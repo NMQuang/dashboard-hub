@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:        #fafaf9;
+  --surface:   #ffffff;
+  --surface2:  #f5f4f2;
+  --border:    #e8e6e1;
+  --border2:   #d4d0c8;
+  --ink:       #1a1917;
+  --ink2:      #6b6860;
+  --ink3:      #a8a49d;
+  --green:     #1a7f4e;
+  --green-bg:  #f0faf4;
+  --red:       #c0392b;
+  --red-bg:    #fdf3f2;
+  --blue:      #1d5fa8;
+  --blue-bg:   #f0f5fd;
+  --amber:     #92580a;
+  --amber-bg:  #fdf8ed;
+  --purple:    #5b3fa6;
+  --purple-bg: #f2f0fd;
+}
+
+[data-theme="dark"] {
+  --bg:        #0f0f0e;
+  --surface:   #1a1917;
+  --surface2:  #242320;
+  --border:    #2e2c28;
+  --border2:   #3d3b36;
+  --ink:       #f0ede8;
+  --ink2:      #9b9790;
+  --ink3:      #5a584f;
+  --green:     #34d17a;
+  --green-bg:  #0d2018;
+  --red:       #f16b60;
+  --red-bg:    #2a1210;
+  --blue:      #5a9cf5;
+  --blue-bg:   #0d1829;
+  --amber:     #f5aa40;
+  --amber-bg:  #251a05;
+  --purple:    #a68df5;
+  --purple-bg: #160e2e;
+}
+
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+/* Utilities */
+.font-mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+
+/* Live dot animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+.dot-live { animation: blink 2s ease-in-out infinite; }
+
+/* Price flash */
+@keyframes flash-up   { 0%,100%{background:transparent} 50%{background:#dcfce7} }
+@keyframes flash-down { 0%,100%{background:transparent} 50%{background:#fee2e2} }
+.flash-up   { animation: flash-up   0.6s ease; }
+.flash-down { animation: flash-down 0.6s ease; }
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ── Responsive layout ────────────────────────────────────────────────────── */
+
+/* Sidebar overlay backdrop (mobile) */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 39;
+}
+.sidebar-backdrop.open { display: block; }
+
+/* Mobile hamburger / close toggle */
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* Responsive grid helpers */
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Page content wrapper */
+.page-content {
+  padding: 28px 32px 48px;
+}
+
+@media (max-width: 768px) {
+  /* Show hamburger button on mobile */
+  .sidebar-toggle { display: flex; }
+
+  /* Sidebar becomes a fixed overlay drawer */
+  .sidebar-desktop {
+    position: fixed !important;
+    left: -220px;
+    top: 0;
+    height: 100vh;
+    z-index: 40;
+    transition: left 0.25s ease;
+    box-shadow: none;
+  }
+  .sidebar-desktop.open {
+    left: 0;
+    box-shadow: 2px 0 24px rgba(0,0,0,0.12);
+  }
+
+  /* Collapse 2-col grids to 1 column */
+  .grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  /* Reduce page padding on mobile */
+  .page-content {
+    padding: 16px 16px 48px;
+  }
+
+  /* Push main content left edge to 0 on mobile (sidebar is overlay) */
+  .layout-main {
+    padding-top: 56px;  /* space for fixed hamburger */
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Tablet: sidebar stays but page padding is smaller */
+  .page-content {
+    padding: 24px 24px 40px;
+  }
+}
+
