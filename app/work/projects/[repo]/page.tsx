@@ -4,6 +4,8 @@ import { fetchRepoContents, fetchRepoBranches, fetchRepoCommits, fetchRepoContri
 
 interface Props { params: { repo: string } }
 
+export const revalidate = 0
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: params.repo }
 }
