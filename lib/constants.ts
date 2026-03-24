@@ -39,6 +39,7 @@ export const GITHUB_REPOS = [
   { name: 'aws',    topic: 'AWS / Infrastructure', color: 'amber'  },
   { name: 'claude', topic: 'Claude tools',         color: 'teal'   },
   { name: 'ibm',    topic: 'IBM Mainframe / COBOL',color: 'gray'   },
+  { name: 'dify',   topic: 'Dify workflows',       color: 'orange' },
 ] as const
 
 export const AI_PROVIDERS = [

@@ -10,14 +10,14 @@ import { fetchMarketSnapshot } from '@/services/market'
 export const revalidate = 60
 
 const NAV_ITEMS = [
-  { href: '/learn/japanese',  icon: '日', label: 'Japanese',  desc: 'AI chat · shadowing · N2',   color: '#edfaf4' },
-  { href: '/learn/mainframe', icon: '⬛', label: 'Mainframe', desc: 'COBOL · JCL · IBM docs',      color: '#f0f0ed' },
-  { href: '/learn/ai-dev',    icon: '◈',  label: 'AI / Dev',  desc: 'Dify · AWS · Claude',        color: '#f2f0fd' },
-  { href: '/work/tools',      icon: '⚙',  label: 'Tools',     desc: 'Web3 · Analytics',           color: '#f5f4f2' },
-  { href: '/work/ai-hub',     icon: '◎',  label: 'AI Hub',    desc: 'Claude · GPT · Gemini',      color: '#f0f5fd' },
-  { href: '/work/projects',   icon: '⌥',  label: 'Projects',  desc: 'web3 · ai · aws · ibm',      color: '#f0f5fd' },
-  { href: '/invest/market',   icon: '◎',  label: 'Market',    desc: 'Gold · BTC · ETH · SOL',     color: '#fdf8ed' },
-  { href: '/invest/alerts',   icon: '◉',  label: 'Alerts',    desc: 'Dify daily report',           color: '#fdf8ed' },
+  { href: '/learn/japanese', icon: '日', label: 'Japanese', desc: 'AI chat · shadowing · N2', color: '#edfaf4' },
+  { href: '/learn/mainframe', icon: '⬛', label: 'Mainframe', desc: 'COBOL · JCL · IBM docs', color: '#f0f0ed' },
+  { href: '/learn/ai-dev', icon: '◈', label: 'AI / Dev', desc: 'Dify · AWS · Claude', color: '#f2f0fd' },
+  { href: '/work/tools', icon: '⚙', label: 'Tools', desc: 'Web3 · Analytics', color: '#f5f4f2' },
+  { href: '/work/ai-hub', icon: '◎', label: 'AI Hub', desc: 'Claude · GPT · Gemini', color: '#f0f5fd' },
+  { href: '/work/projects', icon: '⌥', label: 'Projects', desc: 'web3 · ai · aws · ibm · dify', color: '#f0f5fd' },
+  { href: '/invest/market', icon: '◎', label: 'Market', desc: 'Gold · BTC · ETH · SOL', color: '#fdf8ed' },
+  { href: '/invest/alerts', icon: '◉', label: 'Alerts', desc: 'Dify daily report', color: '#fdf8ed' },
 ]
 
 // Server-side: call service directly — no internal HTTP self-fetch
@@ -213,11 +213,12 @@ function ProgressBar({ label, value, color, note }: { label: string; value: numb
 // Mock activity feed — replace with real GitHub events when GITHUB_TOKEN is configured
 function GithubActivityMock() {
   const events = [
-    { type: 'push',   repo: 'web3-dapp',            msg: 'feat: add wallet connect v2',       time: '2h ago',  color: 'var(--green)'  },
-    { type: 'create', repo: 'claude-tools',          msg: 'branch: feature/dify-webhook',      time: '5h ago',  color: 'var(--blue)'   },
-    { type: 'push',   repo: 'ibm-mainframe-notes',   msg: 'docs: JCL syntax cheatsheet',       time: '1d ago',  color: 'var(--green)'  },
-    { type: 'push',   repo: 'aws-infra',             msg: 'chore: lambda runtime node20',      time: '2d ago',  color: 'var(--green)'  },
-    { type: 'pr',     repo: 'ai-agents',             msg: 'PR #12: claude tool-use pipeline',  time: '3d ago',  color: '#8b5cf6'       },
+    { type: 'push', repo: 'web3-project', msg: 'feat: add wallet connect v2', time: '2h ago', color: 'var(--green)' },
+    { type: 'create', repo: 'claude-project', msg: 'branch: feature/dify-webhook', time: '5h ago', color: 'var(--blue)' },
+    { type: 'push', repo: 'ibm-project', msg: 'docs: JCL syntax cheatsheet', time: '1d ago', color: 'var(--green)' },
+    { type: 'push', repo: 'aws-project', msg: 'chore: lambda runtime node20', time: '2d ago', color: 'var(--green)' },
+    { type: 'pr', repo: 'ai-project', msg: 'PR #12: claude tool-use pipeline', time: '3d ago', color: '#8b5cf6' },
+    { type: 'push', repo: 'dify-project', msg: 'feat: new alert workflow', time: '4d ago', color: 'var(--green)' },
   ]
   return (
     <>

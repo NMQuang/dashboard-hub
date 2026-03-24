@@ -6,7 +6,7 @@ import { fetchUserRepos } from '@/services/github'
 import type { GithubRepo } from '@/types'
 
 export const metadata: Metadata = { title: 'Projects' }
-export const revalidate = 300
+export const revalidate = 0
 
 function repoColor(repo: GithubRepo): string {
   const key = [repo.name, ...(repo.topics ?? [])].join(' ').toLowerCase()
@@ -46,6 +46,7 @@ const MOCK_REPOS: GithubRepo[] = [
   { id: 3, name: 'aws-infra',           full_name: 'you/aws-infra',           description: 'AWS infrastructure: Lambda, Bedrock, CDK templates',      html_url: '#', language: 'TypeScript', stargazers_count: 5,  updated_at: new Date(Date.now() - 3 * 24 * 3_600_000).toISOString(), topics: ['aws', 'cdk'],     private: false },
   { id: 4, name: 'claude-tools',        full_name: 'you/claude-tools',        description: 'Claude API tools, Dify workflows, prompt engineering',    html_url: '#', language: 'TypeScript', stargazers_count: 21, updated_at: new Date(Date.now() - 5 * 3_600_000).toISOString(),      topics: ['ai', 'dify'],     private: false },
   { id: 5, name: 'ibm-mainframe-notes', full_name: 'you/ibm-mainframe-notes', description: 'IBM Mainframe notes: COBOL, JCL, ISPF, z/OS cheatsheets', html_url: '#', language: 'COBOL',      stargazers_count: 3,  updated_at: new Date(Date.now() - 7 * 24 * 3_600_000).toISOString(), topics: ['ibm', 'cobol'],   private: false },
+  { id: 6, name: 'dify-project',        full_name: 'you/dify-project',        description: 'Dify AI workflows and automated market alerts',           html_url: '#', language: 'TypeScript', stargazers_count: 5,  updated_at: new Date(Date.now() - 10 * 3_600_000).toISOString(),     topics: ['ai', 'workflow'], private: false },
 ]
 
 async function getRepos(username: string): Promise<{ repos: GithubRepo[]; isMock: boolean }> {
@@ -78,7 +79,6 @@ export default async function ProjectsPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
         {repos.map(r => {
-          const isExternal = r.html_url.startsWith('http')
           const card = (
             <div style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
@@ -106,14 +106,6 @@ export default async function ProjectsPage() {
             </div>
           )
 
-          if (isExternal) {
-            return (
-              <a key={r.id} href={r.html_url} target="_blank" rel="noopener noreferrer"
-                style={{ textDecoration: 'none', display: 'block' }}>
-                {card}
-              </a>
-            )
-          }
           return (
             <Link key={r.id} href={`/work/projects/${r.name}`} style={{ textDecoration: 'none', display: 'block' }}>
               {card}
