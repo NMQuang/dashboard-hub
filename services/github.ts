@@ -16,7 +16,7 @@ const headers = (): Record<string, string> => {
 export async function fetchUserRepos(username: string): Promise<GithubRepo[]> {
   const res = await fetch(
     `${BASE}/users/${username}/repos?sort=updated&per_page=30`,
-    { headers: headers(), next: { revalidate: 300 } }
+    { headers: headers(), next: { revalidate: 0 } }
   )
   if (!res.ok) throw new Error(`GitHub repos error: ${res.status}`)
   return res.json()
@@ -104,4 +104,40 @@ export async function fetchContributions(username: string): Promise<number[][]> 
   return weeks.map((w: { contributionDays: Array<{ contributionCount: number }> }) =>
     w.contributionDays.map((d) => d.contributionCount)
   )
+}
+
+export async function fetchRepoBranches(username: string, repo: string): Promise<Array<{ name: string }>> {
+  const res = await fetch(
+    `${BASE}/repos/${username}/${repo}/branches?per_page=10`,
+    { headers: headers(), next: { revalidate: 300 } }
+  )
+  if (!res.ok) return []
+  return res.json()
+}
+
+export async function fetchRepoCommits(username: string, repo: string): Promise<Array<{ sha: string, commit: { message: string, author: { name: string, date: string } }, html_url: string }>> {
+  const res = await fetch(
+    `${BASE}/repos/${username}/${repo}/commits?per_page=5`,
+    { headers: headers(), next: { revalidate: 300 } }
+  )
+  if (!res.ok) return []
+  return res.json()
+}
+
+export async function fetchRepoContributors(username: string, repo: string): Promise<Array<{ login: string, avatar_url: string, html_url: string, contributions: number }>> {
+  const res = await fetch(
+    `${BASE}/repos/${username}/${repo}/contributors?per_page=10`,
+    { headers: headers(), next: { revalidate: 300 } }
+  )
+  if (!res.ok) return []
+  return res.json()
+}
+
+export async function fetchRepoPullRequests(username: string, repo: string): Promise<Array<{ id: number, number: number, title: string, state: string, html_url: string, user: { login: string }, merged_at: string | null }>> {
+  const res = await fetch(
+    `${BASE}/repos/${username}/${repo}/pulls?state=all&sort=updated&direction=desc&per_page=5`,
+    { headers: headers(), next: { revalidate: 300 } }
+  )
+  if (!res.ok) return []
+  return res.json()
 }

@@ -2,6 +2,13 @@
 import type { Metadata } from 'next'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import ChatBox from '@/components/ui/ChatBox'
+import Link from 'next/link'
+import { timeAgo } from '@/lib/utils'
+import { CLAUDE_DOCS } from '@/data/docs-claude'
+import { AWS_DOCS } from '@/data/docs-aws'
+import { AI_DOCS } from '@/data/docs-ai'
+import { DIFY_DOCS } from '@/data/docs-dify'
+
 export const metadata: Metadata = { title: 'AI / Dev' }
 
 const TOPICS = [
@@ -12,11 +19,18 @@ const TOPICS = [
 ]
 
 export default function AiDevPage() {
+  const GITHUB_DOCS = [...CLAUDE_DOCS, ...AWS_DOCS, ...AI_DOCS, ...DIFY_DOCS]
+
   return (
     <div className="page-content" style={{ maxWidth: 960 }}>
       <div style={{ marginBottom: 24 }}>
         <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>learn / ai-dev</div>
-        <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em' }}>AI & Dev <span style={{ fontWeight: 300, color: 'var(--ink2)' }}>Dify · AWS · Claude</span></h1>
+        <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span>AI & Dev <span style={{ fontWeight: 300, color: 'var(--ink2)' }}>Dify · AWS · Claude</span></span>
+          <span style={{ fontSize: 12, color: 'var(--ink3)', fontWeight: 400, marginTop: 4 }}>
+            • Docs synced {timeAgo(new Date().toISOString())}
+          </span>
+        </h1>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16 }}>
         <Card style={{ minHeight: 500 }}>
@@ -38,10 +52,23 @@ export default function AiDevPage() {
             ))}
           </Card>
           <Card>
-            <CardHeader><CardTitle>GitHub docs (from your repos)</CardTitle></CardHeader>
-            <div style={{ fontSize: 12.5, color: 'var(--ink3)' }}>
-              Connect your GitHub token in <span className="font-mono" style={{ fontSize: 11 }}>.env.local</span> to auto-load README files from your ibm, aws, claude repos.
-            </div>
+            <CardHeader><CardTitle>GitHub docs</CardTitle></CardHeader>
+            {GITHUB_DOCS.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {GITHUB_DOCS.map(doc => (
+                  <Link key={doc.path} href={`/work/projects/${doc.repo}?file=${encodeURIComponent(doc.path)}`}
+                    style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', textDecoration: 'none', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--blue)', fontWeight: 500 }}>{doc.title}</span>
+                      <span style={{ fontSize: 10, color: 'var(--ink3)', background: 'var(--surface2)', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace' }}>{doc.repo}</span>
+                    </div>
+                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--ink3)', marginTop: 2 }}>{doc.path}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12.5, color: 'var(--ink3)' }}>No AI/Dev docs synced yet.</div>
+            )}
           </Card>
         </div>
       </div>
