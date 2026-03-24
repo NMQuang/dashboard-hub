@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
-import { fetchRepoContents, fetchRepoBranches, fetchRepoCommits, fetchRepoContributors, fetchRepoPullRequests } from '@/services/github'
+import { fetchRepoContents, fetchRepoBranches, fetchRepoCommits, fetchRepoContributors, fetchRepoPullRequests, fetchFileContent } from '@/services/github'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
-interface Props { params: { repo: string } }
+interface Props { 
+  params: { repo: string },
+  searchParams?: { file?: string }
+}
 
 export const revalidate = 0
 
@@ -10,17 +15,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: params.repo }
 }
 
-export default async function RepoPage({ params }: Props) {
+export default async function RepoPage({ params, searchParams }: Props) {
   const { repo } = params
+  const file = searchParams?.file
   const username = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? 'your-username'
 
-  const [files, commits, branches, contributors, pullRequests] = await Promise.all([
+  const [filesRes, commitsRes, branchesRes, contribsRes, prsRes] = await Promise.allSettled([
     fetchRepoContents(username, repo),
     fetchRepoCommits(username, repo),
     fetchRepoBranches(username, repo),
     fetchRepoContributors(username, repo),
     fetchRepoPullRequests(username, repo)
   ])
+
+  let fileContent: string | null = null
+  if (file) {
+    try {
+      fileContent = await fetchFileContent(username, repo, file)
+    } catch {
+      fileContent = '> File content unavailable or not found in the repository.'
+    }
+  }
+
+  const files = filesRes.status === 'fulfilled' ? filesRes.value : []
+  const commits = commitsRes.status === 'fulfilled' ? commitsRes.value : []
+  const branches = branchesRes.status === 'fulfilled' ? branchesRes.value : []
+  const contributors = contribsRes.status === 'fulfilled' ? contribsRes.value : []
+  const pullRequests = prsRes.status === 'fulfilled' ? prsRes.value : []
 
   return (
     <div style={{ padding: '28px 32px 48px', maxWidth: 960 }}>
@@ -37,6 +58,17 @@ export default async function RepoPage({ params }: Props) {
           </a>
         </div>
       </div>
+
+      {file && fileContent !== null && (
+        <Card style={{ marginBottom: 16 }}>
+          <CardHeader><CardTitle>{file}</CardTitle></CardHeader>
+          <div className="prose prose-sm" style={{ padding: '0 4px', fontSize: 14, color: 'var(--ink)' }}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {fileContent}
+            </ReactMarkdown>
+          </div>
+        </Card>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
         <Card>
