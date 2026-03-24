@@ -9,13 +9,17 @@ import {
   fetchContributions,
 } from '@/services/github'
 
-const USERNAME = process.env.GITHUB_USERNAME ?? ''
+const USERNAME = process.env.GITHUB_USERNAME ?? process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? ''
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const action = searchParams.get('action') ?? 'repos'
-  const repo   = searchParams.get('repo') ?? ''
-  const path   = searchParams.get('path') ?? ''
+  const repo = searchParams.get('repo') ?? ''
+  const path = searchParams.get('path') ?? ''
+
+  if (!USERNAME) {
+    return NextResponse.json({ error: 'GITHUB_USERNAME is not configured' }, { status: 400 })
+  }
 
   try {
     switch (action) {
@@ -37,6 +41,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
     }
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
 }

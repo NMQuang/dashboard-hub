@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { fetchRepoContents, fetchRepoBranches, fetchRepoCommits, fetchRepoContributors, fetchRepoPullRequests, fetchFileContent } from '@/services/github'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-interface Props { 
-  params: { repo: string },
+interface Props {
+  params: { repo: string }
   searchParams?: { file?: string }
 }
 
@@ -18,14 +19,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RepoPage({ params, searchParams }: Props) {
   const { repo } = params
   const file = searchParams?.file
-  const username = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? 'your-username'
+  const username = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? process.env.GITHUB_USERNAME ?? 'your-username'
 
   const [filesRes, commitsRes, branchesRes, contribsRes, prsRes] = await Promise.allSettled([
     fetchRepoContents(username, repo),
     fetchRepoCommits(username, repo),
     fetchRepoBranches(username, repo),
     fetchRepoContributors(username, repo),
-    fetchRepoPullRequests(username, repo)
+    fetchRepoPullRequests(username, repo),
   ])
 
   let fileContent: string | null = null
@@ -47,7 +48,7 @@ export default async function RepoPage({ params, searchParams }: Props) {
     <div style={{ padding: '28px 32px 48px', maxWidth: 960 }}>
       <div style={{ marginBottom: 20 }}>
         <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>
-          <a href="/work/projects" style={{ color: 'var(--ink3)', textDecoration: 'none' }}>projects</a>
+          <Link href="/work/projects" style={{ color: 'var(--ink3)', textDecoration: 'none' }}>projects</Link>
           {' / '}{repo}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -85,10 +86,10 @@ export default async function RepoPage({ params, searchParams }: Props) {
         <Card>
           <CardHeader><CardTitle>Pull Requests</CardTitle></CardHeader>
           <div style={{ fontSize: 12, color: 'var(--ink)' }}>
-            {pullRequests && pullRequests.length > 0 ? pullRequests.map(pr => {
-              const isMerged = !!pr.merged_at;
-              const stateDisplay = isMerged ? 'Merged' : (pr.state === 'open' ? 'Open' : 'Closed');
-              const stateColor = isMerged ? '#8250df' : (pr.state === 'open' ? '#1a7f37' : '#cf222e');
+            {pullRequests.length > 0 ? pullRequests.map(pr => {
+              const isMerged = !!pr.merged_at
+              const stateDisplay = isMerged ? 'Merged' : (pr.state === 'open' ? 'Open' : 'Closed')
+              const stateColor = isMerged ? '#8250df' : (pr.state === 'open' ? '#1a7f37' : '#cf222e')
               return (
                 <a key={pr.id} href={pr.html_url} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', display: 'block', textDecoration: 'none', color: 'inherit' }}>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
@@ -103,7 +104,7 @@ export default async function RepoPage({ params, searchParams }: Props) {
             }) : <div style={{ color: 'var(--ink3)' }}>No pull requests found</div>}
           </div>
         </Card>
-        
+
         <Card>
           <CardHeader><CardTitle>Recent commits</CardTitle></CardHeader>
           <div style={{ fontSize: 12, color: 'var(--ink)' }}>
@@ -134,7 +135,7 @@ export default async function RepoPage({ params, searchParams }: Props) {
         <Card>
           <CardHeader><CardTitle>Contributors</CardTitle></CardHeader>
           <div style={{ fontSize: 12, color: 'var(--ink)' }}>
-            {contributors && contributors.length > 0 ? contributors.map(c => (
+            {contributors.length > 0 ? contributors.map(c => (
               <a key={c.login} href={c.html_url} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
                 <img src={c.avatar_url} alt={c.login} style={{ width: 24, height: 24, borderRadius: '50%' }} />
                 <div>

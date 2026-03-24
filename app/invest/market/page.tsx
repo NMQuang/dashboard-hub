@@ -89,8 +89,12 @@ export default async function MarketPage() {
                   )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>Buy: {g.buy.toLocaleString('vi-VN')} ₫/lượng</span>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>Sell: {g.sell.toLocaleString('vi-VN')} ₫/lượng</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>
+                    Buy: {g.buy > 0 ? `${g.buy.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}
+                  </span>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>
+                    Sell: {g.sell > 0 ? `${g.sell.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}
+                  </span>
                 </div>
               </div>
             )
