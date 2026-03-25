@@ -130,27 +130,27 @@ const GOLD_GROUPS: Array<{
   label: string
   keywords: string[]
 }> = [
-  {
-    key: 'mieng',
-    label: 'Vàng Miếng',
-    keywords: ['vàng miếng', 'miếng', 'sjc', 'vrtl'],
-  },
-  {
-    key: 'nhan',
-    label: 'Vàng Nhẫn',
-    keywords: ['nhẫn', 'nhẫn tròn', 'tròn trơn', 'bản vị nhẫn'],
-  },
-  {
-    key: 'nguyen_lieu',
-    label: 'Vàng 24k / Nguyên liệu',
-    keywords: ['24k', '999.9', '99.99', '99,99', 'nguyên liệu'],
-  },
-  {
-    key: 'nu_trang',
-    label: 'Vàng Nữ Trang',
-    keywords: ['nữ trang', 'trang sức'],
-  },
-]
+    {
+      key: 'mieng',
+      label: 'Vàng Miếng',
+      keywords: ['vàng miếng', 'miếng', 'sjc', 'vrtl'],
+    },
+    {
+      key: 'nhan',
+      label: 'Vàng Nhẫn',
+      keywords: ['nhẫn', 'nhẫn tròn', 'tròn trơn', 'bản vị nhẫn'],
+    },
+    {
+      key: 'nguyen_lieu',
+      label: 'Vàng 24k / Nguyên liệu',
+      keywords: ['24k', '999.9', '99.99', '99,99', 'nguyên liệu'],
+    },
+    {
+      key: 'nu_trang',
+      label: 'Vàng Nữ Trang',
+      keywords: ['nữ trang', 'trang sức'],
+    },
+  ]
 
 function parseVnNumber(input: string): number {
   const raw = String(input).trim()
