@@ -9,11 +9,14 @@ export interface AssetPrice {
 }
 
 export interface VNGoldPrice {
-  brand: string;
-  buy: number;
-  sell: number;
-  change24h: number;
-  updatedAt: string;
+  key: string
+  brand: string
+  sourceName: string
+  source?: string | null
+  buy: number
+  sell: number
+  change24h: number
+  updatedAt: string
 }
 
 export interface MarketSnapshot {
@@ -77,7 +80,7 @@ export interface ChatSession {
   title: string
   messages: ChatMessage[]
   provider: AIProvider
-  context?: string        // e.g. 'japanese' | 'cobol' | 'general'
+  context?: string
   createdAt: string
   updatedAt: string
 }
@@ -115,7 +118,7 @@ export interface NavItem {
 export interface UserSettings {
   onsiteDate: string
   githubUsername: string
-  watchlist: string[]        // coin/asset symbols
+  watchlist: string[]
   preferredAI: AIProvider
   language: 'en' | 'vi' | 'ja'
   timezone: string

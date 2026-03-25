@@ -65,14 +65,19 @@ export default async function MarketPage() {
         </CardHeader>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0 24px' }}>
           {snapshot?.vnGold?.map((g) => {
-            const isUp = g.change24h >= 0;
+            const isUp = g.change24h >= 0
             return (
-              <div key={g.brand} style={{
+              <div key={g.key} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '10px 0', borderBottom: '1px solid var(--border)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{g.brand}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{g.brand}</span>
+                    <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220 }}>
+                      {g.sourceName}{g.source ? ` · ${g.source}` : ''}
+                    </span>
+                  </div>
                   {g.change24h !== 0 ? (
                     <span className="font-mono" style={{
                       fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
@@ -81,20 +86,11 @@ export default async function MarketPage() {
                     }}>
                       {isUp ? '+' : ''}{g.change24h.toFixed(2)}%
                     </span>
-                  ) : (
-                    <span className="font-mono" style={{
-                      fontSize: 10.5, padding: '2px 7px', borderRadius: 5,
-                      color: 'var(--ink3)', background: 'var(--surface)',
-                    }}>—</span>
-                  )}
+                  ) : null}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>
-                    Buy: {g.buy > 0 ? `${g.buy.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}
-                  </span>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>
-                    Sell: {g.sell > 0 ? `${g.sell.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}
-                  </span>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>Buy: {g.buy > 0 ? `${g.buy.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>Sell: {g.sell > 0 ? `${g.sell.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
                 </div>
               </div>
             )

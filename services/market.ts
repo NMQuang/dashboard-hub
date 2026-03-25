@@ -1,30 +1,9 @@
 import type { AssetPrice, MarketSnapshot, VNGoldPrice } from '@/types'
 
-function parseLooseNumber(value: unknown): number {
-  if (typeof value === 'number') return value
-  if (typeof value !== 'string') return 0
-  const normalized = value.replace(/\./g, '').replace(/,/g, '.').replace(/[^\d.-]/g, '')
-  const num = Number(normalized)
-  return Number.isFinite(num) ? num : 0
-}
-
-function parseGoldThousands(value: unknown): number {
-  if (typeof value === 'number') return value * 1000
-  if (typeof value !== 'string') return 0
-  const normalized = value.replace(/,/g, '').replace(/[^\d.-]/g, '')
-  const num = Number(normalized)
-  return Number.isFinite(num) ? num * 1000 : 0
-}
-
-function safePercent(current: number, previous?: number | null): number {
-  if (!previous || previous <= 0 || current <= 0) return 0
-  return ((current - previous) / previous) * 100
-}
-
 // ── Gold via goldapi.io ───────────────────────────────────────────────────
 export async function fetchGoldPrice(): Promise<AssetPrice> {
   const apiKey = process.env.GOLD_API_KEY
-  if (!apiKey) throw new Error('GOLD_API_KEY is not configured')
+  if (!apiKey) return mockGold()
 
   const res = await fetch('https://www.goldapi.io/api/XAU/USD', {
     headers: {
@@ -40,8 +19,8 @@ export async function fetchGoldPrice(): Promise<AssetPrice> {
   return {
     symbol: 'XAU',
     name: 'Gold',
-    price: data.price,
-    change24h: data.chp ?? data.ch ?? 0,
+    price: Number(data.price ?? 0),
+    change24h: Number(data.ch ?? 0),
     currency: 'USD',
     updatedAt: new Date().toISOString(),
   }
@@ -63,15 +42,21 @@ const COIN_IDS: Record<string, string> = {
 }
 
 const COIN_NAMES: Record<string, string> = {
-  bitcoin: 'Bitcoin', ethereum: 'Ethereum', solana: 'Solana',
-  binancecoin: 'BNB', tether: 'Tether', ripple: 'XRP',
-  cardano: 'Cardano', 'avalanche-2': 'Avalanche',
-  'matic-network': 'Polygon', polkadot: 'Polkadot',
+  bitcoin: 'Bitcoin',
+  ethereum: 'Ethereum',
+  solana: 'Solana',
+  binancecoin: 'BNB',
+  tether: 'Tether',
+  ripple: 'XRP',
+  cardano: 'Cardano',
+  'avalanche-2': 'Avalanche',
+  'matic-network': 'Polygon',
+  polkadot: 'Polkadot',
   'fetch-ai': 'Fetch.ai',
 }
 
 export async function fetchCryptoPrices(symbols: string[]): Promise<AssetPrice[]> {
-  const ids = symbols.map(s => COIN_IDS[s]).filter(Boolean).join(',')
+  const ids = symbols.map((s) => COIN_IDS[s]).filter(Boolean).join(',')
   if (!ids) return []
 
   const apiKey = process.env.COINGECKO_API_KEY
@@ -83,21 +68,23 @@ export async function fetchCryptoPrices(symbols: string[]): Promise<AssetPrice[]
     `https://api.coingecko.com/api/v3/simple/price` +
     `?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`
 
-  const res = await fetch(url, { headers, next: { revalidate: 60 } })
+  const res = await fetch(url, { headers, next: { revalidate: 3600 } })
   if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
   const data = await res.json()
 
   return symbols
-    .map(sym => {
+    .map((sym) => {
       const id = COIN_IDS[sym]
       if (!id || !data[id]) return null
       return {
         symbol: sym,
         name: COIN_NAMES[id] ?? sym,
-        price: data[id].usd,
-        change24h: data[id].usd_24h_change ?? 0,
+        price: Number(data[id].usd ?? 0),
+        change24h: Number(data[id].usd_24h_change ?? 0),
         currency: 'USD',
-        updatedAt: data[id].last_updated_at ? new Date(data[id].last_updated_at * 1000).toISOString() : new Date().toISOString(),
+        updatedAt: data[id].last_updated_at
+          ? new Date(data[id].last_updated_at * 1000).toISOString()
+          : new Date().toISOString(),
       } satisfies AssetPrice
     })
     .filter((x): x is AssetPrice => x !== null)
@@ -117,169 +104,165 @@ export async function fetchForex(): Promise<AssetPrice[]> {
   const data = await res.json()
 
   return FOREX_PAIRS
-    .filter(p => data.rates?.[p.symbol] != null)
-    .map(p => ({
+    .filter((p) => data.rates?.[p.symbol] != null)
+    .map((p) => ({
       symbol: p.symbol,
       name: p.name,
-      price: data.rates[p.symbol],
+      price: Number(data.rates[p.symbol]),
       change24h: 0,
       currency: p.currency,
       updatedAt: new Date().toISOString(),
     }))
 }
 
-// ── Vietnam Domestic Gold (DOJI + BTMC + PNJ fallback) ───────────────────
-async function fetchDojiGold(): Promise<VNGoldPrice[]> {
-  const res = await fetch('https://giavang.doji.vn/api/giavang/', { next: { revalidate: 300 } })
-  if (!res.ok) throw new Error(`DOJI gold error: ${res.status}`)
-  const xml = await res.text()
+// ── Vietnam Domestic Gold from single official source (BTMC) ──────────────
+type RawGoldRow = {
+  source: string
+  name: string
+  buy: number
+  sell: number
+}
 
-  const rows = Array.from(xml.matchAll(/<Row\s+([^>]+)\/?>/gi)).map(match => {
-    const attrs = match[1]
-    const getAttr = (name: string) => (attrs.match(new RegExp(`${name}='([^']*)'`, 'i')) ?? [])[1] ?? ''
-    
+const BTMC_GOLD_URL = 'https://btmc.vn/gia-vang-theo-ngay.html'
+
+const GOLD_GROUPS: Array<{
+  key: string
+  label: string
+  keywords: string[]
+}> = [
+  {
+    key: 'mieng',
+    label: 'Vàng Miếng',
+    keywords: ['vàng miếng', 'miếng', 'sjc', 'vrtl'],
+  },
+  {
+    key: 'nhan',
+    label: 'Vàng Nhẫn',
+    keywords: ['nhẫn', 'nhẫn tròn', 'tròn trơn', 'bản vị nhẫn'],
+  },
+  {
+    key: 'nguyen_lieu',
+    label: 'Vàng 24k / Nguyên liệu',
+    keywords: ['24k', '999.9', '99.99', '99,99', 'nguyên liệu'],
+  },
+  {
+    key: 'nu_trang',
+    label: 'Vàng Nữ Trang',
+    keywords: ['nữ trang', 'trang sức'],
+  },
+]
+
+function parseVnNumber(input: string): number {
+  const raw = String(input).trim()
+  const compact = raw.replace(/\.(?=\d{3}(\D|$))/g, '').replace(/,/g, '')
+  const numeric = compact.replace(/[^\d]/g, '')
+  const value = Number(numeric)
+  if (!Number.isFinite(value) || value <= 0) return 0
+  return value < 1_000_000 ? value * 1_000 : value
+}
+
+function cleanupName(input: string): string {
+  return input.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function dedupeRawRows(rows: RawGoldRow[]): RawGoldRow[] {
+  const map = new Map<string, RawGoldRow>()
+  for (const row of rows) {
+    const key = `${row.source}::${row.name.toLowerCase()}`
+    if (!map.has(key)) map.set(key, row)
+  }
+  return Array.from(map.values())
+}
+
+function parseBTMCRows(html: string): RawGoldRow[] {
+  const compact = cleanupName(html.replace(/<[^>]+>/g, ' '))
+  const rows: RawGoldRow[] = []
+
+  const rowPattern = /([A-ZÀ-Ỵa-zà-ỵ0-9./,&()\-\s]{4,140}?)\s+(\d{2,3}(?:[.,]\d{3}){0,3})\s+(\d{2,3}(?:[.,]\d{3}){0,3})/g
+  for (const match of compact.matchAll(rowPattern)) {
+    const name = cleanupName(match[1])
+    const lower = name.toLowerCase()
+    const buy = parseVnNumber(match[2])
+    const sell = parseVnNumber(match[3])
+
+    if (!name || buy <= 0 || sell <= 0) continue
+    if (name.length < 4 || name.length > 120) continue
+    if (/giá vàng|khu vực|hanoi|đvt|vnđ|read more|xem thêm|cập nhật/i.test(lower)) continue
+    if (/ngày \d{1,2}[/-]\d{1,2}[/-]\d{4}/i.test(lower)) continue
+
+    rows.push({ source: 'BTMC', name, buy, sell })
+  }
+
+  return dedupeRawRows(rows)
+}
+
+function scoreRow(row: RawGoldRow, group: (typeof GOLD_GROUPS)[number]): number {
+  const name = row.name.toLowerCase()
+  let score = 0
+
+  for (const keyword of group.keywords) {
+    if (name.includes(keyword.toLowerCase())) score += keyword.length * 3
+  }
+
+  if (group.key === 'mieng' && /nhẫn|nữ trang|trang sức|nguyên liệu/i.test(name)) score -= 20
+  if (group.key === 'nhan' && /nữ trang|trang sức|nguyên liệu/i.test(name)) score -= 12
+  if (group.key === 'nguyen_lieu' && /nhẫn|nữ trang|trang sức/i.test(name)) score -= 8
+  if (group.key === 'nu_trang' && /nhẫn|nguyên liệu/i.test(name)) score -= 8
+
+  return score
+}
+
+function mapRowsToGoldCards(rows: RawGoldRow[]): VNGoldPrice[] {
+  const updatedAt = new Date().toISOString()
+
+  return GOLD_GROUPS.map((group) => {
+    const best = rows
+      .map((row) => ({ row, score: scoreRow(row, group) }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)[0]?.row
+
     return {
-      name: getAttr('Name'),
-      key: getAttr('Key'),
-      sell: parseGoldThousands(getAttr('Sell')),
-      buy: parseGoldThousands(getAttr('Buy')),
-      change: parseLooseNumber(getAttr('Change')),
+      key: group.key,
+      brand: group.label,
+      sourceName: best?.name ?? '—',
+      source: 'BTMC',
+      buy: best?.buy ?? 0,
+      sell: best?.sell ?? 0,
+      change24h: 0,
+      updatedAt,
     }
   })
-
-  const pick = (predicate: (row: { name: string; key: string }) => boolean) => rows.find(predicate)
-  const result: VNGoldPrice[] = []
-
-  const sjc = pick(r => /sjc/i.test(r.name) || /sjc/i.test(r.key))
-  if (sjc) {
-    result.push({
-      brand: 'Vàng Miếng SJC',
-      buy: sjc.buy,
-      sell: sjc.sell,
-      change24h: sjc.change,
-      updatedAt: new Date().toISOString(),
-    })
-  }
-
-  const doji = pick(r => /doji/i.test(r.name) || /doji/i.test(r.key))
-  if (doji) {
-    result.push({
-      brand: 'Vàng Miếng DOJI',
-      buy: doji.buy,
-      sell: doji.sell,
-      change24h: doji.change,
-      updatedAt: new Date().toISOString(),
-    })
-  }
-
-  const sjcRing = pick(r => /(nhẫn|1-5|24k|9999)/i.test(r.name) && /sjc/i.test(r.name + r.key))
-  if (sjcRing) {
-    result.push({
-      brand: 'Nhẫn SJC 1-5 Chỉ 24k',
-      buy: sjcRing.buy,
-      sell: sjcRing.sell,
-      change24h: sjcRing.change,
-      updatedAt: new Date().toISOString(),
-    })
-  }
-
-  return result
 }
 
-async function fetchBTMCGold(): Promise<VNGoldPrice[]> {
-  const res = await fetch('https://api.btmc.vn/api/BTMCAPI/getpricebtmc', { next: { revalidate: 300 } })
-  if (!res.ok) throw new Error(`BTMC gold error: ${res.status}`)
-  const data = await res.json()
-
-  const rows = Array.isArray(data?.DataList) ? data.DataList : []
-  const pick = (predicate: (row: any) => boolean) => rows.find(predicate)
-  const result: VNGoldPrice[] = []
-
-  const btmc24k = pick((row: any) => /999\.9|24k/i.test(String(row?.n ?? '')))
-  if (btmc24k) {
-    const buy = parseLooseNumber(btmc24k.pb ?? btmc24k.buy ?? btmc24k.Buy)
-    const sell = parseLooseNumber(btmc24k.ps ?? btmc24k.sell ?? btmc24k.Sell)
-    result.push({
-      brand: 'Nhẫn Tròn Trơn BTMC 24k',
-      buy,
-      sell,
-      change24h: safePercent(sell, parseLooseNumber(btmc24k.pt ?? btmc24k.yesterday ?? 0)),
-      updatedAt: new Date().toISOString(),
-    })
-  }
-
-  return result
-}
-
-async function fetchPNJGold(): Promise<VNGoldPrice[]> {
-  // PNJ does not expose a stable public API.
-  return [{
-    brand: 'Nhẫn Trơn PNJ 24k',
-    buy: 0,
-    sell: 0,
-    change24h: 0,
-    updatedAt: new Date().toISOString(),
-  }]
+async function fetchBTMCGoldRows(): Promise<RawGoldRow[]> {
+  const res = await fetch(BTMC_GOLD_URL, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; MyDashboardBot/1.0)',
+      Accept: 'text/html,application/xhtml+xml',
+    },
+    next: { revalidate: 1800 },
+  })
+  if (!res.ok) throw new Error(`BTMC ${res.status}`)
+  const html = await res.text()
+  return parseBTMCRows(html)
 }
 
 export async function fetchVNGold(): Promise<VNGoldPrice[]> {
-  const [doji, btmc, pnj] = await Promise.allSettled([
-    fetchDojiGold(),
-    fetchBTMCGold(),
-    fetchPNJGold(),
-  ])
+  try {
+    const rows = await fetchBTMCGoldRows()
+    if (!rows.length) return mockVNGold()
 
-  // Fixed set of brands to always display
-  const targetBrands = [
-    'Vàng Miếng SJC',
-    'Vàng Miếng DOJI',
-    'Nhẫn Trơn PNJ 24k',
-    'Nhẫn Tròn Trơn BTMC 24k'
-  ]
-
-  const merged = new Map<string, VNGoldPrice>()
-  
-  // Initialize with empty data for fixed brands
-  for (const brand of targetBrands) {
-    const mockMatch = mockVNGold().find(m => m.brand === brand)
-    merged.set(brand, {
-      brand,
-      buy: 0,
-      sell: 0,
-      change24h: 0,
-      updatedAt: new Date().toISOString(),
-      ...(mockMatch && { buy: 0, sell: 0 }) // Explicitly start at 0
-    })
+    const cards = mapRowsToGoldCards(rows)
+    const hasRealData = cards.some((item) => item.buy > 0 && item.sell > 0)
+    return hasRealData ? cards : mockVNGold()
+  } catch {
+    return mockVNGold()
   }
-
-  const add = (items: VNGoldPrice[]) => {
-    for (const item of items) {
-      if (item.buy <= 0 || item.sell <= 0) continue
-      
-      const key = item.brand
-      // If the API didn't provide a change percentage, try to use a realistic placeholder from mock data
-      const change24h = item.change24h !== 0 ? item.change24h : (merged.get(key)?.change24h || 0)
-
-      if (merged.has(key)) {
-        merged.set(key, { ...item, change24h })
-      } else if (key.includes('SJC') && !key.includes('Nhẫn')) {
-        merged.set('Vàng Miếng SJC', { ...item, brand: 'Vàng Miếng SJC', change24h })
-      } else if (key.includes('DOJI') && !key.includes('Nhẫn')) {
-        merged.set('Vàng Miếng DOJI', { ...item, brand: 'Vàng Miếng DOJI', change24h })
-      }
-    }
-  }
-
-  if (doji.status === 'fulfilled') add(doji.value)
-  if (btmc.status === 'fulfilled') add(btmc.value)
-  if (pnj.status === 'fulfilled') add(pnj.value)
-
-  return Array.from(merged.values())
 }
 
 // ── Aggregate snapshot ────────────────────────────────────────────────────
 export async function fetchMarketSnapshot(watchlist: string[]): Promise<MarketSnapshot> {
-  const cryptoSymbols = watchlist.filter(s => s !== 'XAU')
+  const cryptoSymbols = watchlist.filter((s) => s !== 'XAU')
   const [gold, coins, forex, vnGold] = await Promise.allSettled([
     fetchGoldPrice(),
     fetchCryptoPrices(cryptoSymbols),
@@ -295,6 +278,7 @@ export async function fetchMarketSnapshot(watchlist: string[]): Promise<MarketSn
   }
 }
 
+// ── Mock fallback ─────────────────────────────────────────────────────────
 function mockGold(): AssetPrice {
   return {
     symbol: 'XAU',
@@ -307,10 +291,47 @@ function mockGold(): AssetPrice {
 }
 
 function mockVNGold(): VNGoldPrice[] {
+  const updatedAt = new Date().toISOString()
   return [
-    { brand: 'Vàng Miếng SJC', buy: 158000000, sell: 160000000, change24h: 3.45, updatedAt: new Date().toISOString() },
-    { brand: 'Vàng Miếng DOJI', buy: 158000000, sell: 160000000, change24h: 3.2, updatedAt: new Date().toISOString() },
-    { brand: 'Nhẫn Trơn PNJ 24k', buy: 0, sell: 0, change24h: 0, updatedAt: new Date().toISOString() },
-    { brand: 'Nhẫn Tròn Trơn BTMC 24k', buy: 143000000, sell: 146000000, change24h: 2.1, updatedAt: new Date().toISOString() },
+    {
+      key: 'mieng',
+      brand: 'Vàng Miếng',
+      sourceName: 'VÀNG MIẾNG VRTL BẢO TÍN MINH CHÂU, 999.9 (24k)',
+      source: 'BTMC',
+      buy: 0,
+      sell: 0,
+      change24h: 0,
+      updatedAt,
+    },
+    {
+      key: 'nhan',
+      brand: 'Vàng Nhẫn',
+      sourceName: 'NHẪN TRÒN TRƠN BẢO TÍN MINH CHÂU, 999.9 (24k)',
+      source: 'BTMC',
+      buy: 0,
+      sell: 0,
+      change24h: 0,
+      updatedAt,
+    },
+    {
+      key: 'nguyen_lieu',
+      brand: 'Vàng 24k / Nguyên liệu',
+      sourceName: 'QUÀ MỪNG BẢN VỊ VÀNG BẢO TÍN MINH CHÂU, 999.9 (24k)',
+      source: 'BTMC',
+      buy: 0,
+      sell: 0,
+      change24h: 0,
+      updatedAt,
+    },
+    {
+      key: 'nu_trang',
+      brand: 'Vàng Nữ Trang',
+      sourceName: 'NỮ TRANG VÀNG 999.9 / 24k',
+      source: 'BTMC',
+      buy: 0,
+      sell: 0,
+      change24h: 0,
+      updatedAt,
+    },
   ]
 }
