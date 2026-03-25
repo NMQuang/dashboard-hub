@@ -57,47 +57,6 @@ export default async function MarketPage() {
         </h1>
       </div>
 
-      {/* ── Vietnam Domestic Gold ────────────────────────────────────────────── */}
-      <Card style={{ marginBottom: 24 }}>
-        <CardHeader>
-          <CardTitle>Vietnam Domestic Gold</CardTitle>
-          <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)' }}>Đơn vị: VND / lượng (cây) · Miếng & Nhẫn 24k</span>
-        </CardHeader>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0 24px' }}>
-          {snapshot?.vnGold?.map((g) => {
-            const isUp = g.change24h >= 0;
-            return (
-              <div key={g.brand} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 0', borderBottom: '1px solid var(--border)',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{g.brand}</span>
-                  {g.change24h !== 0 ? (
-                    <span className="font-mono" style={{
-                      fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
-                      color: isUp ? 'var(--green)' : 'var(--red)',
-                      background: isUp ? 'var(--green-bg)' : 'var(--red-bg)',
-                    }}>
-                      {isUp ? '+' : ''}{g.change24h.toFixed(2)}%
-                    </span>
-                  ) : (
-                    <span className="font-mono" style={{
-                      fontSize: 10.5, padding: '2px 7px', borderRadius: 5,
-                      color: 'var(--ink3)', background: 'var(--surface)',
-                    }}>—</span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>Buy: {g.buy.toLocaleString('vi-VN')} ₫/lượng</span>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>Sell: {g.sell.toLocaleString('vi-VN')} ₫/lượng</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
       {/* ── Stat strip — always 6 tiles ──────────────────────────────── */}
       {(() => {
         const SLOTS = [
@@ -256,7 +215,7 @@ export default async function MarketPage() {
                   )}
                 </div>
               ))
-            : ['XAU', 'BTC', 'ETH', 'FET', 'SOL', 'BNB'].map(sym => (
+            : ['{XAU}', 'BTC', 'ETH', 'FET', 'SOL', 'BNB'].map(sym => (
                 <div key={sym} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
                   <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', width: 44 }}>{sym}</span>
                   <div className="skeleton" style={{ flex: 1, height: 13 }} />

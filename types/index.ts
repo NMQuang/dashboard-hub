@@ -8,19 +8,10 @@ export interface AssetPrice {
   updatedAt: string      // ISO string
 }
 
-export interface VNGoldPrice {
-  brand: string;
-  buy: number;
-  sell: number;
-  change24h: number;
-  updatedAt: string;
-}
-
 export interface MarketSnapshot {
   gold: AssetPrice
   coins: AssetPrice[]
   forex: AssetPrice[]
-  vnGold: VNGoldPrice[]
 }
 
 // ── Weather ──────────────────────────────────────
