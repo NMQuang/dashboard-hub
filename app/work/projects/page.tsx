@@ -40,79 +40,98 @@ function formatUpdated(iso: string): string {
   } catch { return '' }
 }
 
-const MOCK_REPOS: GithubRepo[] = [
-  { id: 1, name: 'web3-dapp',           full_name: 'you/web3-dapp',           description: 'Web3 DApp with wallet connect, smart contracts',          html_url: '#', language: 'TypeScript', stargazers_count: 12, updated_at: new Date(Date.now() - 2 * 3_600_000).toISOString(),      topics: ['web3', 'solidity'], private: false },
-  { id: 2, name: 'ai-agents',           full_name: 'you/ai-agents',           description: 'AI agents, Claude tool-use, LangChain experiments',       html_url: '#', language: 'Python',     stargazers_count: 8,  updated_at: new Date(Date.now() - 24 * 3_600_000).toISOString(),     topics: ['ai', 'claude'],   private: false },
-  { id: 3, name: 'aws-infra',           full_name: 'you/aws-infra',           description: 'AWS infrastructure: Lambda, Bedrock, CDK templates',      html_url: '#', language: 'TypeScript', stargazers_count: 5,  updated_at: new Date(Date.now() - 3 * 24 * 3_600_000).toISOString(), topics: ['aws', 'cdk'],     private: false },
-  { id: 4, name: 'claude-tools',        full_name: 'you/claude-tools',        description: 'Claude API tools, Dify workflows, prompt engineering',    html_url: '#', language: 'TypeScript', stargazers_count: 21, updated_at: new Date(Date.now() - 5 * 3_600_000).toISOString(),      topics: ['ai', 'dify'],     private: false },
-  { id: 5, name: 'ibm-mainframe-notes', full_name: 'you/ibm-mainframe-notes', description: 'IBM Mainframe notes: COBOL, JCL, ISPF, z/OS cheatsheets', html_url: '#', language: 'COBOL',      stargazers_count: 3,  updated_at: new Date(Date.now() - 7 * 24 * 3_600_000).toISOString(), topics: ['ibm', 'cobol'],   private: false },
-  { id: 6, name: 'dify-project',        full_name: 'you/dify-project',        description: 'Dify AI workflows and automated market alerts',           html_url: '#', language: 'TypeScript', stargazers_count: 5,  updated_at: new Date(Date.now() - 10 * 3_600_000).toISOString(),     topics: ['ai', 'workflow'], private: false },
-]
+type RepoResult =
+  | { repos: GithubRepo[]; error: null }
+  | { repos: []; error: string }
 
-async function getRepos(username: string): Promise<{ repos: GithubRepo[]; isMock: boolean }> {
-  if (!username || username === 'your-username') return { repos: MOCK_REPOS, isMock: true }
+async function getRepos(username: string): Promise<RepoResult> {
+  if (!username || username === 'your-username') {
+    return { repos: [], error: 'GITHUB_USERNAME chưa được cấu hình trong .env.local' }
+  }
   try {
     const repos = await fetchUserRepos(username)
-    return { repos: repos.filter(r => !r.private), isMock: false }
-  } catch {
-    return { repos: MOCK_REPOS, isMock: true }
+    return { repos: repos.filter(r => !r.private), error: null }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { repos: [], error: msg }
   }
 }
 
 export default async function ProjectsPage() {
   const username = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? 'your-username'
-  const { repos, isMock } = await getRepos(username)
+  const { repos, error } = await getRepos(username)
 
   return (
     <div className="page-content" style={{ maxWidth: 960 }}>
       <div style={{ marginBottom: 24 }}>
         <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>work / projects</div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em', margin: 0 }}>
-            Projects <span className="font-mono" style={{ fontWeight: 300, fontSize: 16, color: 'var(--ink3)' }}>@{username}</span>
-          </h1>
-          {isMock && (
-            <Badge color="var(--ink3)">mock data · set GITHUB_TOKEN</Badge>
-          )}
+        <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em', margin: 0 }}>
+          Projects <span className="font-mono" style={{ fontWeight: 300, fontSize: 16, color: 'var(--ink3)' }}>@{username}</span>
+        </h1>
+      </div>
+
+      {error ? (
+        <div style={{
+          border: '1px solid var(--border)', borderRadius: 14,
+          padding: '32px 28px', textAlign: 'center', color: 'var(--ink3)',
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink2)', marginBottom: 8 }}>
+            Không thể tải dữ liệu từ GitHub
+          </div>
+          <div className="font-mono" style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 16, background: 'var(--surface)', borderRadius: 8, padding: '8px 12px', display: 'inline-block' }}>
+            {error}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink3)' }}>
+            Kiểm tra <code>GITHUB_TOKEN</code> trong <code>.env.local</code> — token có thể đã hết hạn.
+          </div>
         </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-        {repos.map(r => {
-          const card = (
-            <div style={{
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 14, padding: '18px 20px', textDecoration: 'none',
-              display: 'block', height: '100%',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 8,
-                  background: repoColor(r),
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                }}>
-                  {repoIcon(r)}
+      ) : repos.length === 0 ? (
+        <div style={{
+          border: '1px solid var(--border)', borderRadius: 14,
+          padding: '32px 28px', textAlign: 'center', color: 'var(--ink3)',
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }}>📭</div>
+          <div style={{ fontSize: 14 }}>Không có repository public nào.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+          {repos.map(r => {
+            const card = (
+              <div style={{
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 14, padding: '18px 20px', textDecoration: 'none',
+                display: 'block', height: '100%',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: repoColor(r),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                  }}>
+                    {repoIcon(r)}
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink)' }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink3)' }}>{formatUpdated(r.updated_at)}</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--ink3)' }}>&#9733; {r.stargazers_count}</div>
                 </div>
-                <div>
-                  <div className="font-mono" style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink)' }}>{r.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)' }}>{formatUpdated(r.updated_at)}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink2)', lineHeight: 1.5, marginBottom: 10 }}>
+                  {r.description ?? '\u2014'}
                 </div>
-                <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--ink3)' }}>&#9733; {r.stargazers_count}</div>
+                {r.language && <Badge>{r.language}</Badge>}
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink2)', lineHeight: 1.5, marginBottom: 10 }}>
-                {r.description ?? '\u2014'}
-              </div>
-              {r.language && <Badge>{r.language}</Badge>}
-            </div>
-          )
+            )
 
-          return (
-            <Link key={r.id} href={`/work/projects/${r.name}`} style={{ textDecoration: 'none', display: 'block' }}>
-              {card}
-            </Link>
-          )
-        })}
-      </div>
+            return (
+              <Link key={r.id} href={`/work/projects/${r.name}`} style={{ textDecoration: 'none', display: 'block' }}>
+                {card}
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
