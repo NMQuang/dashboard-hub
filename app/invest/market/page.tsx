@@ -8,7 +8,7 @@ import { formatPrice, formatChange } from '@/lib/utils'
 import type { AssetPrice } from '@/types'
 
 // Both use Recharts — need browser APIs
-const GoldLive   = dynamic(() => import('@/components/widgets/GoldLive'),   { ssr: false })
+const GoldLive = dynamic(() => import('@/components/widgets/GoldLive'), { ssr: false })
 const AssetChart = dynamic(() => import('@/components/widgets/AssetChart'), { ssr: false })
 
 export const metadata: Metadata = { title: 'Market' }
@@ -21,9 +21,9 @@ async function getSnapshot() {
 
 export default async function MarketPage() {
   const snapshot = await getSnapshot()
-  const gold   = snapshot?.gold
-  const coins  = snapshot?.coins  ?? []
-  const forex  = snapshot?.forex  ?? []
+  const gold = snapshot?.gold
+  const coins = snapshot?.coins ?? []
+  const forex = snapshot?.forex ?? []
 
   // Find specific assets for chart initial values
   const btc = coins.find(c => c.symbol === 'BTC')
@@ -34,16 +34,16 @@ export default async function MarketPage() {
 
   // Stat strip — top row summary
   const statAssets: AssetPrice[] = [
-    ...(gold  ? [gold]  : []),
-    ...(btc   ? [btc]   : []),
-    ...(eth   ? [eth]   : []),
-    ...(fet   ? [fet]   : []),
-    ...(jpy   ? [jpy]   : []),
-    ...(vnd   ? [vnd]   : []),
+    ...(gold ? [gold] : []),
+    ...(btc ? [btc] : []),
+    ...(eth ? [eth] : []),
+    ...(fet ? [fet] : []),
+    ...(jpy ? [jpy] : []),
+    ...(vnd ? [vnd] : []),
   ]
 
   const all: AssetPrice[] = [
-    ...(gold  ? [gold]  : []),
+    ...(gold ? [gold] : []),
     ...coins,
     ...forex,
   ]
@@ -57,22 +57,63 @@ export default async function MarketPage() {
         </h1>
       </div>
 
+      {/* ── Vietnam Domestic Gold ────────────────────────────────────────────── */}
+      <Card style={{ marginBottom: 24 }}>
+        <CardHeader>
+          <CardTitle>Vietnam Domestic Gold</CardTitle>
+          <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)' }}>Đơn vị: VND / lượng (cây) · Miếng & Nhẫn 24k</span>
+        </CardHeader>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0 24px' }}>
+          {snapshot?.vnGold?.map((g) => {
+            const isUp = g.change24h >= 0
+            return (
+              <div key={g.key} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 0', borderBottom: '1px solid var(--border)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{g.brand}</span>
+                    <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220 }}>
+                      {g.sourceName}{g.source ? ` · ${g.source}` : ''}
+                    </span>
+                  </div>
+                  {g.change24h !== 0 ? (
+                    <span className="font-mono" style={{
+                      fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
+                      color: isUp ? 'var(--green)' : 'var(--red)',
+                      background: isUp ? 'var(--green-bg)' : 'var(--red-bg)',
+                    }}>
+                      {isUp ? '+' : ''}{g.change24h.toFixed(2)}%
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>Buy: {g.buy > 0 ? `${g.buy.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>Sell: {g.sell > 0 ? `${g.sell.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+
       {/* ── Stat strip — always 6 tiles ──────────────────────────────── */}
       {(() => {
         const SLOTS = [
-          { symbol: 'XAU', name: 'Gold',     currency: 'USD', source: gold },
-          { symbol: 'BTC', name: 'Bitcoin',  currency: 'USD', source: btc  },
-          { symbol: 'ETH', name: 'Ethereum', currency: 'USD', source: eth  },
-          { symbol: 'FET', name: 'Fetch.ai', currency: 'USD', source: fet  },
-          { symbol: 'JPY', name: 'USD/JPY',  currency: 'JPY', source: jpy  },
-          { symbol: 'VND', name: 'USD/VND',  currency: 'VND', source: vnd  },
+          { symbol: 'XAU', name: 'Gold', currency: 'USD', source: gold },
+          { symbol: 'BTC', name: 'Bitcoin', currency: 'USD', source: btc },
+          { symbol: 'ETH', name: 'Ethereum', currency: 'USD', source: eth },
+          { symbol: 'FET', name: 'Fetch.ai', currency: 'USD', source: fet },
+          { symbol: 'JPY', name: 'USD/JPY', currency: 'JPY', source: jpy },
+          { symbol: 'VND', name: 'USD/VND', currency: 'VND', source: vnd },
         ]
         return (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, marginBottom: 24 }}>
             {SLOTS.map(({ symbol, name, currency, source }) => {
-              const price   = source?.price
-              const change  = source?.change24h ?? null
-              const isUp    = (change ?? 0) >= 0
+              const price = source?.price
+              const change = source?.change24h ?? null
+              const isUp = (change ?? 0) >= 0
               const hasData = price != null && price > 0
               const hasBadge = change !== null && change !== 0
               return (
@@ -199,28 +240,28 @@ export default async function MarketPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0 24px' }}>
           {all.length > 0
             ? all.map((a, i) => (
-                <div key={a.symbol} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 0', borderBottom: '1px solid var(--border)',
-                }}>
-                  <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', width: 44, flexShrink: 0 }}>{a.symbol}</span>
-                  <span style={{ flex: 1, fontSize: 11.5, color: 'var(--ink2)' }}>{a.name}</span>
-                  <span className="font-mono" style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink)' }}>{formatPrice(a.price, a.currency)}</span>
-                  {a.change24h !== 0 && (
-                    <span className="font-mono" style={{
-                      fontSize: 11, fontWeight: 500, padding: '2px 6px', borderRadius: 5, minWidth: 50, textAlign: 'right',
-                      color: a.change24h >= 0 ? 'var(--green)' : 'var(--red)',
-                      background: a.change24h >= 0 ? 'var(--green-bg)' : 'var(--red-bg)',
-                    }}>{formatChange(a.change24h)}</span>
-                  )}
-                </div>
-              ))
-            : ['{XAU}', 'BTC', 'ETH', 'FET', 'SOL', 'BNB'].map(sym => (
-                <div key={sym} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
-                  <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', width: 44 }}>{sym}</span>
-                  <div className="skeleton" style={{ flex: 1, height: 13 }} />
-                </div>
-              ))
+              <div key={a.symbol} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 0', borderBottom: '1px solid var(--border)',
+              }}>
+                <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', width: 44, flexShrink: 0 }}>{a.symbol}</span>
+                <span style={{ flex: 1, fontSize: 11.5, color: 'var(--ink2)' }}>{a.name}</span>
+                <span className="font-mono" style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink)' }}>{formatPrice(a.price, a.currency)}</span>
+                {a.change24h !== 0 && (
+                  <span className="font-mono" style={{
+                    fontSize: 11, fontWeight: 500, padding: '2px 6px', borderRadius: 5, minWidth: 50, textAlign: 'right',
+                    color: a.change24h >= 0 ? 'var(--green)' : 'var(--red)',
+                    background: a.change24h >= 0 ? 'var(--green-bg)' : 'var(--red-bg)',
+                  }}>{formatChange(a.change24h)}</span>
+                )}
+              </div>
+            ))
+            : ['XAU', 'BTC', 'ETH', 'FET', 'SOL', 'BNB'].map(sym => (
+              <div key={sym} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
+                <span className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', width: 44 }}>{sym}</span>
+                <div className="skeleton" style={{ flex: 1, height: 13 }} />
+              </div>
+            ))
           }
         </div>
         {!snapshot && (

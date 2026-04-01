@@ -91,6 +91,15 @@ export default function AssetChart({
   // Accumulate real price history
   const historyRef = useRef<HistoryPoint[]>([])
   const [history, setHistory] = useState<HistoryPoint[]>([])
+  const [chartTimedOut, setChartTimedOut] = useState(false)
+
+  // After 3 min with < 2 points → show empty state
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (historyRef.current.length < 2) setChartTimedOut(true)
+    }, 3 * 60 * 1000)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     if (!price) return
@@ -104,6 +113,8 @@ export default function AssetChart({
     }
     if (historyRef.current.length > 60) historyRef.current = historyRef.current.slice(-60)
     setHistory([...historyRef.current])
+    // Clear timeout flag once we have data
+    if (historyRef.current.length >= 2) setChartTimedOut(false)
   }, [price])
 
   // Chart domain
@@ -176,6 +187,16 @@ export default function AssetChart({
             />
           </LineChart>
         </ResponsiveContainer>
+      ) : chartTimedOut ? (
+        <div style={{
+          width: '100%', height: 130, borderRadius: 6,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 6,
+          border: '1px dashed var(--border)', background: 'var(--surface2)',
+        }}>
+          <span style={{ fontSize: 20, opacity: 0.3 }}>◎</span>
+          <span className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)' }}>No chart data</span>
+        </div>
       ) : (
         <div className="skeleton" style={{ width: '100%', height: 130, borderRadius: 6 }} />
       )}

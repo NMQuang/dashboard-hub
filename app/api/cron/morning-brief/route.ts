@@ -36,16 +36,18 @@ export async function GET(req: Request) {
     const result = await triggerWorkflow(workflowId, {
       date,
       recipient_email: 'quangnmjp96@gmail.com',
-      gold_price:   snapshot.gold?.price?.toFixed(2) ?? 'N/A',
-      gold_change:  snapshot.gold?.change24h?.toFixed(2) ?? '0',
-      btc_price:    snapshot.coins?.find(c => c.symbol === 'BTC')?.price?.toFixed(0) ?? 'N/A',
-      btc_change:   snapshot.coins?.find(c => c.symbol === 'BTC')?.change24h?.toFixed(2) ?? '0',
-      eth_price:    snapshot.coins?.find(c => c.symbol === 'ETH')?.price?.toFixed(0) ?? 'N/A',
-      eth_change:   snapshot.coins?.find(c => c.symbol === 'ETH')?.change24h?.toFixed(2) ?? '0',
-      fet_price:    snapshot.coins?.find(c => c.symbol === 'FET')?.price?.toFixed(4) ?? 'N/A',
-      jpy_rate:     snapshot.forex?.find(f => f.symbol === 'JPY')?.price?.toFixed(2) ?? 'N/A',
-      vnd_rate:     snapshot.forex?.find(f => f.symbol === 'VND')?.price?.toFixed(0) ?? 'N/A',
+      gold_price: snapshot.gold?.price?.toFixed(2) ?? 'N/A',
+      gold_change: snapshot.gold?.change24h?.toFixed(2) ?? '0',
+      btc_price: snapshot.coins?.find(c => c.symbol === 'BTC')?.price?.toFixed(0) ?? 'N/A',
+      btc_change: snapshot.coins?.find(c => c.symbol === 'BTC')?.change24h?.toFixed(2) ?? '0',
+      eth_price: snapshot.coins?.find(c => c.symbol === 'ETH')?.price?.toFixed(0) ?? 'N/A',
+      eth_change: snapshot.coins?.find(c => c.symbol === 'ETH')?.change24h?.toFixed(2) ?? '0',
+      fet_price: snapshot.coins?.find(c => c.symbol === 'FET')?.price?.toFixed(4) ?? 'N/A',
+      jpy_rate: snapshot.forex?.find(f => f.symbol === 'JPY')?.price?.toFixed(2) ?? 'N/A',
+      vnd_rate: snapshot.forex?.find(f => f.symbol === 'VND')?.price?.toFixed(0) ?? 'N/A',
     })
+
+    console.log('[cron/morning-brief] Dify result:', JSON.stringify(result, null, 2))
 
     await saveAlert({
       action: 'morning-brief',
@@ -53,11 +55,11 @@ export async function GET(req: Request) {
       summary: `Triggered Dify workflow. Gold: $${snapshot.gold?.price?.toFixed(2)}, BTC: $${snapshot.coins?.find(c => c.symbol === 'BTC')?.price?.toFixed(0)}`,
       triggeredAt: now.toISOString(),
       emailSent: true,
-      runId: result.run_id,
-      outputs: result.data?.outputs,
+      runId: result.run_id || result.workflow_run_id,
+      outputs: result.data?.outputs || result.outputs,
     })
 
-    return NextResponse.json({ success: true, run_id: result.run_id })
+    return NextResponse.json({ success: true, run_id: result.run_id || result.workflow_run_id })
   } catch (e) {
     console.error('[cron/morning-brief]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })

@@ -1,13 +1,14 @@
-// app/invest/alerts/page.tsx
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { getAlerts } from '@/lib/alert-store'
+import { getWorkflowOverrides } from '@/lib/workflow-store'
+import AlertHistory from '@/components/widgets/AlertHistory'
+import WorkflowCards, { type WorkflowDef } from '@/components/widgets/WorkflowCards'
 
 export const metadata: Metadata = { title: 'Alerts' }
 export const dynamic = 'force-dynamic'
 
-const WORKFLOWS = [
+const WORKFLOW_DEFAULTS: WorkflowDef[] = [
   {
     id: 'morning-brief',
     name: 'Morning Market Brief',
@@ -62,20 +63,21 @@ const WORKFLOWS = [
   },
 ]
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const h = Math.floor(diff / 3_600_000)
-  if (h < 1) return `${Math.floor(diff / 60_000)}m ago`
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
-}
-
 export default async function AlertsPage() {
-  const alerts = await getAlerts()
+  const [alerts, overrides] = await Promise.all([
+    getAlerts(),
+    getWorkflowOverrides(),
+  ])
+
   const isDifyConfigured = !!(
     process.env.DIFY_API_KEY &&
     process.env.DIFY_MORNING_BRIEF_WORKFLOW_ID
   )
+
+  // Compute server-side which workflows have their env key set
+  const configuredIds = WORKFLOW_DEFAULTS
+    .filter(wf => !wf.disabled && isDifyConfigured && !!(process.env as Record<string, string>)[wf.envKey])
+    .map(wf => wf.id)
 
   return (
     <div className="page-content" style={{ maxWidth: 960 }}>
@@ -96,64 +98,14 @@ export default async function AlertsPage() {
         </p>
       </div>
 
-      {/* Workflow cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: 24 }}>
-        {WORKFLOWS.map(wf => {
-          const lastAlert = alerts.find(a => a.action === wf.id)
-          const isConfigured = !wf.disabled && isDifyConfigured && !!(process.env as Record<string,string>)[wf.envKey]
-          return (
-            <Card key={wf.id} style={{ opacity: wf.disabled ? 0.45 : 1, pointerEvents: wf.disabled ? 'none' : undefined }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 8,
-                  background: wf.disabled ? 'var(--surface2)' : wf.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, flexShrink: 0,
-                  color: wf.disabled ? 'var(--ink3)' : wf.color,
-                }}>
-                  {wf.icon}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink)' }}>{wf.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)' }}>{wf.schedule}</div>
-                </div>
-                <span style={{
-                  fontSize: 10, padding: '2px 7px', borderRadius: 20, fontFamily: 'monospace',
-                  background: wf.disabled ? 'var(--surface2)' : isConfigured ? 'var(--green-bg)' : 'var(--surface2)',
-                  color: wf.disabled ? 'var(--ink3)' : isConfigured ? 'var(--green)' : 'var(--ink3)',
-                }}>
-                  {wf.disabled ? 'coming soon' : isConfigured ? 'active' : 'setup'}
-                </span>
-              </div>
-
-              <div style={{ fontSize: 12, color: 'var(--ink2)', marginBottom: 12 }}>{wf.desc}</div>
-
-              {!wf.disabled && (lastAlert ? (
-                <div style={{ padding: '8px 10px', background: 'var(--surface2)', borderRadius: 7, marginBottom: 10 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink)', marginBottom: 2 }}>{lastAlert.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 8 }}>{lastAlert.summary}</div>
-                  {lastAlert.outputs && (
-                    <div style={{ background: 'var(--surface)', padding: 10, borderRadius: 6, fontSize: 11, color: 'var(--ink2)', fontFamily: 'system-ui, sans-serif', whiteSpace: 'pre-wrap', maxHeight: 150, overflowY: 'auto' }}>
-                      {typeof lastAlert.outputs?.text === 'string' ? lastAlert.outputs.text : JSON.stringify(lastAlert.outputs, null, 2)}
-                    </div>
-                  )}
-                  <div className="font-mono" style={{ fontSize: 10, color: 'var(--ink3)', marginTop: 8 }}>{timeAgo(lastAlert.triggeredAt)}</div>
-                </div>
-              ) : (
-                <div style={{ padding: '8px 10px', background: 'var(--surface2)', borderRadius: 7, marginBottom: 10 }}>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)' }}>No alerts fired yet</div>
-                </div>
-              ))}
-
-              {!wf.disabled && (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span className="font-mono" style={{ fontSize: 10, color: 'var(--ink3)', flex: 1 }}>cron: {wf.cron}</span>
-                </div>
-              )}
-            </Card>
-          )
-        })}
-      </div>
+      {/* Workflow cards — client component with edit mode */}
+      <WorkflowCards
+        defaults={WORKFLOW_DEFAULTS}
+        overrides={overrides}
+        alerts={alerts}
+        isDifyConfigured={isDifyConfigured}
+        configuredIds={configuredIds}
+      />
 
       {/* Setup guide */}
       {!isDifyConfigured && (
@@ -179,34 +131,8 @@ export default async function AlertsPage() {
         </Card>
       )}
 
-
       {/* Alert history */}
-      {alerts.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Alert history</CardTitle></CardHeader>
-          {alerts.slice(0, 20).map((a, i) => (
-            <div key={a.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < Math.min(19, alerts.length - 1) ? '1px solid var(--border)' : 'none', alignItems: 'flex-start' }}>
-              <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', minWidth: 80, flexShrink: 0, marginTop: 2 }}>{timeAgo(a.triggeredAt)}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 2 }}>{a.title}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--ink2)' }}>{a.summary}</div>
-                {a.outputs && (
-                  <div style={{ background: 'var(--surface2)', padding: '8px 12px', borderRadius: 8, marginTop: 8, fontSize: 12, color: 'var(--ink)', fontFamily: 'system-ui, sans-serif', whiteSpace: 'pre-wrap', border: '1px solid var(--border)' }}>
-                    {typeof a.outputs?.text === 'string' ? a.outputs.text : JSON.stringify(a.outputs, null, 2)}
-                  </div>
-                )}
-              </div>
-              <span style={{
-                fontSize: 10, padding: '2px 7px', borderRadius: 20, fontFamily: 'monospace', flexShrink: 0, marginTop: 2,
-                background: a.emailSent ? 'var(--green-bg)' : 'var(--surface2)',
-                color: a.emailSent ? 'var(--green)' : 'var(--ink3)',
-              }}>
-                {a.emailSent ? '✓ sent' : 'local'}
-              </span>
-            </div>
-          ))}
-        </Card>
-      )}
+      <AlertHistory alerts={alerts} />
     </div>
   )
 }

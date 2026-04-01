@@ -1,16 +1,27 @@
 import type { ChatMessage, AIProvider } from '@/types'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+const encoder = new TextEncoder()
 
-/** Encode a unified SSE event line */
 function sseChunk(text: string) {
-  return new TextEncoder().encode(`data: ${JSON.stringify({ text })}\n\n`)
+  return encoder.encode(`data: ${JSON.stringify({ text })}\n\n`)
 }
-const sseDone = new TextEncoder().encode('data: [DONE]\n\n')
+
+const sseDone = encoder.encode('data: [DONE]\n\n')
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function ensureApiKey(name: string, value: string | undefined) {
+  if (!value) {
+    throw new Error(`${name} is not configured`)
+  }
+  return value
+}
 
 /**
- * Wraps a raw provider ReadableStream into a normalized SSE stream.
- * Output format: `data: {"text":"…"}\n\n` … `data: [DONE]\n\n`
+ * Wrap a provider SSE stream into a normalized SSE stream for the client.
+ * Output format: data: {"text":"..."}\n\n ... data: [DONE]\n\n
  */
 function normalizeStream(
   rawStream: ReadableStream<Uint8Array>,
@@ -19,6 +30,22 @@ function normalizeStream(
   const decoder = new TextDecoder()
   let buffer = ''
 
+  const processLine = (line: string, controller: ReadableStreamDefaultController<Uint8Array>) => {
+    const trimmed = line.trim()
+    if (!trimmed.startsWith('data:')) return
+
+    const raw = trimmed.slice(5).trim()
+    if (!raw || raw === '[DONE]') return
+
+    try {
+      const json = JSON.parse(raw)
+      const text = extractText(json)
+      if (text) controller.enqueue(sseChunk(text))
+    } catch {
+      // Ignore malformed non-JSON chunks such as keep-alive events.
+    }
+  }
+
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       const reader = rawStream.getReader()
@@ -26,21 +53,20 @@ function normalizeStream(
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
+
           buffer += decoder.decode(value, { stream: true })
           const lines = buffer.split('\n')
           buffer = lines.pop() ?? ''
 
           for (const line of lines) {
-            if (!line.startsWith('data:')) continue
-            const raw = line.slice(5).trim()
-            if (raw === '[DONE]') continue
-            try {
-              const json = JSON.parse(raw)
-              const text = extractText(json)
-              if (text) controller.enqueue(sseChunk(text))
-            } catch { /* skip malformed chunks */ }
+            processLine(line, controller)
           }
         }
+
+        if (buffer) {
+          processLine(buffer, controller)
+        }
+
         controller.enqueue(sseDone)
       } finally {
         controller.close()
@@ -49,15 +75,16 @@ function normalizeStream(
   })
 }
 
-// ── Claude (Anthropic) ────────────────────────────────────────────────────
 export async function streamClaude(
   messages: ChatMessage[],
   system?: string
 ): Promise<ReadableStream<Uint8Array>> {
+  const apiKey = ensureApiKey('ANTHROPIC_API_KEY', process.env.ANTHROPIC_API_KEY)
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json',
     },
@@ -69,23 +96,33 @@ export async function streamClaude(
       messages: messages.map(m => ({ role: m.role, content: m.content })),
     }),
   })
-  if (!res.ok) throw new Error(`Claude error: ${res.status}`)
+
+  if (!res.ok || !res.body) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Claude error: ${res.status}${body ? ` - ${body}` : ''}`)
+  }
+
   return normalizeStream(
-    res.body!,
-    // Claude SSE: { type: "content_block_delta", delta: { type: "text_delta", text: "…" } }
-    (json: unknown) => (json as { delta?: { text?: string } }).delta?.text
+    res.body,
+    (json: unknown) => {
+      if (!isRecord(json)) return null
+      const delta = json.delta
+      if (!isRecord(delta)) return null
+      return typeof delta.text === 'string' ? delta.text : null
+    }
   )
 }
 
-// ── OpenAI ───────────────────────────────────────────────────────────────
 export async function streamOpenAI(
   messages: ChatMessage[],
   system?: string
 ): Promise<ReadableStream<Uint8Array>> {
+  const apiKey = ensureApiKey('OPENAI_API_KEY', process.env.OPENAI_API_KEY)
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -97,22 +134,30 @@ export async function streamOpenAI(
       ],
     }),
   })
-  if (!res.ok) throw new Error(`OpenAI error: ${res.status}`)
+
+  if (!res.ok || !res.body) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`OpenAI error: ${res.status}${body ? ` - ${body}` : ''}`)
+  }
+
   return normalizeStream(
-    res.body!,
-    // OpenAI SSE: { choices: [{ delta: { content: "…" } }] }
-    (json: unknown) =>
-      (json as { choices?: Array<{ delta?: { content?: string } }> })
-        .choices?.[0]?.delta?.content
+    res.body,
+    (json: unknown) => {
+      if (!isRecord(json)) return null
+      const choices = json.choices
+      if (!Array.isArray(choices) || !choices.length || !isRecord(choices[0])) return null
+      const delta = choices[0].delta
+      if (!isRecord(delta)) return null
+      return typeof delta.content === 'string' ? delta.content : null
+    }
   )
 }
 
-// ── Gemini ────────────────────────────────────────────────────────────────
 export async function streamGemini(
   messages: ChatMessage[],
   system?: string
 ): Promise<ReadableStream<Uint8Array>> {
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = ensureApiKey('GEMINI_API_KEY', process.env.GEMINI_API_KEY)
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:streamGenerateContent?key=${apiKey}&alt=sse`
 
   const contents = messages.map(m => ({
@@ -128,22 +173,27 @@ export async function streamGemini(
       contents,
     }),
   })
-  if (!res.ok) throw new Error(`Gemini error: ${res.status}`)
+
+  if (!res.ok || !res.body) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Gemini error: ${res.status}${body ? ` - ${body}` : ''}`)
+  }
+
   return normalizeStream(
-    res.body!,
-    // Gemini SSE: { candidates: [{ content: { parts: [{ text: "…" }] } }] }
-    (json: unknown) =>
-      (
-        json as {
-          candidates?: Array<{
-            content?: { parts?: Array<{ text?: string }> }
-          }>
-        }
-      ).candidates?.[0]?.content?.parts?.[0]?.text
+    res.body,
+    (json: unknown) => {
+      if (!isRecord(json)) return null
+      const candidates = json.candidates
+      if (!Array.isArray(candidates) || !candidates.length || !isRecord(candidates[0])) return null
+      const content = candidates[0].content
+      if (!isRecord(content)) return null
+      const parts = content.parts
+      if (!Array.isArray(parts) || !parts.length || !isRecord(parts[0])) return null
+      return typeof parts[0].text === 'string' ? parts[0].text : null
+    }
   )
 }
 
-// ── Router ────────────────────────────────────────────────────────────────
 export function streamAI(
   provider: AIProvider,
   messages: ChatMessage[],
@@ -153,10 +203,10 @@ export function streamAI(
     case 'claude': return streamClaude(messages, system)
     case 'openai': return streamOpenAI(messages, system)
     case 'gemini': return streamGemini(messages, system)
+    default: throw new Error(`Unsupported provider: ${String(provider)}`)
   }
 }
 
-// ── System prompts ────────────────────────────────────────────────────────
 export const SYSTEM_PROMPTS: Record<string, string> = {
   japanese: `You are a Japanese language tutor. The user is preparing for JLPT N2 and will work onsite in Japan.
 - Respond in a mix of Japanese and English to help them learn
