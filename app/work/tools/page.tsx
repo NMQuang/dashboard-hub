@@ -1,16 +1,44 @@
 // app/work/tools/page.tsx
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card } from '@/components/ui/Card'
+import DifyLinkBadges from '@/components/widgets/DifyLinkBadges'
 export const metadata: Metadata = { title: 'Tools' }
 
-const TOOLS = [
-  { label: 'Web3 DApp',        desc: 'Wallet connect, contract interaction',    icon: '\u25C8', color: '#f2f0fd', href: '#' },
-  { label: 'COBOL Analyzer',   desc: 'Paste & analyze COBOL source code',       icon: '\u2B1B', color: '#f0f0ed', href: '/learn/mainframe' },
-  { label: 'Analytics',        desc: 'Data visualization & analysis',            icon: '\u25CE', color: '#f0f5fd', href: '#' },
-  { label: 'Market Dashboard', desc: 'Gold & crypto real-time prices',           icon: '\u25CE', color: '#fdf8ed', href: '/invest/market' },
-  { label: 'AI Hub',           desc: 'Claude · GPT · Gemini chat',               icon: '\u25CE', color: '#f0f5fd', href: '/work/ai-hub' },
-  { label: 'Dify Workflows',   desc: 'Trigger daily reports & price alerts',     icon: '\u25C9', color: '#fdf8ed', href: '/invest/alerts' },
+interface SubLink { label: string; icon: string; href: string }
+interface Tool {
+  label: string; desc: string; icon: string; color: string
+  href: string; external: boolean
+  subLinks?: SubLink[]
+}
+
+const TOOLS: Tool[] = [
+  {
+    label: 'Web3 DApp',
+    desc: 'Wallet connect, contract interaction',
+    icon: '◈', color: '#f2f0fd',
+    href: 'https://web3-project-xi-three.vercel.app/',
+    external: true,
+    subLinks: [
+      { label: 'DApp',                icon: '◈', href: 'https://web3-project-xi-three.vercel.app/' },
+      { label: 'Staking Voting App',  icon: '◉', href: '#' },
+    ],
+  },
+  { label: 'COBOL Analyzer',   desc: 'Paste & analyze COBOL source code',  icon: '⬛', color: '#f0f0ed', href: '/learn/mainframe',  external: false },
+  { label: 'Analytics',        desc: 'Data visualization & analysis',       icon: '◎', color: '#f0f5fd', href: '#',                 external: false },
+  { label: 'Market Dashboard', desc: 'Gold & crypto real-time prices',      icon: '◎', color: '#fdf8ed', href: '/invest/market',    external: false },
+  { label: 'AI Hub',           desc: 'Claude · GPT · Gemini chat',         icon: '◎', color: '#f0f5fd', href: '/work/ai-hub',      external: false },
+  {
+    label: 'Dify Workflows',
+    desc: 'Trigger daily reports & price alerts',
+    icon: '◉', color: '#fdf8ed',
+    href: '/invest/alerts',
+    external: false,
+    subLinks: [
+      { label: 'Morning Brief', icon: '☀', href: 'https://cloud.dify.ai/app/3d242c17-3120-4833-a343-e68576605210/workflow' },
+      { label: 'Gold Alert',    icon: '◎', href: 'https://cloud.dify.ai/app/71b4d553-a466-4690-90de-1a059b16cd50/workflow' },
+    ],
+  },
 ]
 
 export default function ToolsPage() {
@@ -22,10 +50,12 @@ export default function ToolsPage() {
           Tools <span style={{ fontWeight: 300, color: 'var(--ink2)' }}>Quick access</span>
         </h1>
       </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-        {TOOLS.map(t => (
-          <Link key={t.label} href={t.href} style={{ textDecoration: 'none' }}>
-            <Card style={{ cursor: 'pointer', height: '100%' }}>
+        {TOOLS.map(t => {
+          const cardContent = (
+            <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 10, background: t.color,
@@ -33,12 +63,52 @@ export default function ToolsPage() {
                 }}>
                   {t.icon}
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>{t.label}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>{t.label}</div>
+                  {t.external && !t.subLinks && (
+                    <div className="font-mono" style={{ fontSize: 9.5, color: 'var(--ink3)', marginTop: 1 }}>↗ external</div>
+                  )}
+                </div>
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink2)', lineHeight: 1.5 }}>{t.desc}</div>
+
+              {/* Description */}
+              <div style={{ fontSize: 12.5, color: 'var(--ink2)', lineHeight: 1.5, flex: 1 }}>{t.desc}</div>
+
+              {/* Sub-links */}
+              {t.subLinks && (
+                <>
+                  <DifyLinkBadges links={t.subLinks} />
+                  {/* Internal nav link for non-external cards */}
+                  {!t.external && (
+                    <Link
+                      href={t.href}
+                      style={{ display: 'inline-block', marginTop: 10, fontSize: 11, color: 'var(--ink3)', textDecoration: 'none' }}
+                    >
+                      View Alerts →
+                    </Link>
+                  )}
+                </>
+              )}
             </Card>
-          </Link>
-        ))}
+          )
+
+          // Cards with subLinks must NOT be wrapped in <Link>
+          // (nested <a> = invalid HTML → hydration error)
+          if (t.subLinks) {
+            return <div key={t.label}>{cardContent}</div>
+          }
+
+          return (
+            <Link
+              key={t.label}
+              href={t.href}
+              style={{ textDecoration: 'none' }}
+              {...(t.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              {cardContent}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
