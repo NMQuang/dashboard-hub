@@ -33,6 +33,8 @@ interface Props {
   overrides: WorkflowOverride[]
   alerts: AlertRecord[]
   isDifyConfigured: boolean
+  /** Set of workflow IDs that have their env key configured — computed server-side */
+  configuredIds: string[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -327,7 +329,7 @@ function WorkflowCard({
 }
 
 // ── WorkflowCards (exported) ───────────────────────────────────────────────────
-export default function WorkflowCards({ defaults, overrides, alerts, isDifyConfigured }: Props) {
+export default function WorkflowCards({ defaults, overrides, alerts, isDifyConfigured, configuredIds }: Props) {
   // Merge defaults with persisted overrides
   const workflows: WorkflowDef[] = defaults.map(def => {
     const ov = overrides.find(o => o.id === def.id)
@@ -338,8 +340,7 @@ export default function WorkflowCards({ defaults, overrides, alerts, isDifyConfi
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: 24 }}>
       {workflows.map(wf => {
         const lastAlert = alerts.find(a => a.action === wf.id)
-        const isConfigured = !wf.disabled && isDifyConfigured &&
-          !!(process.env as Record<string, string>)[wf.envKey]
+        const isConfigured = !wf.disabled && isDifyConfigured && configuredIds.includes(wf.id)
         return (
           <WorkflowCard
             key={wf.id}

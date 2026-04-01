@@ -74,6 +74,11 @@ export default async function AlertsPage() {
     process.env.DIFY_MORNING_BRIEF_WORKFLOW_ID
   )
 
+  // Compute server-side which workflows have their env key set
+  const configuredIds = WORKFLOW_DEFAULTS
+    .filter(wf => !wf.disabled && isDifyConfigured && !!(process.env as Record<string, string>)[wf.envKey])
+    .map(wf => wf.id)
+
   return (
     <div className="page-content" style={{ maxWidth: 960 }}>
       <div style={{ marginBottom: 24 }}>
@@ -99,6 +104,7 @@ export default async function AlertsPage() {
         overrides={overrides}
         alerts={alerts}
         isDifyConfigured={isDifyConfigured}
+        configuredIds={configuredIds}
       />
 
       {/* Setup guide */}
