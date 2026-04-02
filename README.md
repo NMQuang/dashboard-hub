@@ -296,6 +296,7 @@ curl -X POST https://your-app.vercel.app/api/ai-chat \
 | `/learn/mainframe` | COBOL paste + AI analyzer, IBM docs links, PIC cheatsheet | `ANTHROPIC_API_KEY` |
 | `/learn/ai-dev` | Dify/AWS/Claude docs, AI assistant | `ANTHROPIC_API_KEY` |
 | `/work/tools` | App launcher grid | — |
+| `/work/accounts` | Quick access to Dify, Vercel, Udemy, Figma, Gamma, v.v. | — |
 | `/work/ai-hub` | Multi-model chat (Claude/GPT/Gemini), saved prompts | All 3 AI keys |
 | `/work/projects` | GitHub repo list | `GITHUB_TOKEN` |
 | `/work/projects/[repo]` | README render, file tree, commits | `GITHUB_TOKEN` |
@@ -322,7 +323,8 @@ Project này được cấu hình sẵn cho [Antigravity](https://antigravity.de
 │   ├── github-sync/
 │   ├── dify-workflow/
 │   ├── deploy-vercel/
-│   └── add-feature/
+│   ├── add-feature/
+│   └── add-account-link/
 └── workflows/              ← Gọi bằng /command
     ├── new-page.md
     ├── add-coin.md
@@ -472,6 +474,19 @@ Skill cung cấp: page template, metadata pattern, sidebar update steps, client 
 ```
 
 Skill cung cấp: component templates (server + client), color variables reference, Recharts wrapper, Badge pattern.
+
+---
+
+#### `add-account-link` — Thêm trang web / tài khoản mới
+
+**Kích hoạt khi:** hỏi về thêm account, thêm link website vào trang Accounts.
+
+```
+"Thêm account Notion vào trang Accounts"
+"Add my AWS account to the /work/accounts list"
+```
+
+Skill cung cấp: Cấu trúc object truy xuất `ACCOUNTS`, suy luận màu (colors) và icon đại diện, cách tự động bổ sung liên kết nhanh vào danh sách.
 
 ---
 
