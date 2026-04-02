@@ -295,7 +295,7 @@ function WorkflowCard({
         <div style={{ padding: '8px 10px', background: 'var(--surface2)', borderRadius: 7, marginBottom: 10 }}>
           <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink)', marginBottom: 2 }}>{lastAlert.title}</div>
           <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: lastAlert.outputs ? 8 : 0 }}>{lastAlert.summary}</div>
-          {!!lastAlert.outputs && (
+          {lastAlert.outputs ? (
             <div style={{
               background: 'var(--surface)', padding: 10, borderRadius: 6,
               fontSize: 11, color: 'var(--ink2)', fontFamily: 'system-ui, sans-serif',
@@ -305,7 +305,7 @@ function WorkflowCard({
                 ? String((lastAlert.outputs as Record<string, unknown>).text)
                 : JSON.stringify(lastAlert.outputs, null, 2)}
             </div>
-          )}
+          ) : null}
           <div className="font-mono" style={{ fontSize: 10, color: 'var(--ink3)', marginTop: 8 }}>
             {timeAgo(lastAlert.triggeredAt)}
           </div>
