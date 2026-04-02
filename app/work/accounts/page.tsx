@@ -77,6 +77,20 @@ const ACCOUNTS: Account[] = [
     icon: '🔥',
     color: '#fffbf0', // light amber/yellow tint
   },
+  {
+    label: 'Figma',
+    desc: 'Collaborative UI & UX Design',
+    url: 'https://www.figma.com/',
+    icon: '🎨',
+    color: '#fdf3f2', // light red tint
+  },
+  {
+    label: 'Gamma',
+    desc: 'AI Presentations & Documents',
+    url: 'https://gamma.app/',
+    icon: 'γ',
+    color: '#eefcf5', // light green tint
+  },
 ]
 
 export default function AccountsPage() {
