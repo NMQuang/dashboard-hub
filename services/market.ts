@@ -179,7 +179,7 @@ function parseBTMCRows(html: string): RawGoldRow[] {
   const rows: RawGoldRow[] = []
 
   const rowPattern = /([A-ZÀ-Ỵa-zà-ỵ0-9./,&()\-\s]{4,140}?)\s+(\d{2,3}(?:[.,]\d{3}){0,3})\s+(\d{2,3}(?:[.,]\d{3}){0,3})/g
-  for (const match of compact.matchAll(rowPattern)) {
+  for (const match of Array.from(compact.matchAll(rowPattern))) {
     const name = cleanupName(match[1])
     const lower = name.toLowerCase()
     const buy = parseVnNumber(match[2])
