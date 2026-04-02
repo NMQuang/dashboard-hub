@@ -24,7 +24,16 @@ const TOOLS: Tool[] = [
       { label: 'Staking Voting App',  icon: '◉', href: '#' },
     ],
   },
-  { label: 'COBOL Analyzer',   desc: 'Paste & analyze COBOL source code',  icon: '⬛', color: '#f0f0ed', href: '/learn/mainframe',  external: false },
+  {
+    label: 'COBOL Analyzer',
+    desc: 'Paste & analyze COBOL source code',
+    icon: '⬛', color: '#f0f0ed',
+    href: '/learn/mainframe',
+    external: false,
+    subLinks: [
+      { label: 'Migration Tool', icon: '⚙', href: 'https://claude-project-frontend.vercel.app/' },
+    ],
+  },
   { label: 'Analytics',        desc: 'Data visualization & analysis',       icon: '◎', color: '#f0f5fd', href: '#',                 external: false },
   { label: 'Market Dashboard', desc: 'Gold & crypto real-time prices',      icon: '◎', color: '#fdf8ed', href: '/invest/market',    external: false },
   { label: 'AI Hub',           desc: 'Claude · GPT · Gemini chat',         icon: '◎', color: '#f0f5fd', href: '/work/ai-hub',      external: false },
@@ -76,27 +85,12 @@ export default function ToolsPage() {
 
               {/* Sub-links */}
               {t.subLinks && (
-                <>
-                  <DifyLinkBadges links={t.subLinks} />
-                  {/* Internal nav link for non-external cards */}
-                  {!t.external && (
-                    <Link
-                      href={t.href}
-                      style={{ display: 'inline-block', marginTop: 10, fontSize: 11, color: 'var(--ink3)', textDecoration: 'none' }}
-                    >
-                      View Alerts →
-                    </Link>
-                  )}
-                </>
+                <DifyLinkBadges links={t.subLinks} />
               )}
             </Card>
           )
 
-          // Cards with subLinks must NOT be wrapped in <Link>
-          // (nested <a> = invalid HTML → hydration error)
-          if (t.subLinks) {
-            return <div key={t.label}>{cardContent}</div>
-          }
+          // Cards will now be wrapped in <Link> properly since subLinks no longer use <a> tags.
 
           return (
             <Link

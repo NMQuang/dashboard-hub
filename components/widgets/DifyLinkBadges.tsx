@@ -9,12 +9,15 @@ export default function DifyLinkBadges({ links }: { links: DifyLink[] }) {
       onClick={e => e.stopPropagation()}
     >
       {links.map(dl => (
-        <a
+        <span
           key={dl.label}
-          href={dl.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
+          role="button"
+          tabIndex={0}
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(dl.href, '_blank', 'noopener,noreferrer');
+          }}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             padding: '3px 9px', borderRadius: 6,
@@ -36,7 +39,7 @@ export default function DifyLinkBadges({ links }: { links: DifyLink[] }) {
           <span>{dl.icon}</span>
           <span>{dl.label}</span>
           <span style={{ opacity: 0.5, fontSize: 9 }}>↗</span>
-        </a>
+        </span>
       ))}
     </div>
   )
