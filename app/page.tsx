@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: '/work/tools', icon: '⚙', label: 'Tools', desc: 'Web3 · Analytics', color: '#f5f4f2' },
   { href: '/work/ai-hub', icon: '◎', label: 'AI Hub', desc: 'Claude · GPT · Gemini', color: '#f0f5fd' },
   { href: '/work/projects', icon: '⌥', label: 'Projects', desc: 'web3 · ai · aws · ibm · dify', color: '#f0f5fd' },
+  { href: '/work/accounts', icon: '👤', label: 'Accounts', desc: 'Dify · Vercel · Udemy', color: '#f0f5fd' },
   { href: '/invest/market', icon: '◎', label: 'Market', desc: 'Gold · BTC · ETH · SOL', color: '#fdf8ed' },
   { href: '/invest/alerts', icon: '◉', label: 'Alerts', desc: 'Dify daily report', color: '#fdf8ed' },
 ]

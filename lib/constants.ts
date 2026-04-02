@@ -13,6 +13,7 @@ export const NAV_ITEMS = [
       { label: 'Tools',    href: '/work/tools',    icon: '⚙' },
       { label: 'AI Hub',   href: '/work/ai-hub',   icon: '◎' },
       { label: 'Projects', href: '/work/projects', icon: '⌥' },
+      { label: 'Accounts', href: '/work/accounts', icon: '👤' },
     ],
   },
   {
