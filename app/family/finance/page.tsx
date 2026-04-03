@@ -1,78 +1,210 @@
-import type { Metadata } from 'next'
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { getBudgetEntries } from '@/services/family-storage'
-import { fetchForexJPY } from '@/services/market'
-import FinanceClient from '@/components/family/FinanceClient'
+import { fetchForex } from '@/services/market'
 
-export const metadata: Metadata = { title: 'Finance · Family' }
+function startOfMonth(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
 
-export default async function FinancePage() {
+function formatMonthKey(date: Date) {
+  return date.toISOString().slice(0, 7)
+}
+
+function formatVND(value: number) {
+  return new Intl.NumberFormat('vi-VN').format(value) + 'đ'
+}
+
+export default async function FamilyFinancePage() {
   const now = new Date()
-  const thisMonth = now.toISOString().slice(0, 7)
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7)
+  const thisMonth = formatMonthKey(startOfMonth(now))
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonth = formatMonthKey(lastMonthDate)
 
-  const [entries, lastEntries, forex] = await Promise.allSettled([
+  const [entriesResult, lastMonthEntriesResult, forexResult] = await Promise.allSettled([
     getBudgetEntries(thisMonth),
     getBudgetEntries(lastMonth),
-    fetchForexJPY(),
+    fetchForex(),
   ])
 
-  const thisMonthEntries = entries.status === 'fulfilled' ? entries.value : []
-  const lastMonthEntries = lastEntries.status === 'fulfilled' ? lastEntries.value : []
-  const jpyRate          = forex.status === 'fulfilled' ? forex.value.price : 149.5
+  const thisMonthEntries =
+    entriesResult.status === 'fulfilled' ? entriesResult.value : []
 
-  // Summary this month
-  const vnTotal  = thisMonthEntries.filter(e => e.location === 'vietnam').reduce((s, e) => s + e.amount, 0)
-  const jpTotal  = thisMonthEntries.filter(e => e.location === 'japan').reduce((s, e) => s + e.amount, 0)
-  const lastTotal = lastMonthEntries.reduce((s, e) => s + (e.currency === 'VND' ? e.amount : e.amount * jpyRate * 170), 0)
+  const lastMonthEntries =
+    lastMonthEntriesResult.status === 'fulfilled' ? lastMonthEntriesResult.value : []
+
+  const forex =
+    forexResult.status === 'fulfilled' ? forexResult.value : []
+
+  const jpyRate =
+    forex.find((item) => item.symbol === 'JPY')?.price ?? 0
+
+  const income = thisMonthEntries
+    .filter((e) => e.type === 'income')
+    .reduce((sum, e) => sum + e.amount, 0)
+
+  const expense = thisMonthEntries
+    .filter((e) => e.type === 'expense')
+    .reduce((sum, e) => sum + e.amount, 0)
+
+  const balance = income - expense
+
+  const lastMonthIncome = lastMonthEntries
+    .filter((e) => e.type === 'income')
+    .reduce((sum, e) => sum + e.amount, 0)
+
+  const lastMonthExpense = lastMonthEntries
+    .filter((e) => e.type === 'expense')
+    .reduce((sum, e) => sum + e.amount, 0)
+
+  const lastMonthBalance = lastMonthIncome - lastMonthExpense
+  const diff = balance - lastMonthBalance
 
   return (
-    <div style={{ padding: '28px 32px 48px', maxWidth: 960 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>family / finance</div>
-          <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em' }}>Finance <span style={{ fontWeight: 300, color: 'var(--ink2)' }}>chi tiêu gia đình 💴</span></h1>
+    <div style={{ display: 'grid', gap: 24 }}>
+      <div>
+        <div style={{ fontSize: 14, color: 'var(--ink3)', marginBottom: 8 }}>
+          family / finance
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div className="font-mono" style={{ fontSize: 12, color: 'var(--ink3)' }}>Tỷ giá hôm nay</div>
-          <div className="font-mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--ink)' }}>
-            ¥1 = {(170 / jpyRate * 1000).toFixed(0)}₫
-          </div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)' }}>¥{jpyRate.toFixed(2)}/USD · live</div>
-        </div>
+        <h1 style={{ fontSize: 28, margin: 0 }}>Finance</h1>
+        <p style={{ color: 'var(--ink3)', marginTop: 8 }}>
+          Theo dõi thu chi gia đình và tỷ giá tham chiếu.
+        </p>
       </div>
 
-      {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
-        <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 16px' }}>
-          <div style={{ fontSize: 11, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>VN tháng này</div>
-          <div className="font-mono" style={{ fontSize: 20, fontWeight: 500, color: 'var(--ink)' }}>
-            {(vnTotal / 1_000_000).toFixed(1)}M₫
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            border: '1px solid var(--line)',
+            borderRadius: 20,
+            padding: 20,
+            background: 'var(--panel)',
+          }}
+        >
+          <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 8 }}>
+            Thu tháng này
           </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{formatVND(income)}</div>
         </div>
-        <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 16px' }}>
-          <div style={{ fontSize: 11, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Nhật tháng này</div>
-          <div className="font-mono" style={{ fontSize: 20, fontWeight: 500, color: 'var(--ink)' }}>
-            ¥{jpTotal.toLocaleString('ja-JP')}
-          </div>
-          <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)' }}>
-            ≈ {(jpTotal / jpyRate * 170 / 1_000_000).toFixed(1)}M₫
-          </div>
-        </div>
-        <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 16px' }}>
-          <div style={{ fontSize: 11, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Tháng trước</div>
-          <div className="font-mono" style={{ fontSize: 20, fontWeight: 500, color: 'var(--ink)' }}>
-            {(lastTotal / 1_000_000).toFixed(1)}M₫
-          </div>
-          <div style={{ fontSize: 11, color: lastTotal > 0 ? 'var(--ink3)' : 'var(--ink3)' }}>{lastMonthEntries.length} khoản</div>
-        </div>
-      </div>
 
-      <FinanceClient
-        initialEntries={thisMonthEntries}
-        currentMonth={thisMonth}
-        jpyRate={jpyRate}
-      />
+        <div
+          style={{
+            border: '1px solid var(--line)',
+            borderRadius: 20,
+            padding: 20,
+            background: 'var(--panel)',
+          }}
+        >
+          <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 8 }}>
+            Chi tháng này
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{formatVND(expense)}</div>
+        </div>
+
+        <div
+          style={{
+            border: '1px solid var(--line)',
+            borderRadius: 20,
+            padding: 20,
+            background: 'var(--panel)',
+          }}
+        >
+          <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 8 }}>
+            Cân đối
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>{formatVND(balance)}</div>
+          <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 8 }}>
+            So với tháng trước: {diff >= 0 ? '+' : ''}
+            {formatVND(diff)}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: '1px solid var(--line)',
+            borderRadius: 20,
+            padding: 20,
+            background: 'var(--panel)',
+          }}
+        >
+          <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 8 }}>
+            Tỷ giá USD/JPY
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700 }}>
+            ¥{Number.isFinite(jpyRate) ? jpyRate.toFixed(2) : '--'}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 8 }}>
+            /USD • live
+          </div>
+        </div>
+      </section>
+
+      <section
+        style={{
+          border: '1px solid var(--line)',
+          borderRadius: 20,
+          background: 'var(--panel)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            padding: 20,
+            borderBottom: '1px solid var(--line)',
+            fontWeight: 700,
+          }}
+        >
+          Giao dịch tháng này
+        </div>
+
+        {thisMonthEntries.length === 0 ? (
+          <div style={{ padding: 20, color: 'var(--ink3)' }}>
+            Chưa có giao dịch nào trong tháng này.
+          </div>
+        ) : (
+          <div style={{ display: 'grid' }}>
+            {thisMonthEntries.map((entry) => (
+              <div
+                key={entry.id}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto',
+                  gap: 12,
+                  padding: 16,
+                  borderTop: '1px solid var(--line)',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600 }}>{entry.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink3)', marginTop: 4 }}>
+                    {entry.category} • {entry.date}
+                  </div>
+                  {entry.note ? (
+                    <div style={{ fontSize: 12, color: 'var(--ink3)', marginTop: 6 }}>
+                      {entry.note}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: entry.type === 'income' ? '#11845b' : 'inherit',
+                    alignSelf: 'center',
+                  }}
+                >
+                  {entry.type === 'income' ? '+' : '-'}
+                  {formatVND(entry.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

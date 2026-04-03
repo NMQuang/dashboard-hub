@@ -103,7 +103,9 @@ export default function Sidebar() {
                 label={item.label}
                 icon={item.icon}
                 badge={'badge' in item ? item.badge : undefined}
-                active={pathname === item.href || pathname.startsWith(item.href + '/')}
+                active={'exact' in item && item.exact
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(item.href + '/')}
               />
             ))}
           </div>

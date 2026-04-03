@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 export default function FamilyLoginPage() {
-  const router = useRouter()
   const params = useSearchParams()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -12,21 +11,46 @@ export default function FamilyLoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
+    if (loading || !password) return
+
     setLoading(true)
     setError('')
 
     const from = params.get('from') ?? '/family'
-    const res = await fetch(`/api/family/auth?from=${encodeURIComponent(from)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    })
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
 
-    if (res.ok) {
-      const data = await res.json() as { redirectTo: string }
-      router.push(data.redirectTo)
-    } else {
-      setError('Sai mật khẩu. Thử lại nhé.')
+    try {
+      const res = await fetch(`/api/family/auth?from=${encodeURIComponent(from)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeout)
+
+      let data: { redirectTo?: string; error?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        data = {}
+      }
+
+      if (!res.ok) {
+        setError(data.error ?? 'Sai mật khẩu hoặc server đang lỗi. Thử lại nhé.')
+        setLoading(false)
+        return
+      }
+
+      const redirectTo = data.redirectTo ?? from
+      window.location.assign(redirectTo)
+    } catch (err) {
+      clearTimeout(timeout)
+      const message = err instanceof Error && err.name === 'AbortError'
+        ? 'Đăng nhập bị quá thời gian chờ. Kiểm tra server rồi thử lại.'
+        : 'Không thể kết nối tới Family. Thử lại nhé.'
+      setError(message)
       setLoading(false)
     }
   }
@@ -34,7 +58,6 @@ export default function FamilyLoginPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
       <div style={{ width: 360, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 32 }}>
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>🏠</div>
           <h1 style={{ fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 6 }}>

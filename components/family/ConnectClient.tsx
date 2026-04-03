@@ -4,22 +4,22 @@ import { useState } from 'react'
 import type { DailyCheckIn } from '@/types/family'
 
 const MOODS = [
-  { value: 1, label: 'Mệt',    emoji: '😔' },
-  { value: 2, label: 'Bình',   emoji: '😐' },
-  { value: 3, label: 'Ổn',     emoji: '🙂' },
-  { value: 4, label: 'Vui',    emoji: '😊' },
-  { value: 5, label: 'Tuyệt',  emoji: '😄' },
+  { value: 1, label: 'Mệt', emoji: '😔' },
+  { value: 2, label: 'Bình', emoji: '😐' },
+  { value: 3, label: 'Ổn', emoji: '🙂' },
+  { value: 4, label: 'Vui', emoji: '😊' },
+  { value: 5, label: 'Tuyệt', emoji: '😄' },
 ] as const
 
 export default function ConnectClient({ initialCheckins }: { initialCheckins: DailyCheckIn[] }) {
-  const [checkins, setCheckins]   = useState(initialCheckins)
-  const [text, setText]           = useState('')
-  const [textJa, setTextJa]       = useState('')
-  const [mood, setMood]           = useState<1|2|3|4|5>(3)
-  const [author, setAuthor]       = useState<'me'|'partner'>('me')
-  const [location, setLocation]   = useState('')
+  const [checkins, setCheckins] = useState(initialCheckins)
+  const [text, setText] = useState('')
+  const [textJa, setTextJa] = useState('')
+  const [mood, setMood] = useState<1 | 2 | 3 | 4 | 5>(3)
+  const [author, setAuthor] = useState<'me' | 'partner'>('me')
+  const [location, setLocation] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [showJa, setShowJa]       = useState(false)
+  const [showJa, setShowJa] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -54,7 +54,7 @@ export default function ConnectClient({ initialCheckins }: { initialCheckins: Da
               background: author === a ? 'var(--ink)' : 'transparent',
               color: author === a ? '#fff' : 'var(--ink2)',
             }}>
-              {a === 'me' ? '🇯🇵 Tú (Nhật)' : '🇻🇳 Vợ (nhà)'}
+              {a === 'me' ? '🇯🇵 Ba Cafe (Nhật)' : '🇻🇳 Mẹ Cafe (nhà)'}
             </button>
           ))}
         </div>
@@ -62,7 +62,7 @@ export default function ConnectClient({ initialCheckins }: { initialCheckins: Da
         {/* Mood picker */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           {MOODS.map(m => (
-            <button key={m.value} onClick={() => setMood(m.value as 1|2|3|4|5)} style={{
+            <button key={m.value} onClick={() => setMood(m.value as 1 | 2 | 3 | 4 | 5)} style={{
               padding: '6px 10px', borderRadius: 10, fontSize: 20, cursor: 'pointer', border: '2px solid',
               borderColor: mood === m.value ? 'var(--ink)' : 'var(--border)',
               background: mood === m.value ? 'var(--surface2)' : 'transparent',
@@ -157,7 +157,7 @@ export default function ConnectClient({ initialCheckins }: { initialCheckins: Da
 function CheckInCard({ checkIn }: { checkIn: DailyCheckIn }) {
   const moodEmoji = MOODS.find(m => m.value === checkIn.mood)?.emoji ?? '🙂'
   const isMe = checkIn.author === 'me'
-  const moodColors = ['','#ef4444','#f97316','#eab308','#84cc16','#22c55e']
+  const moodColors = ['', '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e']
 
   return (
     <div style={{
@@ -167,7 +167,7 @@ function CheckInCard({ checkIn }: { checkIn: DailyCheckIn }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <span style={{ fontSize: 18 }}>{moodEmoji}</span>
         <span style={{ fontSize: 12.5, fontWeight: 500, color: isMe ? 'var(--blue)' : '#BE185D' }}>
-          {isMe ? '🇯🇵 Tú' : '🇻🇳 Vợ'}
+          {isMe ? '🇯🇵 Ba Cafe' : '🇻🇳 Mẹ Cafe'}
         </span>
         {checkIn.location && (
           <span style={{ fontSize: 11.5, color: 'var(--ink3)' }}>· {checkIn.location}</span>

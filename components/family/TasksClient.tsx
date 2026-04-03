@@ -4,26 +4,26 @@ import { useState } from 'react'
 import type { FamilyTask, TaskPriority } from '@/types/family'
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  high:   '#EF4444',
+  high: '#EF4444',
   medium: '#F59E0B',
-  low:    '#6B7280',
+  low: '#6B7280',
 }
 const PRIORITY_BG: Record<TaskPriority, string> = {
-  high:   '#FEF2F2',
+  high: '#FEF2F2',
   medium: '#FFFBEB',
-  low:    '#F9FAFB',
+  low: '#F9FAFB',
 }
 
 export default function TasksClient({ initialTasks }: { initialTasks: FamilyTask[] }) {
-  const [tasks, setTasks]       = useState(initialTasks)
-  const [title, setTitle]       = useState('')
+  const [tasks, setTasks] = useState(initialTasks)
+  const [title, setTitle] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('medium')
-  const [assignedTo, setAssignedTo] = useState<'me'|'partner'|'both'>('both')
-  const [dueDate, setDueDate]   = useState('')
-  const [adding, setAdding]     = useState(false)
+  const [assignedTo, setAssignedTo] = useState<'me' | 'partner' | 'both'>('both')
+  const [dueDate, setDueDate] = useState('')
+  const [adding, setAdding] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
-  const pending   = tasks.filter(t => !t.done)
+  const pending = tasks.filter(t => !t.done)
   const completed = tasks.filter(t => t.done)
 
   async function handleAdd(e: React.FormEvent) {
@@ -101,7 +101,7 @@ export default function TasksClient({ initialTasks }: { initialTasks: FamilyTask
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
             {/* Priority */}
             <div style={{ display: 'flex', gap: 6 }}>
-              {(['high','medium','low'] as TaskPriority[]).map(p => (
+              {(['high', 'medium', 'low'] as TaskPriority[]).map(p => (
                 <button key={p} type="button" onClick={() => setPriority(p)} style={{
                   padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
                   border: '1px solid',
@@ -116,7 +116,7 @@ export default function TasksClient({ initialTasks }: { initialTasks: FamilyTask
             </div>
             {/* Assign */}
             <div style={{ display: 'flex', gap: 6 }}>
-              {(['me','partner','both'] as const).map(a => (
+              {(['me', 'partner', 'both'] as const).map(a => (
                 <button key={a} type="button" onClick={() => setAssignedTo(a)} style={{
                   padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
                   border: '1px solid',
@@ -125,7 +125,7 @@ export default function TasksClient({ initialTasks }: { initialTasks: FamilyTask
                   color: assignedTo === a ? '#fff' : 'var(--ink3)',
                   fontWeight: assignedTo === a ? 500 : 400,
                 }}>
-                  {a === 'me' ? '🇯🇵 Tú' : a === 'partner' ? '🇻🇳 Vợ' : '👫 Cả hai'}
+                  {a === 'me' ? '🇯🇵 Ba Cafe' : a === 'partner' ? '🇻🇳 Mẹ Cafe' : '👫 Cả hai'}
                 </button>
               ))}
             </div>

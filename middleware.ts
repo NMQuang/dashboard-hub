@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * Protects all /family/* routes with a shared family password.
- * Cookie: family_auth=<hashed_token>, httpOnly, 30-day expiry.
- *
- * Env: FAMILY_PASSWORD=your-password-here
- */
-
 const FAMILY_PASSWORD = process.env.FAMILY_PASSWORD ?? ''
 const COOKIE_NAME = 'family_auth'
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
-// Simple hash: SHA-256 of password + salt
 async function hashPassword(password: string): Promise<string> {
   const salt = process.env.FAMILY_COOKIE_SALT ?? 'dashboard-hub-family-2025'
   const data = new TextEncoder().encode(password + salt)
@@ -22,22 +13,31 @@ async function hashPassword(password: string): Promise<string> {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Only protect /family routes
-  if (!pathname.startsWith('/family')) {
-    return NextResponse.next()
-  }
-
-  // Allow the login page itself
-  if (pathname === '/family/login') {
-    return NextResponse.next()
-  }
-
-  // Allow the login POST API
   if (pathname === '/api/family/auth') {
     return NextResponse.next()
   }
 
-  // Check auth cookie
+  const isFamilyPage = pathname.startsWith('/family')
+  const isFamilyApi = pathname.startsWith('/api/family')
+
+  if (!isFamilyPage && !isFamilyApi) {
+    return NextResponse.next()
+  }
+
+  if (pathname === '/family/login') {
+    return NextResponse.next()
+  }
+
+  if (!FAMILY_PASSWORD) {
+    if (isFamilyPage) {
+      const loginUrl = new URL('/family/login', req.url)
+      loginUrl.searchParams.set('from', pathname)
+      loginUrl.searchParams.set('error', 'missing-password')
+      return NextResponse.redirect(loginUrl)
+    }
+    return NextResponse.json({ error: 'Family password is not configured' }, { status: 503 })
+  }
+
   const cookie = req.cookies.get(COOKIE_NAME)
   if (cookie?.value) {
     const expected = await hashPassword(FAMILY_PASSWORD)
@@ -46,7 +46,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Redirect to login
+  if (isFamilyApi) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const loginUrl = new URL('/family/login', req.url)
   loginUrl.searchParams.set('from', pathname)
   return NextResponse.redirect(loginUrl)

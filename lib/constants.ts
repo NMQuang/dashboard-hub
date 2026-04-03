@@ -2,7 +2,7 @@ export const NAV_ITEMS = [
   {
     group: 'Family',
     items: [
-      { label: 'Home', href: '/family', icon: '🏠' },
+      { label: 'Home', href: '/family', icon: '🏠', exact: true },
       { label: 'Memories', href: '/family/memories', icon: '📸' },
       { label: 'Connect', href: '/family/connect', icon: '💬' },
       { label: 'Plan', href: '/family/plan', icon: '📅' },

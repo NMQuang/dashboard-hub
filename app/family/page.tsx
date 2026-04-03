@@ -9,11 +9,11 @@ import { getTasks } from '@/services/family-storage'
 export const metadata: Metadata = { title: 'Family' }
 
 const SECTIONS = [
-  { href: '/family/memories', icon: '📸', label: 'Memories',  desc: 'Ảnh gia đình · timeline · albums', color: '#FBEAF0' },
-  { href: '/family/connect',  icon: '💬', label: 'Connect',   desc: 'Daily check-in · nhật ký từ Nhật', color: '#E1F5EE' },
-  { href: '/family/plan',     icon: '📅', label: 'Plan',      desc: 'Lịch chung · sự kiện · du lịch',  color: '#EEEDFE' },
-  { href: '/family/finance',  icon: '💴', label: 'Finance',   desc: 'Chi tiêu · JPY↔VND · tiết kiệm',  color: '#FAEEDA' },
-  { href: '/family/tasks',    icon: '✅', label: 'Tasks',     desc: 'Việc nhà · nhắc nhở · chia sẻ',   color: '#E6F1FB' },
+  { href: '/family/memories', icon: '📸', label: 'Memories', desc: 'Ảnh gia đình · timeline · albums', color: '#FBEAF0' },
+  { href: '/family/connect', icon: '💬', label: 'Connect', desc: 'Daily check-in · nhật ký từ Nhật', color: '#E1F5EE' },
+  { href: '/family/plan', icon: '📅', label: 'Plan', desc: 'Lịch chung · sự kiện · du lịch', color: '#EEEDFE' },
+  { href: '/family/finance', icon: '💴', label: 'Finance', desc: 'Chi tiêu · JPY↔VND · tiết kiệm', color: '#FAEEDA' },
+  { href: '/family/tasks', icon: '✅', label: 'Tasks', desc: 'Việc nhà · nhắc nhở · chia sẻ', color: '#E6F1FB' },
 ] as const
 
 export default async function FamilyHomePage() {
@@ -25,13 +25,13 @@ export default async function FamilyHomePage() {
     getTasks(),
   ])
 
-  const recentCheckins  = checkins.status  === 'fulfilled' ? checkins.value  : []
-  const upcomingEvents  = events.status    === 'fulfilled' ? events.value    : []
-  const allPhotos       = photos.status    === 'fulfilled' ? photos.value    : []
-  const allTasks        = tasks.status     === 'fulfilled' ? tasks.value     : []
+  const recentCheckins = checkins.status === 'fulfilled' ? checkins.value : []
+  const upcomingEvents = events.status === 'fulfilled' ? events.value : []
+  const allPhotos = photos.status === 'fulfilled' ? photos.value : []
+  const allTasks = tasks.status === 'fulfilled' ? tasks.value : []
 
   const pendingTasks = allTasks.filter(t => !t.done)
-  const latestPhoto  = allPhotos[0]
+  const latestPhoto = allPhotos[0]
 
   return (
     <div style={{ padding: '28px 32px 48px', maxWidth: 960 }}>
@@ -40,7 +40,7 @@ export default async function FamilyHomePage() {
       <div style={{ marginBottom: 28 }}>
         <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>family</div>
         <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em' }}>
-          Gia đình <span style={{ fontWeight: 300, color: 'var(--ink2)', fontSize: 18 }}>nhà Tú 🏠</span>
+          Gia đình <span style={{ fontWeight: 300, color: 'var(--ink2)', fontSize: 18 }}>nhà Ba Cafe 🏠</span>
         </h1>
       </div>
 
@@ -83,7 +83,7 @@ export default async function FamilyHomePage() {
                 <MoodDot mood={c.mood} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, color: 'var(--ink3)', fontFamily: 'monospace', marginBottom: 2 }}>
-                    {c.author === 'me' ? '🇯🇵 Tú' : '🇻🇳 Vợ'} · {c.date}
+                    {c.author === 'me' ? '🇯🇵 Ba Cafe' : '🇻🇳 Mẹ Cafe'} · {c.date}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.textViTranslated ?? c.text}
