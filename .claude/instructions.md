@@ -42,9 +42,10 @@ Stack:
 - ALWAYS call `services/*` directly in Server Components
 
 Correct:
+
 ```ts
 import { fetchMarket } from '@/services/market'
-````
+```
 
 Wrong:
 
@@ -299,3 +300,5 @@ When generating code:
 * MUST not introduce runtime crashes
 * MUST include error handling
 * MUST follow project structure
+
+---
