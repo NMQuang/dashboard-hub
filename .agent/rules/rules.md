@@ -1,4 +1,4 @@
-# nexus.hq — Agent Rules
+# dashboard-hub.hq — Agent Rules
 
 ## Project overview
 Personal dashboard: Japanese learning · IBM Mainframe/COBOL · Market prices · AI Hub · GitHub projects.

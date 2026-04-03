@@ -11,7 +11,7 @@ const nextConfig = {
   },
   // Proxy env vars to client selectively
   env: {
-    NEXT_PUBLIC_APP_NAME: 'nexus.hq',
+    NEXT_PUBLIC_APP_NAME: 'dashboard-hub.hq',
   },
 }
 

@@ -57,7 +57,7 @@ WEATHER_API_KEY
 # Public (safe to expose)
 NEXT_PUBLIC_ONSITE_DATE=2025-07-01
 NEXT_PUBLIC_GITHUB_USERNAME=your-handle
-NEXT_PUBLIC_APP_NAME=nexus.hq
+NEXT_PUBLIC_APP_NAME=dashboard-hub.hq
 ```
 
 ## Common build errors and fixes

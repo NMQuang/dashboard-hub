@@ -1,6 +1,6 @@
 # Deploy to Vercel
 
-Full deployment workflow for nexus.hq dashboard.
+Full deployment workflow for dashboard-hub.hq dashboard.
 
 ## Steps
 
