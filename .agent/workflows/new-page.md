@@ -1,6 +1,6 @@
 # New Dashboard Page
 
-Create a new page in the nexus.hq dashboard following project conventions.
+Create a new page in the dashboard-hub.hq dashboard following project conventions.
 
 ## Steps
 

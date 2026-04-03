@@ -1,7 +1,7 @@
 ---
 name: next-page
 description: >
-  Create a new page in the nexus.hq dashboard. Triggered when the user asks to
+  Create a new page in the dashboard-hub.hq dashboard. Triggered when the user asks to
   "add a page", "create a new section", "build the /learn/... page", or similar.
   Handles the full flow: page.tsx, metadata, sidebar link, types if needed.
 ---

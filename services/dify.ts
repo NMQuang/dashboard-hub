@@ -29,7 +29,7 @@ export async function triggerWorkflow(
         workflow_id: workflowId,
         inputs,
         response_mode: 'blocking',
-        user: 'nexus-dashboard',
+        user: 'dashboard-hub-dashboard',
       }),
     })
     if (!res.ok) {
@@ -82,7 +82,7 @@ export async function chatWithDify(
         query: message,
         conversation_id: conversationId,
         response_mode: 'blocking',
-        user: 'nexus-dashboard',
+        user: 'dashboard-hub-dashboard',
       }),
     })
     if (!res.ok) {
