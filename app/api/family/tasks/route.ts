@@ -10,8 +10,16 @@ export async function GET() {
   const tasks = await getTasks()
   tasks.sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1
-    const prio = { high: 0, medium: 1, low: 2 }
-    return prio[a.priority] - prio[b.priority]
+    const prio: Record<'high' | 'medium' | 'low', number> = {
+      high: 0,
+      medium: 1,
+      low: 2,
+    }
+
+    const aPriority = (a.priority ?? 'medium') as keyof typeof prio
+    const bPriority = (b.priority ?? 'medium') as keyof typeof prio
+
+    return prio[aPriority] - prio[bPriority]
   })
   return NextResponse.json({ tasks })
 }
