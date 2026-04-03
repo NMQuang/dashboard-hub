@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function FamilyLoginPage() {
+export const dynamic = 'force-dynamic'
+
+function LoginForm() {
   const params = useSearchParams()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -109,5 +111,17 @@ export default function FamilyLoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function FamilyLoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--ink3)', fontSize: 14 }}>
+        Đang tải...
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

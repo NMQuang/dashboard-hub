@@ -4,6 +4,7 @@ import { getAllPhotos, getStories } from '@/services/family-storage'
 import MemoriesClient from '@/components/family/MemoriesClient'
 
 export const metadata: Metadata = { title: 'Memories · Family' }
+export const dynamic = 'force-dynamic'
 
 const TAGS = [
   { value: 'all',       label: 'Tất cả', icon: '◉' },

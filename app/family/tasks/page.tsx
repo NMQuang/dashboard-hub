@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { getTasks } from '@/services/family-storage'
 import TasksClient from '@/components/family/TasksClient'
 export const metadata: Metadata = { title: 'Tasks · Family' }
+export const dynamic = 'force-dynamic'
 
 export default async function TasksPage() {
   const tasks = await getTasks()

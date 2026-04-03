@@ -7,6 +7,7 @@ import { getAllPhotos } from '@/services/family-storage'
 import { getTasks } from '@/services/family-storage'
 
 export const metadata: Metadata = { title: 'Family' }
+export const dynamic = 'force-dynamic'
 
 const SECTIONS = [
   { href: '/family/memories', icon: '📸', label: 'Memories', desc: 'Ảnh gia đình · timeline · albums', color: '#FBEAF0' },

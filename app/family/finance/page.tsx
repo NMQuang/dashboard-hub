@@ -13,6 +13,8 @@ function formatVND(value: number) {
   return new Intl.NumberFormat('vi-VN').format(value) + 'đ'
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function FamilyFinancePage() {
   const now = new Date()
   const thisMonth = formatMonthKey(startOfMonth(now))

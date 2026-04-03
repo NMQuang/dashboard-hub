@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { Card, CardHeader, CardTitle, CardAction } from '@/components/ui/Card'
 import { getEvents, getUpcomingEvents } from '@/services/family-storage'
 export const metadata: Metadata = { title: 'Plan · Family' }
+export const dynamic = 'force-dynamic'
 
 const CATEGORY_ICONS: Record<string, string> = {
   flight: '✈', visit: '🏠', birthday: '🎂', medical: '🏥', holiday: '🎌', trip: '🗺', other: '📅',

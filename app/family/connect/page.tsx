@@ -3,6 +3,7 @@ import { getRecentCheckIns } from '@/services/family-storage'
 import ConnectClient from '@/components/family/ConnectClient'
 
 export const metadata: Metadata = { title: 'Connect · Family' }
+export const dynamic = 'force-dynamic'
 
 export default async function ConnectPage() {
   const checkins = await getRecentCheckIns(30)
