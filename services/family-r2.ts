@@ -7,7 +7,7 @@
  *   R2_BUCKET_NAME, R2_PUBLIC_URL (CDN domain)
  */
 
-import type { PresignedUploadUrl } from './family-types'
+import type { PresignedUploadUrl } from '@/types/family-types'
 
 const ACCOUNT_ID  = process.env.R2_ACCOUNT_ID ?? ''
 const ACCESS_KEY  = process.env.R2_ACCESS_KEY_ID ?? ''
@@ -27,7 +27,7 @@ async function hmac(key: ArrayBuffer, data: string): Promise<ArrayBuffer> {
 }
 
 function hex(buf: ArrayBuffer): string {
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 async function sha256(data: string): Promise<string> {
@@ -80,7 +80,7 @@ export async function getPresignedUploadUrl(
 
   // Derive signing key
   const enc = new TextEncoder()
-  let signingKey = await hmac(enc.encode(`AWS4${SECRET_KEY}`), dateStamp)
+  let signingKey = await hmac(enc.encode(`AWS4${SECRET_KEY}`).buffer, dateStamp)
   signingKey = await hmac(signingKey, region)
   signingKey = await hmac(signingKey, service)
   signingKey = await hmac(signingKey, 'aws4_request')
@@ -122,7 +122,7 @@ export async function deletePhotoFromR2(key: string): Promise<void> {
   ].join('\n')
 
   const enc = new TextEncoder()
-  let signingKey = await hmac(enc.encode(`AWS4${SECRET_KEY}`), dateStamp)
+  let signingKey = await hmac(enc.encode(`AWS4${SECRET_KEY}`).buffer, dateStamp)
   signingKey = await hmac(signingKey, region)
   signingKey = await hmac(signingKey, service)
   signingKey = await hmac(signingKey, 'aws4_request')

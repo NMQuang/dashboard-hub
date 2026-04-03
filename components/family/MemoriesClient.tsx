@@ -13,9 +13,9 @@ interface Props {
 }
 
 const MONTH_LABELS: Record<string, string> = {
-  '01':'Tháng 1','02':'Tháng 2','03':'Tháng 3','04':'Tháng 4',
-  '05':'Tháng 5','06':'Tháng 6','07':'Tháng 7','08':'Tháng 8',
-  '09':'Tháng 9','10':'Tháng 10','11':'Tháng 11','12':'Tháng 12',
+  '01': 'Tháng 1', '02': 'Tháng 2', '03': 'Tháng 3', '04': 'Tháng 4',
+  '05': 'Tháng 5', '06': 'Tháng 6', '07': 'Tháng 7', '08': 'Tháng 8',
+  '09': 'Tháng 9', '10': 'Tháng 10', '11': 'Tháng 11', '12': 'Tháng 12',
 }
 
 function monthLabel(ym: string) {
@@ -24,15 +24,15 @@ function monthLabel(ym: string) {
 }
 
 export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }: Props) {
-  const [activeTag, setActiveTag]   = useState('all')
-  const [view, setView]             = useState<'timeline' | 'stories' | 'upload'>('timeline')
-  const [photos, setPhotos]         = useState(initialPhotos)
-  const [selected, setSelected]     = useState<Set<string>>(new Set())
-  const [uploading, setUploading]   = useState(false)
-  const [uploadMsg, setUploadMsg]   = useState('')
-  const [lightbox, setLightbox]     = useState<FamilyPhoto | null>(null)
+  const [activeTag, setActiveTag] = useState('all')
+  const [view, setView] = useState<'timeline' | 'stories' | 'upload'>('timeline')
+  const [photos, setPhotos] = useState(initialPhotos)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [uploading, setUploading] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState('')
+  const [lightbox, setLightbox] = useState<FamilyPhoto | null>(null)
   const [generatingStory, setGeneratingStory] = useState(false)
-  const [localStories, setLocalStories]       = useState(stories)
+  const [localStories, setLocalStories] = useState(stories)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Filter photos by tag
@@ -51,7 +51,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
   // Upload handler
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = [...(e.target.files ?? [])]
+    const files = Array.from(e.target.files ?? [])
     if (!files.length) return
     setUploading(true)
     setUploadMsg(`Đang upload ${files.length} ảnh...`)
@@ -106,7 +106,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
     const res = await fetch('/api/family/photos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate-story', photoIds: [...selected], tag: activeTag !== 'all' ? activeTag : undefined }),
+      body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
     })
     const { story } = await res.json() as { story: PhotoStory }
     setLocalStories(prev => [story, ...prev])
@@ -377,7 +377,8 @@ function getExifDate(file: File): Promise<string | null> {
         while (offset < view.byteLength - 4) {
           if (view.getUint16(offset) === 0xFFE1) {
             const len = view.getUint16(offset + 2)
-            const exifStr = String.fromCharCode(...new Uint8Array((e.target!.result as ArrayBuffer).slice(offset + 4, offset + 4 + len)))
+            const chunk = (e.target!.result as ArrayBuffer).slice(offset + 4, offset + 4 + len)
+            const exifStr = new TextDecoder().decode(new Uint8Array(chunk))
             const match = exifStr.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/)
             if (match) {
               resolve(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`)

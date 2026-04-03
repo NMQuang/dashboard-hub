@@ -110,6 +110,7 @@ export type ExpenseCategory =
   | 'medical'     // y tế
   | 'education'   // học phí
   | 'saving'      // tiết kiệm
+  | 'income'      // thu nhập
   | 'other'
 
 export interface BudgetEntry {
@@ -119,7 +120,10 @@ export interface BudgetEntry {
   currency: Currency
   amountVnd?: number   // quy đổi tham khảo
   category: ExpenseCategory
-  description: string
+  type: 'income' | 'expense'
+  title: string
+  description?: string
+  note?: string
   location: 'vietnam' | 'japan'
   createdBy: 'me' | 'partner'
   createdAt: string

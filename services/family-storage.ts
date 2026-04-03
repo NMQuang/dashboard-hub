@@ -25,7 +25,7 @@ import type {
   FamilyTask,
   BudgetEntry,
   PhotoStory,
-} from './family-types'
+} from '@/types/family-types'
 
 const KV_URL = (process.env.FAMILY_KV_REST_API_URL ?? '').trim()
 const KV_TOKEN = (process.env.FAMILY_KV_REST_API_TOKEN ?? '').trim()
@@ -274,7 +274,7 @@ export async function getRecentCheckIns(days = 14): Promise<DailyCheckIn[]> {
     months.add(d.toISOString().slice(0, 7))
   }
 
-  const results = await Promise.all([...months].map((m) => getCheckIns(m)))
+  const results = await Promise.all(Array.from(months).map((m) => getCheckIns(m)))
   return results
     .flat()
     .sort((a, b) => b.date.localeCompare(a.date))

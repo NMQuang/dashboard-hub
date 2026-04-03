@@ -5,7 +5,7 @@
  * 3. Story/slideshow narrative generation
  */
 
-import type { FamilyPhoto, PhotoStory, FaceLabel } from './family-types'
+import type { FamilyPhoto, PhotoStory, FaceLabel } from '@/types/family-types'
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? ''
 

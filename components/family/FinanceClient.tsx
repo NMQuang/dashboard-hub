@@ -54,6 +54,8 @@ export default function FinanceClient({
       currency,
       amountVnd: currency === 'VND' ? amountNum : Math.round(amountNum / jpyRate * 170),
       category,
+      type: 'expense',
+      title: desc.trim(),
       description: desc.trim(),
       location,
       createdBy: 'me',
