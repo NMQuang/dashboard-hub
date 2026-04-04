@@ -1,0 +1,5 @@
+{
+    "project": "dashboard-hub",
+    "default_behavior": "strict",
+    "auto_apply_instructions": true
+}
