@@ -84,7 +84,6 @@ async function kvFetch(path: string, init?: RequestInit): Promise<Response | nul
         ...(init?.headers ?? {}),
       },
       cache: 'no-store',
-      next: { revalidate: 0 },
     })
     return res
   } catch (error) {
@@ -132,7 +131,7 @@ async function kvSet(key: string, value: unknown): Promise<boolean> {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(JSON.stringify(value)),
+    body: JSON.stringify(value),
   })
 
   if (!res) {
@@ -175,7 +174,8 @@ async function kvDelete(key: string): Promise<boolean> {
 // ── Photos ────────────────────────────────────────────────────────────────
 
 export async function getAllPhotos(): Promise<FamilyPhoto[]> {
-  return (await kvGet<FamilyPhoto[]>('family:photos')) ?? []
+  const result = await kvGet<FamilyPhoto[]>('family:photos')
+  return Array.isArray(result) ? result : []
 }
 
 export async function getPhoto(id: string): Promise<FamilyPhoto | null> {
@@ -185,7 +185,7 @@ export async function getPhoto(id: string): Promise<FamilyPhoto | null> {
 export async function savePhoto(photo: FamilyPhoto): Promise<void> {
   await kvSet(`family:photo:${photo.id}`, photo)
 
-  const all = await getAllPhotos()
+  const all = Array.from(await getAllPhotos())
   const idx = all.findIndex((p) => p.id === photo.id)
 
   if (idx >= 0) all[idx] = photo
@@ -208,7 +208,7 @@ export async function updatePhotoCaption(id: string, caption: string): Promise<v
 export async function deletePhoto(id: string): Promise<void> {
   await kvDelete(`family:photo:${id}`)
 
-  const all = await getAllPhotos()
+  const all = Array.from(await getAllPhotos())
   await kvSet(
     'family:photos',
     all.filter((p) => p.id !== id),
@@ -216,7 +216,7 @@ export async function deletePhoto(id: string): Promise<void> {
 }
 
 export async function getPhotosByTag(tag: string): Promise<FamilyPhoto[]> {
-  const all = await getAllPhotos()
+  const all = Array.from(await getAllPhotos())
   return all.filter((p) => p.tags.includes(tag))
 }
 
@@ -235,11 +235,12 @@ export function groupByMonth(photos: FamilyPhoto[]): Record<string, FamilyPhoto[
 // ── Albums ────────────────────────────────────────────────────────────────
 
 export async function getAlbums(): Promise<PhotoAlbum[]> {
-  return (await kvGet<PhotoAlbum[]>('family:albums')) ?? []
+  const result = await kvGet<PhotoAlbum[]>('family:albums')
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveAlbum(album: PhotoAlbum): Promise<void> {
-  const all = await getAlbums()
+  const all = Array.from(await getAlbums())
   const idx = all.findIndex((a) => a.id === album.id)
 
   if (idx >= 0) all[idx] = album
@@ -251,12 +252,13 @@ export async function saveAlbum(album: PhotoAlbum): Promise<void> {
 // ── Check-ins ─────────────────────────────────────────────────────────────
 
 export async function getCheckIns(yearMonth: string): Promise<DailyCheckIn[]> {
-  return (await kvGet<DailyCheckIn[]>(`family:checkins:${yearMonth}`)) ?? []
+  const result = await kvGet<DailyCheckIn[]>(`family:checkins:${yearMonth}`)
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveCheckIn(checkIn: DailyCheckIn): Promise<void> {
   const ym = checkIn.date.slice(0, 7)
-  const all = await getCheckIns(ym)
+  const all = Array.from(await getCheckIns(ym))
   const idx = all.findIndex((c) => c.id === checkIn.id)
 
   if (idx >= 0) all[idx] = checkIn
@@ -284,11 +286,12 @@ export async function getRecentCheckIns(days = 14): Promise<DailyCheckIn[]> {
 // ── Events ────────────────────────────────────────────────────────────────
 
 export async function getEvents(): Promise<FamilyEvent[]> {
-  return (await kvGet<FamilyEvent[]>('family:events')) ?? []
+  const result = await kvGet<FamilyEvent[]>('family:events')
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveEvent(event: FamilyEvent): Promise<void> {
-  const all = await getEvents()
+  const all = Array.from(await getEvents())
   const idx = all.findIndex((e) => e.id === event.id)
 
   if (idx >= 0) all[idx] = event
@@ -299,7 +302,7 @@ export async function saveEvent(event: FamilyEvent): Promise<void> {
 }
 
 export async function deleteEvent(id: string): Promise<void> {
-  const all = await getEvents()
+  const all = Array.from(await getEvents())
   await kvSet(
     'family:events',
     all.filter((e) => e.id !== id),
@@ -307,7 +310,7 @@ export async function deleteEvent(id: string): Promise<void> {
 }
 
 export async function getUpcomingEvents(days = 30): Promise<FamilyEvent[]> {
-  const all = await getEvents()
+  const all = Array.from(await getEvents())
   const now = new Date().toISOString().slice(0, 10)
   const limit = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10)
 
@@ -317,11 +320,12 @@ export async function getUpcomingEvents(days = 30): Promise<FamilyEvent[]> {
 // ── Tasks ─────────────────────────────────────────────────────────────────
 
 export async function getTasks(): Promise<FamilyTask[]> {
-  return (await kvGet<FamilyTask[]>('family:tasks')) ?? []
+  const result = await kvGet<FamilyTask[]>('family:tasks')
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveTask(task: FamilyTask): Promise<void> {
-  const all = await getTasks()
+  const all = Array.from(await getTasks())
   const idx = all.findIndex((t) => t.id === task.id)
 
   if (idx >= 0) all[idx] = task
@@ -331,7 +335,7 @@ export async function saveTask(task: FamilyTask): Promise<void> {
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const all = await getTasks()
+  const all = Array.from(await getTasks())
   await kvSet(
     'family:tasks',
     all.filter((t) => t.id !== id),
@@ -341,12 +345,13 @@ export async function deleteTask(id: string): Promise<void> {
 // ── Budget ────────────────────────────────────────────────────────────────
 
 export async function getBudgetEntries(yearMonth: string): Promise<BudgetEntry[]> {
-  return (await kvGet<BudgetEntry[]>(`family:budget:${yearMonth}`)) ?? []
+  const result = await kvGet<BudgetEntry[]>(`family:budget:${yearMonth}`)
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveBudgetEntry(entry: BudgetEntry): Promise<void> {
   const ym = entry.date.slice(0, 7)
-  const all = await getBudgetEntries(ym)
+  const all = Array.from(await getBudgetEntries(ym))
   const idx = all.findIndex((e) => e.id === entry.id)
 
   if (idx >= 0) all[idx] = entry
@@ -358,11 +363,12 @@ export async function saveBudgetEntry(entry: BudgetEntry): Promise<void> {
 // ── Stories ───────────────────────────────────────────────────────────────
 
 export async function getStories(): Promise<PhotoStory[]> {
-  return (await kvGet<PhotoStory[]>('family:stories')) ?? []
+  const result = await kvGet<PhotoStory[]>('family:stories')
+  return Array.isArray(result) ? result : []
 }
 
 export async function saveStory(story: PhotoStory): Promise<void> {
-  const all = await getStories()
+  const all = Array.from(await getStories())
   const idx = all.findIndex((s) => s.id === story.id)
 
   if (idx >= 0) all[idx] = story

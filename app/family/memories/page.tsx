@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
+import type { FamilyPhoto, PhotoStory } from '@/types/family'
 import { getAllPhotos, getStories } from '@/services/family-storage'
 import MemoriesClient from '@/components/family/MemoriesClient'
 
@@ -17,15 +17,18 @@ const TAGS = [
 ] as const
 
 export default async function MemoriesPage() {
-  const [photos, stories] = await Promise.all([
+  const [photosResult, storiesResult] = await Promise.allSettled([
     getAllPhotos(),
     getStories(),
-  ])
+  ] as [Promise<FamilyPhoto[]>, Promise<PhotoStory[]>])
+  const photos: FamilyPhoto[] = photosResult.status === 'fulfilled' ? Array.from(photosResult.value ?? []) : []
+  const stories: PhotoStory[] = storiesResult.status === 'fulfilled' ? Array.from(storiesResult.value ?? []) : []
 
   // Group by month for timeline
   const byMonth: Record<string, typeof photos> = {}
-  for (const p of photos.sort((a, b) => b.takenAt.localeCompare(a.takenAt))) {
-    const m = p.takenAt.slice(0, 7)
+  for (const p of photos.sort((a, b) => (b.takenAt ?? '').localeCompare(a.takenAt ?? ''))) {
+    const m = (p.takenAt ?? '').slice(0, 7)
+    if (!m) continue
     if (!byMonth[m]) byMonth[m] = []
     byMonth[m].push(p)
   }
@@ -33,7 +36,7 @@ export default async function MemoriesPage() {
   // Tag counts
   const tagCounts: Record<string, number> = { all: photos.length }
   for (const p of photos) {
-    for (const t of p.tags) {
+    for (const t of p.tags ?? []) {
       tagCounts[t] = (tagCounts[t] ?? 0) + 1
     }
   }

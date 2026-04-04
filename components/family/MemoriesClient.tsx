@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import type { FamilyPhoto, PhotoStory } from '@/types/family'
 
 interface Tag { value: string; label: string; count: number }
@@ -24,6 +25,7 @@ function monthLabel(ym: string) {
 }
 
 export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }: Props) {
+  const router = useRouter()
   const [activeTag, setActiveTag] = useState('all')
   const [view, setView] = useState<'timeline' | 'stories' | 'upload'>('timeline')
   const [photos, setPhotos] = useState(initialPhotos)
@@ -32,6 +34,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
   const [uploadMsg, setUploadMsg] = useState('')
   const [lightbox, setLightbox] = useState<FamilyPhoto | null>(null)
   const [generatingStory, setGeneratingStory] = useState(false)
+  const [storyError, setStoryError] = useState('')
   const [localStories, setLocalStories] = useState(stories)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,8 +45,9 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
   // Group filtered photos by month
   const filteredByMonth: Record<string, FamilyPhoto[]> = {}
-  for (const p of [...filtered].sort((a, b) => b.takenAt.localeCompare(a.takenAt))) {
-    const m = p.takenAt.slice(0, 7)
+  for (const p of filtered.filter((x): x is FamilyPhoto => !!x).sort((a, b) => (b.takenAt ?? '').localeCompare(a.takenAt ?? ''))) {
+    const m = (p.takenAt ?? '').slice(0, 7)
+    if (!m) continue
     if (!filteredByMonth[m]) filteredByMonth[m] = []
     filteredByMonth[m].push(p)
   }
@@ -58,8 +62,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
     for (const file of files) {
       try {
-        // Get image dimensions
-        const dims = await getImageDimensions(file)
+        const dims    = await getImageDimensions(file)
         const takenAt = await getExifDate(file) ?? new Date().toISOString()
 
         // Request presigned URL
@@ -67,27 +70,28 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            filename: file.name,
+            filename:    file.name,
             contentType: file.type,
             takenAt,
-            tags: activeTag !== 'all' ? [activeTag] : ['family'],
-            uploadedBy: 'me',
-            width: dims.width,
-            height: dims.height,
-            sizeBytes: file.size,
+            tags:        activeTag !== 'all' ? [activeTag] : ['family'],
+            uploadedBy:  'me',
+            width:       dims.width,
+            height:      dims.height,
+            sizeBytes:   file.size,
           }),
         })
 
+        if (!metaRes.ok) throw new Error(`Upload API error: ${metaRes.status}`)
         const { uploadUrl, photo } = await metaRes.json() as { uploadUrl: string; photo: FamilyPhoto }
+        if (!photo?.id) throw new Error('Invalid photo response from API')
 
         // Direct upload to R2
-        await fetch(uploadUrl, {
+        const putRes = await fetch(uploadUrl, {
           method: 'PUT',
           body: file,
-          headers: { 'Content-Type': file.type },
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
         })
-
-        setPhotos(prev => [photo, ...prev])
+        if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`)
       } catch (err) {
         console.error('Upload error:', err)
       }
@@ -95,24 +99,32 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
     setUploading(false)
     setUploadMsg(`✓ Upload xong ${files.length} ảnh. AI đang viết caption...`)
-    setTimeout(() => setUploadMsg(''), 5000)
     e.target.value = ''
+    router.refresh()
   }
 
   // Generate story from selected photos
   async function generateStory() {
     if (selected.size < 2) return
     setGeneratingStory(true)
-    const res = await fetch('/api/family/photos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
-    })
-    const { story } = await res.json() as { story: PhotoStory }
-    setLocalStories(prev => [story, ...prev])
-    setSelected(new Set())
-    setView('stories')
-    setGeneratingStory(false)
+    setStoryError('')
+    try {
+      const res = await fetch('/api/family/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const { story } = await res.json() as { story: PhotoStory }
+      setLocalStories(prev => [story, ...prev])
+      setSelected(new Set())
+      setView('stories')
+    } catch (err) {
+      console.error('Story generation error:', err)
+      setStoryError('Không tạo được story. Vui lòng thử lại.')
+    } finally {
+      setGeneratingStory(false)
+    }
   }
 
   return (
@@ -172,6 +184,13 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
         </div>
       )}
 
+      {/* Story error */}
+      {storyError && (
+        <div style={{ padding: '8px 14px', background: 'var(--red-bg, #FEF2F2)', color: 'var(--red, #DC2626)', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
+          {storyError}
+        </div>
+      )}
+
       {/* ── Timeline view ── */}
       {view === 'timeline' && (
         <div>
@@ -224,7 +243,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
                 <div key={story.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                   {/* Thumbnail grid from first 4 photos */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, height: 120 }}>
-                    {story.photoIds.slice(0, 4).map(pid => {
+                    {story.photoIds.slice(0, 4).map((pid: string) => {
                       const p = photos.find(x => x.id === pid)
                       return p ? (
                         <img key={pid} src={p.thumbnailUrl || p.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -318,8 +337,14 @@ function PhotoCell({ photo, selected, onSelect, onClick }: {
   const isJapan = photo.tags.includes('japan')
   return (
     <div style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', outline: selected ? '3px solid var(--blue)' : 'none', outlineOffset: -3 }}>
-      {photo.thumbnailUrl || photo.url ? (
-        <img src={photo.thumbnailUrl || photo.url} alt={photo.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onClick={onClick} />
+      {photo.url ? (
+        <img
+          src={photo.thumbnailUrl || photo.url}
+          alt={photo.caption ?? ''}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onClick={onClick}
+          onError={e => { (e.currentTarget as HTMLImageElement).src = photo.url }}
+        />
       ) : (
         <div style={{ width: '100%', height: '100%', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }} onClick={onClick}>📷</div>
       )}
