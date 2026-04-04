@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       id,
       filename: body.filename,
       url: publicUrl,
-      thumbnailUrl: `${process.env.R2_PUBLIC_URL ?? ''}/${thumbKey}`,
+      thumbnailUrl: process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : publicUrl,
       takenAt: body.takenAt,
       uploadedAt: new Date().toISOString(),
       uploadedBy: body.uploadedBy,
@@ -52,10 +52,9 @@ export async function POST(req: NextRequest) {
     await savePhoto(photo)
 
     // Trigger AI caption + face detection in background (non-blocking)
-    // In production: use Vercel background functions or queue
     void (async () => {
       try {
-        const [caption, faces] = await Promise.all([
+        const [caption, faces] = await Promise.allSettled([
           generatePhotoCaption(publicUrl, {
             tags: body.tags,
             location: body.location,
@@ -63,7 +62,12 @@ export async function POST(req: NextRequest) {
           }),
           detectFacesInPhoto(publicUrl),
         ])
-        const updated: FamilyPhoto = { ...photo, caption, faces, captionGeneratedAt: new Date().toISOString() }
+        const updated: FamilyPhoto = {
+          ...photo,
+          caption:            caption.status === 'fulfilled' ? caption.value : undefined,
+          faces:              faces.status   === 'fulfilled' ? faces.value   : undefined,
+          captionGeneratedAt: new Date().toISOString(),
+        }
         await savePhoto(updated)
       } catch (e) {
         console.error('AI caption/face error:', e)
@@ -72,6 +76,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ uploadUrl, photo })
   } catch (e) {
+    console.error('[upload] POST error:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
