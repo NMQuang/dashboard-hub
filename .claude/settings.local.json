@@ -4,7 +4,8 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ls .env*)"
     ]
   }
 }

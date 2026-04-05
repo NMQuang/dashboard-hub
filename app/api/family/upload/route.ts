@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPresignedUploadUrl, photoKey, thumbnailKey } from '@/services/family-r2'
 import { savePhoto } from '@/services/family-storage'
-import { generatePhotoCaption, detectFacesInPhoto } from '@/services/family-ai'
+import { generatePhotoCaption, detectFacesInPhoto, inferTagsFromPhoto } from '@/services/family-ai'
 import type { FamilyPhoto } from '@/types/family'
 
 function generateId(): string {
@@ -9,15 +9,15 @@ function generateId(): string {
 }
 
 // POST /api/family/upload
-// Body: { filename, contentType, takenAt, tags, location, uploadedBy, width, height, sizeBytes }
+// Body: { filename, contentType, takenAt, location, uploadedBy, width, height, sizeBytes }
 // Returns: { uploadUrl, photo } — client PUTs to uploadUrl, then photo is already saved
+// Tags are NOT sent by client — AI infers them from the image in the background step.
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as {
       filename: string
       contentType: string
       takenAt: string
-      tags: string[]
       location?: string
       uploadedBy: 'me' | 'partner'
       width: number
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // Get presigned URL for direct client upload
     const { uploadUrl, publicUrl } = await getPresignedUploadUrl(key, body.contentType)
 
-    // Build photo record (caption + faces generated async after upload)
+    // Save photo with placeholder tag — AI will update tags in the background
     const photo: FamilyPhoto = {
       id,
       filename: body.filename,
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       takenAt: body.takenAt,
       uploadedAt: new Date().toISOString(),
       uploadedBy: body.uploadedBy,
-      tags: body.tags,
+      tags: ['family'],   // placeholder — overwritten by AI below
       location: body.location,
       albumIds: [],
       sizeBytes: body.sizeBytes,
@@ -51,26 +51,29 @@ export async function POST(req: NextRequest) {
 
     await savePhoto(photo)
 
-    // Trigger AI caption + face detection in background (non-blocking)
+    // Trigger AI caption + face detection + tag inference in background (non-blocking)
     void (async () => {
       try {
-        const [caption, faces] = await Promise.allSettled([
+        const [caption, faces, tags] = await Promise.allSettled([
           generatePhotoCaption(publicUrl, {
-            tags: body.tags,
             location: body.location,
             takenAt: body.takenAt,
           }),
           detectFacesInPhoto(publicUrl),
+          inferTagsFromPhoto(publicUrl),
         ])
         const updated: FamilyPhoto = {
           ...photo,
           caption:            caption.status === 'fulfilled' ? caption.value : undefined,
           faces:              faces.status   === 'fulfilled' ? faces.value   : undefined,
+          tags:               tags.status    === 'fulfilled' && tags.value.length > 0
+                                ? tags.value
+                                : photo.tags,
           captionGeneratedAt: new Date().toISOString(),
         }
         await savePhoto(updated)
       } catch (e) {
-        console.error('AI caption/face error:', e)
+        console.error('AI caption/face/tag error:', e)
       }
     })()
 

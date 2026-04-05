@@ -28,7 +28,7 @@ export async function generatePhotoCaption(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 200,
       messages: [{
         role: 'user',
@@ -51,7 +51,10 @@ Chỉ trả lời caption, không có gì thêm.`,
     }),
   })
 
-  if (!res.ok) throw new Error(`Claude caption error: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Claude caption error: ${res.status} ${body}`)
+  }
   const data = await res.json()
   return data.content?.[0]?.text?.trim() ?? ''
 }
@@ -69,7 +72,7 @@ export async function detectFacesInPhoto(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 150,
       messages: [{
         role: 'user',
@@ -96,7 +99,55 @@ Chỉ trả về JSON, không có gì thêm. Nếu không nhận ra ai, trả v�
   }
 }
 
-// ── 3. Generate story/slideshow narrative from a set of photos ────────────
+// ── 3. Infer tags from photo content ─────────────────────────────────────
+const VALID_TAGS = ['japan', 'family', 'baby', 'couple', 'travel', 'milestone'] as const
+
+export async function inferTagsFromPhoto(imageUrl: string): Promise<string[]> {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 60,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'url', url: imageUrl } },
+          {
+            type: 'text',
+            text: `Nhìn vào ảnh và chọn các tag phù hợp từ danh sách: japan, family, baby, couple, travel, milestone.
+Tiêu chí:
+- japan: chụp ở Nhật (phong cảnh, chữ Nhật, kiến trúc)
+- family: ảnh gia đình chung
+- baby: có em bé / trẻ nhỏ
+- couple: ảnh vợ chồng / cặp đôi
+- travel: du lịch, danh lam thắng cảnh
+- milestone: khoảnh khắc đặc biệt (sinh nhật, kỷ niệm...)
+Trả về JSON array, ví dụ: ["family","baby"]. Nếu không rõ, trả về ["family"].
+Chỉ JSON, không có gì thêm.`,
+          },
+        ],
+      }],
+    }),
+  })
+
+  if (!res.ok) return ['family']
+  const data = await res.json()
+  const text = data.content?.[0]?.text?.trim() ?? '["family"]'
+  try {
+    const tags = JSON.parse(text) as string[]
+    const valid = tags.filter(t => (VALID_TAGS as readonly string[]).includes(t))
+    return valid.length > 0 ? valid : ['family']
+  } catch {
+    return ['family']
+  }
+}
+
+// ── 4. Generate story/slideshow narrative from a set of photos ────────────
 export async function generatePhotoStory(
   photos: FamilyPhoto[],
   theme?: string
@@ -114,7 +165,7 @@ export async function generatePhotoStory(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       messages: [{
         role: 'user',
@@ -133,7 +184,10 @@ Chỉ JSON, không có gì thêm.`,
     }),
   })
 
-  if (!res.ok) throw new Error(`Story generation error: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Story generation error: ${res.status} ${body}`)
+  }
   const data = await res.json()
   const text = data.content?.[0]?.text?.trim() ?? '{}'
   try {

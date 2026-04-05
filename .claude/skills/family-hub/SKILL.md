@@ -57,12 +57,16 @@ AI features (services/family-ai.ts):
 ## Photo upload flow
 ```
 1. Client reads file → getImageDimensions() + getExifDate()
-2. POST /api/family/upload → returns { uploadUrl, photo }
-3. Client PUTs file directly to R2 uploadUrl
-4. Server saves metadata to KV
-5. Background: Claude Vision generates caption + detects faces
-6. KV updated with caption + faces
+2. User selects tags via the upload tag picker (uploadTags state, default: ['family'])
+3. POST /api/family/upload → body includes tags: uploadTags → returns { uploadUrl, photo }
+4. Client PUTs file directly to R2 uploadUrl
+5. Server saves metadata (incl. selected tags) to KV
+6. Background: Claude Vision generates caption + detects faces
+7. KV updated with caption + faces (tags are NOT overwritten by AI step)
 ```
+
+**Important:** Upload tags come from the dedicated `uploadTags` state (shown as a tag picker in
+the Upload view), NOT from `activeTag` (the filter). These are two separate concerns.
 
 ## Vercel KV key schema
 ```

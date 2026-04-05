@@ -60,12 +60,13 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
     setUploading(true)
     setUploadMsg(`Đang upload ${files.length} ảnh...`)
 
+    const uploadedPhotos: FamilyPhoto[] = []
     for (const file of files) {
       try {
         const dims    = await getImageDimensions(file)
         const takenAt = await getExifDate(file) ?? new Date().toISOString()
 
-        // Request presigned URL
+        // Request presigned URL — tags omitted, AI infers them in the background
         const metaRes = await fetch('/api/family/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,7 +74,6 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
             filename:    file.name,
             contentType: file.type,
             takenAt,
-            tags:        activeTag !== 'all' ? [activeTag] : ['family'],
             uploadedBy:  'me',
             width:       dims.width,
             height:      dims.height,
@@ -92,13 +92,20 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
         })
         if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`)
+
+        // Add to local state immediately so photo appears without reload
+        uploadedPhotos.push(photo)
+        setPhotos(prev => [photo, ...prev])
       } catch (err) {
         console.error('Upload error:', err)
       }
     }
 
     setUploading(false)
-    setUploadMsg(`✓ Upload xong ${files.length} ảnh. AI đang viết caption...`)
+    if (uploadedPhotos.length > 0) {
+      setUploadMsg(`✓ Upload xong ${uploadedPhotos.length} ảnh. AI đang viết caption...`)
+      setView('timeline')  // Switch to timeline to show uploaded photos
+    }
     e.target.value = ''
     router.refresh()
   }
@@ -114,14 +121,17 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(body.error ?? `HTTP ${res.status}`)
+      }
       const { story } = await res.json() as { story: PhotoStory }
       setLocalStories(prev => [story, ...prev])
       setSelected(new Set())
       setView('stories')
     } catch (err) {
       console.error('Story generation error:', err)
-      setStoryError('Không tạo được story. Vui lòng thử lại.')
+      setStoryError(`Không tạo được story: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setGeneratingStory(false)
     }
@@ -197,7 +207,14 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
           {months.length === 0 ? (
             <EmptyPhotos onUpload={() => setView('upload')} />
           ) : (
-            months.map(month => (
+            <>
+            {selected.size === 0 && photos.length >= 2 && (
+              <div style={{ fontSize: 11.5, color: 'var(--ink3)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ opacity: 0.7 }}>💡</span>
+                Bấm vào ảnh để chọn, sau đó tạo story từ các ảnh đã chọn
+              </div>
+            )}
+            {months.map(month => (
               <div key={month} style={{ marginBottom: 28 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink2)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
                   {monthLabel(month)}
@@ -224,7 +241,8 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
                   ))}
                 </div>
               </div>
-            ))
+            ))}
+            </>
           )}
         </div>
       )}
@@ -297,12 +315,45 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
           <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>Sau khi upload, AI sẽ tự động:</div>
-            {['Viết caption tiếng Việt cho từng ảnh', 'Nhận diện bé / vợ / chồng trong ảnh', 'Gắn tag dựa trên nội dung ảnh'].map(item => (
+            {['Viết caption tiếng Việt cho từng ảnh', 'Nhận diện bé / vợ / chồng trong ảnh', 'Tự động gắn tag (japan · baby · couple · travel · milestone...)'].map(item => (
               <div key={item} style={{ fontSize: 12.5, color: 'var(--ink2)', padding: '3px 0', display: 'flex', gap: 8 }}>
                 <span style={{ color: 'var(--green)' }}>✓</span> {item}
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Floating action bar — appears when photos are selected in timeline */}
+      {view === 'timeline' && selected.size > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--ink)', color: '#fff', borderRadius: 14,
+          padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.25)', zIndex: 50, whiteSpace: 'nowrap',
+        }}>
+          <span style={{ fontSize: 13, opacity: 0.85 }}>
+            {selected.size} ảnh đã chọn
+          </span>
+          <button
+            onClick={generateStory}
+            disabled={generatingStory || selected.size < 2}
+            title={selected.size < 2 ? 'Cần ít nhất 2 ảnh' : ''}
+            style={{
+              padding: '6px 14px', borderRadius: 8, fontSize: 12.5, cursor: selected.size < 2 ? 'not-allowed' : 'pointer',
+              background: selected.size < 2 ? 'rgba(255,255,255,0.15)' : '#EEEDFE',
+              color: selected.size < 2 ? 'rgba(255,255,255,0.4)' : '#3C3489',
+              border: 'none', fontWeight: 500,
+            }}
+          >
+            {generatingStory ? 'Đang tạo...' : `✨ Tạo story${selected.size < 2 ? ' (cần 2+ ảnh)' : ''}`}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 16, padding: '0 2px', lineHeight: 1 }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
