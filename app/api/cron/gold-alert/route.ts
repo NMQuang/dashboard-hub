@@ -12,8 +12,10 @@
  */
 import { NextResponse } from 'next/server'
 import { triggerWorkflow } from '@/services/dify'
-import { fetchGoldPrice } from '@/services/market'
-import { saveAlert, getAlerts } from '@/lib/alert-store'
+import { fetchGoldPrice, fetchVNGold } from '@/services/market'
+import { fetchGoldNews } from '@/services/goldNews'
+import { GOLD_HOLDINGS, calcGoldPortfolio } from '@/lib/familyGold'
+import { saveAlert } from '@/lib/alert-store'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -65,6 +67,20 @@ export async function GET(req: Request) {
 
     const direction = change >= 0 ? 'UP' : 'DOWN'
     const now = new Date()
+
+    // Fetch enrichment data in parallel — never block the alert if these fail
+    const [vnGoldResult, newsResult] = await Promise.allSettled([
+      fetchVNGold(),
+      fetchGoldNews(),
+    ])
+
+    const vnGold = vnGoldResult.status === 'fulfilled' ? vnGoldResult.value : []
+    const news = newsResult.status === 'fulfilled' ? newsResult.value : []
+
+    const mieng = vnGold.find((g) => g.key === 'mieng')
+    const nhan = vnGold.find((g) => g.key === 'nhan')
+    const portfolio = calcGoldPortfolio(GOLD_HOLDINGS, vnGold)
+
     const result = await triggerWorkflow(workflowId, {
       recipient_email: 'quangnmjp96@gmail.com',
       symbol: 'XAU/USD',
@@ -73,6 +89,21 @@ export async function GET(req: Request) {
       last_price: lastPrice.toFixed(2),
       change_pct: (change * 100).toFixed(2),
       triggered_at: now.toLocaleString('en-GB', { timeZone: 'Asia/Tokyo' }) + ' JST',
+      // VN domestic gold
+      vn_gold_mieng_buy: mieng?.buy ?? 0,
+      vn_gold_mieng_sell: mieng?.sell ?? 0,
+      vn_gold_nhan_buy: nhan?.buy ?? 0,
+      vn_gold_nhan_sell: nhan?.sell ?? 0,
+      // Top news headlines (up to 3)
+      top_news_1: news[0]?.title ?? '',
+      top_news_2: news[1]?.title ?? '',
+      top_news_3: news[2]?.title ?? '',
+      // Family portfolio snapshot
+      portfolio_qty: portfolio.totalQuantity,
+      portfolio_cost_vnd: portfolio.totalCostVND,
+      portfolio_value_vnd: portfolio.totalCurrentVND,
+      portfolio_pnl_vnd: portfolio.totalPnlVND,
+      portfolio_pnl_pct: portfolio.totalPnlPct.toFixed(2),
     })
 
     await saveAlert({

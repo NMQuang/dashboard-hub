@@ -158,14 +158,14 @@ export default function GoldLive({
         <div style={{ height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <div className="skeleton" style={{ width: '100%', height: 200, borderRadius: 8 }} />
           <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4 }}>
-            Building chart · refreshes every 60s
+            Building chart · refreshes every 5 min
           </div>
         </div>
       )}
 
       <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', marginTop: 10, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
         <span>XAU/USD · via GoldAPI.io</span>
-        <span>auto-refresh every 5 min</span>
+        <span>auto-refresh · 5 min</span>
       </div>
     </div>
   )

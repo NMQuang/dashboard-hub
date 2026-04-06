@@ -12,7 +12,7 @@ const GoldLive = dynamic(() => import('@/components/widgets/GoldLive'), { ssr: f
 const AssetChart = dynamic(() => import('@/components/widgets/AssetChart'), { ssr: false })
 
 export const metadata: Metadata = { title: 'Market' }
-export const revalidate = 3600
+export const revalidate = 60
 
 async function getSnapshot() {
   try { return await fetchMarketSnapshot(DEFAULT_WATCHLIST) }
@@ -57,44 +57,63 @@ export default async function MarketPage() {
         </h1>
       </div>
 
-      {/* ── Vietnam Domestic Gold ────────────────────────────────────────────── */}
+      {/* ── Vietnam Domestic Gold (summary) ──────────────────────────────────── */}
       <Card style={{ marginBottom: 24 }}>
         <CardHeader>
           <CardTitle>Vietnam Domestic Gold</CardTitle>
-          <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)' }}>Đơn vị: VND / lượng (cây) · Miếng & Nhẫn 24k</span>
+          <a
+            href="/invest/domestic-gold"
+            style={{ fontSize: 11, color: 'var(--ink3)', textDecoration: 'none' }}
+          >
+            View full →
+          </a>
         </CardHeader>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '0 24px' }}>
-          {snapshot?.vnGold?.map((g) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+          {(snapshot?.vnGold ?? []).filter(g => g.key === 'mieng' || g.key === 'nhan').map((g) => {
             const isUp = g.change24h >= 0
+            const hasChange = g.change24h !== 0
             return (
               <div key={g.key} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 0', borderBottom: '1px solid var(--border)',
+                background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{g.brand}</span>
-                    <span className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220 }}>
-                      {g.sourceName}{g.source ? ` · ${g.source}` : ''}
-                    </span>
-                  </div>
-                  {g.change24h !== 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{g.brand}</span>
+                  <span className="font-mono" style={{ fontSize: 10, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    VND / lượng
+                  </span>
+                  {hasChange && (
                     <span className="font-mono" style={{
-                      fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
+                      fontSize: 10, fontWeight: 600,
+                      padding: '1px 6px', borderRadius: 4, alignSelf: 'flex-start',
                       color: isUp ? 'var(--green)' : 'var(--red)',
                       background: isUp ? 'var(--green-bg)' : 'var(--red-bg)',
                     }}>
                       {isUp ? '+' : ''}{g.change24h.toFixed(2)}%
                     </span>
-                  ) : null}
+                  )}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>Buy: {g.buy > 0 ? `${g.buy.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
-                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink)' }}>Sell: {g.sell > 0 ? `${g.sell.toLocaleString('vi-VN')} ₫/lượng` : '- ₫/lượng'}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                  <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink2)' }}>
+                    {g.buy > 0 ? g.buy.toLocaleString('vi-VN') + ' ₫' : '—'}
+                  </span>
+                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+                    {g.sell > 0 ? g.sell.toLocaleString('vi-VN') + ' ₫' : '—'}
+                  </span>
                 </div>
               </div>
             )
           })}
+          {(snapshot?.vnGold ?? []).filter(g => g.key === 'mieng' || g.key === 'nhan').length === 0 && (
+            <div style={{ padding: '12px 0' }}>
+              <span className="font-mono" style={{ fontSize: 11.5, color: 'var(--ink3)' }}>
+                Không có dữ liệu —{' '}
+                <a href="/invest/domestic-gold" style={{ color: 'var(--ink2)', textDecoration: 'none' }}>
+                  xem chi tiết →
+                </a>
+              </span>
+            </div>
+          )}
         </div>
       </Card>
 

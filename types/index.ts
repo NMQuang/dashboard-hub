@@ -26,6 +26,36 @@ export interface MarketSnapshot {
   vnGold: VNGoldPrice[]
 }
 
+// ── Gold News ────────────────────────────────────
+export interface GoldNewsItem {
+  title: string
+  url: string
+  publishedAt: string   // ISO string
+  source: string        // e.g. 'VnExpress'
+}
+
+// ── Family Gold Holdings ─────────────────────────
+// type must match VNGoldPrice.key values from services/market.ts GOLD_GROUPS
+export type GoldType = 'mieng' | 'nhan' | 'nguyen_lieu' | 'nu_trang'
+
+export interface GoldHolding {
+  id: string
+  purchasedAt: string   // YYYY-MM-DD
+  type: GoldType
+  quantity: number      // lượng (tael) — 1 lượng = 37.5g
+  buyPrice: number      // VND / lượng at purchase time
+  note?: string
+}
+
+export interface GoldPortfolioSummary {
+  totalQuantity: number
+  totalCostVND: number
+  totalCurrentVND: number
+  totalPnlVND: number
+  totalPnlPct: number   // %
+  updatedAt: string
+}
+
 // ── Weather ──────────────────────────────────────
 export interface WeatherData {
   city: string
