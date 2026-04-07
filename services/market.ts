@@ -220,7 +220,7 @@ export async function fetchVNGold(): Promise<VNGoldPrice[]> {
         : (d3.status === 'fulfilled' && d3.value) ? d3.value : null
     }
 
-    if (!today) return mockVNGold()
+    if (!today) return []
 
     const updatedAt = new Date().toISOString()
 
@@ -267,7 +267,7 @@ export async function fetchVNGold(): Promise<VNGoldPrice[]> {
       },
     ]
   } catch {
-    return mockVNGold()
+    return []
   }
 }
 
@@ -285,7 +285,7 @@ export async function fetchMarketSnapshot(watchlist: string[]): Promise<MarketSn
     gold: gold.status === 'fulfilled' ? gold.value : mockGold(),
     coins: coins.status === 'fulfilled' ? coins.value : [],
     forex: forex.status === 'fulfilled' ? forex.value : [],
-    vnGold: vnGold.status === 'fulfilled' ? vnGold.value : mockVNGold(),
+    vnGold: vnGold.status === 'fulfilled' ? vnGold.value : [],
   }
 }
 
@@ -301,12 +301,3 @@ function mockGold(): AssetPrice {
   }
 }
 
-function mockVNGold(): VNGoldPrice[] {
-  const updatedAt = new Date().toISOString()
-  return [
-    { key: 'mieng',       brand: 'Vàng Miếng BTMC', sourceName: 'VÀNG MIẾNG VRTL BẢO TÍN MINH CHÂU, 999.9', source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
-    { key: 'nhan',        brand: 'Vàng Nhẫn',        sourceName: 'NHẪN TRÒN TRƠN BẢO TÍN MINH CHÂU, 999.9', source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
-    { key: 'nguyen_lieu', brand: 'Vàng SJC',          sourceName: 'VÀNG MIẾNG SJC (qua BTMC)',               source: 'SJC',  buy: 0, sell: 0, change24h: 0, updatedAt },
-    { key: 'nu_trang',    brand: 'Vàng Nữ Trang',     sourceName: 'NỮ TRANG VÀNG BẢO TÍN MINH CHÂU',        source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
-  ]
-}
