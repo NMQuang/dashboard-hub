@@ -10,7 +10,7 @@ interface HomeClientProps {
 
 export default function HomeClient({ daysLeft }: HomeClientProps) {
   const [mounted, setMounted] = useState(false)
-  const [greeting, setGreeting] = useState({ jp: 'こんにちは', en: 'Hello' })
+  const [greeting, setGreeting] = useState(greetingJapanese)
   const [dateStr, setDateStr] = useState('')
 
   useEffect(() => {
