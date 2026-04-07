@@ -7,7 +7,12 @@
       "Bash(npm run:*)",
       "Bash(ls .env*)",
       "Bash(npx next:*)",
-      "Bash(node --input-type=module)"
+      "Bash(node --input-type=module)",
+      "Bash(curl -s \"https://btmc.vn/ProductHome/getGoldDate?date=07/04/2026\" -H \"User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36\" -H \"Referer: https://btmc.vn/gia-vang-theo-ngay.html\" -H \"X-Requested-With: XMLHttpRequest\" -H \"Accept: application/json, text/javascript, */*; q=0.01\")",
+      "Bash(curl -s \"https://vnexpress.net/rss/kinh-doanh/vang.rss\" -H \"User-Agent: Mozilla/5.0 \\(compatible; DashboardBot/1.0\\)\")",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(echo \"no .env.local or no safe vars\" ls D:/OTHER/Dashboard/dashboard-hub/.env*)"
     ]
   }
 }
