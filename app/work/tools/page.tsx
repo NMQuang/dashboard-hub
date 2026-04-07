@@ -46,6 +46,7 @@ const TOOLS: Tool[] = [
     subLinks: [
       { label: 'Morning Brief', icon: '☀', href: 'https://cloud.dify.ai/app/3d242c17-3120-4833-a343-e68576605210/workflow' },
       { label: 'Gold Alert',    icon: '◎', href: 'https://cloud.dify.ai/app/71b4d553-a466-4690-90de-1a059b16cd50/workflow' },
+      { label: 'Gold Alert VN', icon: '◈', href: 'https://cloud.dify.ai/app/b93b7659-b8ed-4ef1-bcf1-493d6c6a2b83/workflow' },
     ],
   },
 ]
