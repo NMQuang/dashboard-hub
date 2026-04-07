@@ -68,7 +68,7 @@ export async function fetchCryptoPrices(symbols: string[]): Promise<AssetPrice[]
     `https://api.coingecko.com/api/v3/simple/price` +
     `?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`
 
-  const res = await fetch(url, { headers, next: { revalidate: 3600 } })
+  const res = await fetch(url, { headers, next: { revalidate: 60 } })
   if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
   const data = await res.json()
 
@@ -115,146 +115,157 @@ export async function fetchForex(): Promise<AssetPrice[]> {
     }))
 }
 
-// ── Vietnam Domestic Gold from single official source (BTMC) ──────────────
-type RawGoldRow = {
-  source: string
-  name: string
-  buy: number
-  sell: number
+// ── Vietnam Domestic Gold via BTMC JSON API ───────────────────────────────
+//
+// BTMC loads prices via JavaScript on their public page.
+// The underlying API endpoint returns JSON directly.
+//
+// Endpoint: GET https://btmc.vn/ProductHome/getGoldDate?date=DD/MM/YYYY
+// Unit:     raw value × 10,000 = VND per lượng (37.5g)
+// Values:   HTML-wrapped, e.g. "<b>16810</b>" → 168,100,000 VND/lượng
+
+// BTMC API types
+interface BTMCApiData {
+  btmcvangmiengmua: string | null
+  btmcvangmiengban: string | null
+  btmcvangnhanmua: string | null
+  btmcvangnhanban: string | null
+  btmcvangquamungmua: string | null
+  btmcvangquamungban: string | null
+  sjcmua: string | null
+  sjcban: string | null
+  trangsucmua: string | null
+  trangsucban: string | null
+  trangsucmua1: string | null
+  trangsucban1: string | null
+  vangnguyenlieumua: string | null
+  vangnguyenlieuban: string | null
+  xemchitiet: string | null
 }
 
-const BTMC_GOLD_URL = 'https://btmc.vn/gia-vang-theo-ngay.html'
-
-const GOLD_GROUPS: Array<{
-  key: string
-  label: string
-  keywords: string[]
-}> = [
-    {
-      key: 'mieng',
-      label: 'Vàng Miếng',
-      keywords: ['vàng miếng', 'miếng', 'sjc', 'vrtl'],
-    },
-    {
-      key: 'nhan',
-      label: 'Vàng Nhẫn',
-      keywords: ['nhẫn', 'nhẫn tròn', 'tròn trơn', 'bản vị nhẫn'],
-    },
-    {
-      key: 'nguyen_lieu',
-      label: 'Vàng 24k / Nguyên liệu',
-      keywords: ['24k', '999.9', '99.99', '99,99', 'nguyên liệu'],
-    },
-    {
-      key: 'nu_trang',
-      label: 'Vàng Nữ Trang',
-      keywords: ['nữ trang', 'trang sức'],
-    },
-  ]
-
-function parseVnNumber(input: string): number {
-  const raw = String(input).trim()
-  const compact = raw.replace(/\.(?=\d{3}(\D|$))/g, '').replace(/,/g, '')
-  const numeric = compact.replace(/[^\d]/g, '')
-  const value = Number(numeric)
-  if (!Number.isFinite(value) || value <= 0) return 0
-  return value < 1_000_000 ? value * 1_000 : value
+interface BTMCApiResponse {
+  Data: BTMCApiData
 }
 
-function cleanupName(input: string): string {
-  return input.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim()
+const BTMC_UNIT = 10_000 // multiply raw integer by this to get VND per lượng
+
+const BTMC_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  'Referer': 'https://btmc.vn/gia-vang-theo-ngay.html',
+  'X-Requested-With': 'XMLHttpRequest',
+  'Accept': 'application/json, text/javascript, */*; q=0.01',
+} as const
+
+// Strip HTML tags and multiply by unit multiplier
+function parseBtmcValue(raw: string | null | undefined): number {
+  if (!raw) return 0
+  const numeric = raw.replace(/<[^>]+>/g, '').replace(/[,.\s]/g, '').trim()
+  const n = Number(numeric)
+  return Number.isFinite(n) && n > 0 ? n * BTMC_UNIT : 0
 }
 
-function dedupeRawRows(rows: RawGoldRow[]): RawGoldRow[] {
-  const map = new Map<string, RawGoldRow>()
-  for (const row of rows) {
-    const key = `${row.source}::${row.name.toLowerCase()}`
-    if (!map.has(key)) map.set(key, row)
+// Returns a date in Vietnam timezone (UTC+7) as DD/MM/YYYY, offset by daysAgo
+function getVnDateString(daysAgo = 0): string {
+  const now = new Date()
+  const vnMs = now.getTime() + 7 * 60 * 60 * 1000 - daysAgo * 24 * 60 * 60 * 1000
+  const vnTime = new Date(vnMs)
+  const day = String(vnTime.getUTCDate()).padStart(2, '0')
+  const month = String(vnTime.getUTCMonth() + 1).padStart(2, '0')
+  const year = vnTime.getUTCFullYear()
+  return `${day}/${month}/${year}`
+}
+
+// Fetches BTMC data for a specific date. Returns null if no data (weekend / holiday).
+async function fetchBtmcForDate(dateStr: string): Promise<BTMCApiData | null> {
+  try {
+    const url = `https://btmc.vn/ProductHome/getGoldDate?date=${encodeURIComponent(dateStr)}`
+    const res = await fetch(url, { headers: BTMC_HEADERS, next: { revalidate: 1800 } })
+    if (!res.ok) return null
+    const json = await res.json() as BTMCApiResponse
+    const d = json.Data
+    // Treat null/empty response as "no data for this date"
+    return (d.btmcvangmiengban ?? d.btmcvangnhanban ?? d.sjcban) ? d : null
+  } catch {
+    return null
   }
-  return Array.from(map.values())
 }
 
-function parseBTMCRows(html: string): RawGoldRow[] {
-  const compact = cleanupName(html.replace(/<[^>]+>/g, ' '))
-  const rows: RawGoldRow[] = []
-
-  const rowPattern = /([A-ZÀ-Ỵa-zà-ỵ0-9./,&()\-\s]{4,140}?)\s+(\d{2,3}(?:[.,]\d{3}){0,3})\s+(\d{2,3}(?:[.,]\d{3}){0,3})/g
-  for (const match of Array.from(compact.matchAll(rowPattern))) {
-    const name = cleanupName(match[1])
-    const lower = name.toLowerCase()
-    const buy = parseVnNumber(match[2])
-    const sell = parseVnNumber(match[3])
-
-    if (!name || buy <= 0 || sell <= 0) continue
-    if (name.length < 4 || name.length > 120) continue
-    if (/giá vàng|khu vực|hanoi|đvt|vnđ|read more|xem thêm|cập nhật/i.test(lower)) continue
-    if (/ngày \d{1,2}[/-]\d{1,2}[/-]\d{4}/i.test(lower)) continue
-
-    rows.push({ source: 'BTMC', name, buy, sell })
-  }
-
-  return dedupeRawRows(rows)
-}
-
-function scoreRow(row: RawGoldRow, group: (typeof GOLD_GROUPS)[number]): number {
-  const name = row.name.toLowerCase()
-  let score = 0
-
-  for (const keyword of group.keywords) {
-    if (name.includes(keyword.toLowerCase())) score += keyword.length * 3
-  }
-
-  if (group.key === 'mieng' && /nhẫn|nữ trang|trang sức|nguyên liệu/i.test(name)) score -= 20
-  if (group.key === 'nhan' && /nữ trang|trang sức|nguyên liệu/i.test(name)) score -= 12
-  if (group.key === 'nguyen_lieu' && /nhẫn|nữ trang|trang sức/i.test(name)) score -= 8
-  if (group.key === 'nu_trang' && /nhẫn|nguyên liệu/i.test(name)) score -= 8
-
-  return score
-}
-
-function mapRowsToGoldCards(rows: RawGoldRow[]): VNGoldPrice[] {
-  const updatedAt = new Date().toISOString()
-
-  return GOLD_GROUPS.map((group) => {
-    const best = rows
-      .map((row) => ({ row, score: scoreRow(row, group) }))
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score)[0]?.row
-
-    return {
-      key: group.key,
-      brand: group.label,
-      sourceName: best?.name ?? '—',
-      source: 'BTMC',
-      buy: best?.buy ?? 0,
-      sell: best?.sell ?? 0,
-      change24h: 0,
-      updatedAt,
-    }
-  })
-}
-
-async function fetchBTMCGoldRows(): Promise<RawGoldRow[]> {
-  const res = await fetch(BTMC_GOLD_URL, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; MyDashboardBot/1.0)',
-      Accept: 'text/html,application/xhtml+xml',
-    },
-    next: { revalidate: 1800 },
-  })
-  if (!res.ok) throw new Error(`BTMC ${res.status}`)
-  const html = await res.text()
-  return parseBTMCRows(html)
+// % change in sell price between today and previous trading day
+function calcChange(todaySell: string | null | undefined, prevSell: string | null | undefined): number {
+  const t = parseBtmcValue(todaySell)
+  const p = parseBtmcValue(prevSell)
+  if (t <= 0 || p <= 0) return 0
+  return ((t - p) / p) * 100
 }
 
 export async function fetchVNGold(): Promise<VNGoldPrice[]> {
   try {
-    const rows = await fetchBTMCGoldRows()
-    if (!rows.length) return mockVNGold()
+    // Fetch today and yesterday in parallel
+    const [todayResult, prevResult] = await Promise.allSettled([
+      fetchBtmcForDate(getVnDateString(0)),
+      fetchBtmcForDate(getVnDateString(1)),
+    ])
 
-    const cards = mapRowsToGoldCards(rows)
-    const hasRealData = cards.some((item) => item.buy > 0 && item.sell > 0)
-    return hasRealData ? cards : mockVNGold()
+    const today = todayResult.status === 'fulfilled' ? todayResult.value : null
+    let prev = prevResult.status === 'fulfilled' ? prevResult.value : null
+
+    // BTMC closes on weekends/holidays — walk back up to 3 more days to find last trading day
+    if (!prev) {
+      const [d2, d3] = await Promise.allSettled([
+        fetchBtmcForDate(getVnDateString(2)),
+        fetchBtmcForDate(getVnDateString(3)),
+      ])
+      prev = (d2.status === 'fulfilled' && d2.value)
+        ? d2.value
+        : (d3.status === 'fulfilled' && d3.value) ? d3.value : null
+    }
+
+    if (!today) return mockVNGold()
+
+    const updatedAt = new Date().toISOString()
+
+    return [
+      {
+        key: 'mieng',
+        brand: 'Vàng Miếng BTMC',
+        sourceName: 'VÀNG MIẾNG VRTL BẢO TÍN MINH CHÂU, 999.9',
+        source: 'BTMC',
+        buy: parseBtmcValue(today.btmcvangmiengmua),
+        sell: parseBtmcValue(today.btmcvangmiengban),
+        change24h: calcChange(today.btmcvangmiengban, prev?.btmcvangmiengban),
+        updatedAt,
+      },
+      {
+        key: 'nhan',
+        brand: 'Vàng Nhẫn',
+        sourceName: 'NHẪN TRÒN TRƠN BẢO TÍN MINH CHÂU, 999.9',
+        source: 'BTMC',
+        buy: parseBtmcValue(today.btmcvangnhanmua),
+        sell: parseBtmcValue(today.btmcvangnhanban),
+        change24h: calcChange(today.btmcvangnhanban, prev?.btmcvangnhanban),
+        updatedAt,
+      },
+      {
+        key: 'nguyen_lieu',
+        brand: 'Vàng SJC',
+        sourceName: 'VÀNG MIẾNG SJC (qua BTMC)',
+        source: 'SJC',
+        buy: parseBtmcValue(today.sjcmua),
+        sell: parseBtmcValue(today.sjcban),
+        change24h: calcChange(today.sjcban, prev?.sjcban),
+        updatedAt,
+      },
+      {
+        key: 'nu_trang',
+        brand: 'Vàng Nữ Trang',
+        sourceName: 'NỮ TRANG VÀNG BẢO TÍN MINH CHÂU',
+        source: 'BTMC',
+        buy: parseBtmcValue(today.trangsucmua),
+        sell: parseBtmcValue(today.trangsucban),
+        change24h: calcChange(today.trangsucban, prev?.trangsucban),
+        updatedAt,
+      },
+    ]
   } catch {
     return mockVNGold()
   }
@@ -293,45 +304,9 @@ function mockGold(): AssetPrice {
 function mockVNGold(): VNGoldPrice[] {
   const updatedAt = new Date().toISOString()
   return [
-    {
-      key: 'mieng',
-      brand: 'Vàng Miếng',
-      sourceName: 'VÀNG MIẾNG VRTL BẢO TÍN MINH CHÂU, 999.9 (24k)',
-      source: 'BTMC',
-      buy: 0,
-      sell: 0,
-      change24h: 0,
-      updatedAt,
-    },
-    {
-      key: 'nhan',
-      brand: 'Vàng Nhẫn',
-      sourceName: 'NHẪN TRÒN TRƠN BẢO TÍN MINH CHÂU, 999.9 (24k)',
-      source: 'BTMC',
-      buy: 0,
-      sell: 0,
-      change24h: 0,
-      updatedAt,
-    },
-    {
-      key: 'nguyen_lieu',
-      brand: 'Vàng 24k / Nguyên liệu',
-      sourceName: 'QUÀ MỪNG BẢN VỊ VÀNG BẢO TÍN MINH CHÂU, 999.9 (24k)',
-      source: 'BTMC',
-      buy: 0,
-      sell: 0,
-      change24h: 0,
-      updatedAt,
-    },
-    {
-      key: 'nu_trang',
-      brand: 'Vàng Nữ Trang',
-      sourceName: 'NỮ TRANG VÀNG 999.9 / 24k',
-      source: 'BTMC',
-      buy: 0,
-      sell: 0,
-      change24h: 0,
-      updatedAt,
-    },
+    { key: 'mieng',       brand: 'Vàng Miếng BTMC', sourceName: 'VÀNG MIẾNG VRTL BẢO TÍN MINH CHÂU, 999.9', source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
+    { key: 'nhan',        brand: 'Vàng Nhẫn',        sourceName: 'NHẪN TRÒN TRƠN BẢO TÍN MINH CHÂU, 999.9', source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
+    { key: 'nguyen_lieu', brand: 'Vàng SJC',          sourceName: 'VÀNG MIẾNG SJC (qua BTMC)',               source: 'SJC',  buy: 0, sell: 0, change24h: 0, updatedAt },
+    { key: 'nu_trang',    brand: 'Vàng Nữ Trang',     sourceName: 'NỮ TRANG VÀNG BẢO TÍN MINH CHÂU',        source: 'BTMC', buy: 0, sell: 0, change24h: 0, updatedAt },
   ]
 }

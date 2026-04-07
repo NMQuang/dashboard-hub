@@ -93,6 +93,20 @@ export default function AssetChart({
   const [history, setHistory] = useState<HistoryPoint[]>([])
   const [chartTimedOut, setChartTimedOut] = useState(false)
 
+  // Pre-load 24h hourly history from CoinGecko on mount
+  useEffect(() => {
+    fetch(`/api/chart/${symbol}`)
+      .then(r => r.json())
+      .then((points: HistoryPoint[]) => {
+        if (Array.isArray(points) && points.length >= 2) {
+          historyRef.current = points
+          setHistory([...points])
+          setChartTimedOut(false)
+        }
+      })
+      .catch(() => {})
+  }, [symbol])
+
   // After 3 min with < 2 points → show empty state
   useEffect(() => {
     const t = setTimeout(() => {

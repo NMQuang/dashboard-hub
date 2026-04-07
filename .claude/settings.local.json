@@ -5,7 +5,9 @@
       "Bash(wc:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run:*)",
-      "Bash(ls .env*)"
+      "Bash(ls .env*)",
+      "Bash(npx next:*)",
+      "Bash(node --input-type=module)"
     ]
   }
 }
