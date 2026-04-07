@@ -9,7 +9,7 @@ Emails will be sent to **quangnmjp96@gmail.com** when each workflow fires.
 | Workflow | Trigger | Env var |
 |---|---|---|
 | Morning Market Brief | Daily 07:00 JST | `DIFY_MORNING_BRIEF_WORKFLOW_ID` |
-| Gold Price Alert | Every 30 min (if ±1.5%) | `DIFY_GOLD_ALERT_WORKFLOW_ID` |
+| Gold Price Alert (Báo Giá Vàng Sáng) | Daily 07:00 ICT / 00:00 UTC | `DIFY_GOLD_ALERT_WORKFLOW_ID` |
 | Crypto Daily Digest | Daily 08:00 JST | `DIFY_CRYPTO_DIGEST_WORKFLOW_ID` |
 | JPY/VND Weekly Digest | Mon 09:00 JST | `DIFY_FX_DIGEST_WORKFLOW_ID` |
 
@@ -50,18 +50,19 @@ Emails will be sent to **quangnmjp96@gmail.com** when each workflow fires.
 
 ---
 
-### Workflow 2: Gold Price Alert
+### Workflow 2: Gold Price Alert (Báo Giá Vàng Sáng)
 
-**Inputs:** `symbol`, `direction`, `current_price`, `last_price`, `change_pct`, `triggered_at`, `recipient_email`
+> **Full guide:** See [`docs/dify-gold-alert-workflow.md`](./dify-gold-alert-workflow.md) for the complete step-by-step setup.
 
-**Nodes:**
-1. **LLM node** — Brief alert message:
-   ```
-   Write a short 2-sentence gold price alert in English.
-   Gold {{direction}}: ${{last_price}} → ${{current_price}} ({{change_pct}}%) at {{triggered_at}}
-   ```
-2. **Email node** — Subject: `🔔 Gold {{direction}} Alert: {{change_pct}}%`
-3. **End node**
+This workflow has been upgraded to a **daily Vietnam gold morning brief** (fires at 07:00 ICT / 00:00 UTC) instead of a threshold-based alert.
+
+**Env var:** `DIFY_GOLD_ALERT_WORKFLOW_ID`
+
+**Summary of inputs (29 fields):** date/time, XAU/USD international price, 4 VN gold types (miếng, nhẫn, SJC, nữ trang) each with buy/sell/change%, top 3 news headlines + URLs, family portfolio snapshot.
+
+**Nodes:** Start → LLM (Vietnamese morning brief) → HTTP (Resend email) → End
+
+Refer to [dify-gold-alert-workflow.md](./dify-gold-alert-workflow.md) for the exact node configuration, system/user prompts, and Resend HTTP node setup.
 
 ---
 

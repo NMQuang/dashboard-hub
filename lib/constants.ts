@@ -31,6 +31,7 @@ export const NAV_ITEMS = [
     group: 'Invest',
     items: [
       { label: 'Market', href: '/invest/market', icon: '◎' },
+      { label: 'VN Gold', href: '/invest/domestic-gold', icon: '◈' },
       { label: 'Alerts', href: '/invest/alerts', icon: '◉' },
       { label: 'Watchlist', href: '/invest/watchlist', icon: '☆' },
     ],

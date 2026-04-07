@@ -4,6 +4,7 @@ description: >
   Add or update market data features: gold prices, crypto prices, forex, charts,
   alerts. Triggered when the user asks to "add price chart", "show live gold price",
   "add a new coin to watchlist", "build the market page", "set up price alerts".
+  For Vietnam domestic gold, family portfolio, or VN gold news → use the vn-gold skill instead.
 ---
 
 # Skill: Market Data Integration
