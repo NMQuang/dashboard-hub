@@ -96,6 +96,14 @@ const ACCOUNTS: Account[] = [
     color: '#eefcf5',
     category: 'Code & Deploy',
   },
+  {
+    label: 'Supabase',
+    desc: 'Postgres Database, Auth & Storage',
+    url: 'https://supabase.com/dashboard',
+    icon: '🗄',
+    color: '#eefcf5',
+    category: 'Code & Deploy',
+  },
   // Design
   {
     label: 'Figma',
