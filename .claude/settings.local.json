@@ -12,7 +12,8 @@
       "Bash(curl -s \"https://vnexpress.net/rss/kinh-doanh/vang.rss\" -H \"User-Agent: Mozilla/5.0 \\(compatible; DashboardBot/1.0\\)\")",
       "Bash(curl:*)",
       "Bash(node:*)",
-      "Bash(echo \"no .env.local or no safe vars\" ls D:/OTHER/Dashboard/dashboard-hub/.env*)"
+      "Bash(echo \"no .env.local or no safe vars\" ls D:/OTHER/Dashboard/dashboard-hub/.env*)",
+      "Bash(npm install:*)"
     ]
   }
 }
