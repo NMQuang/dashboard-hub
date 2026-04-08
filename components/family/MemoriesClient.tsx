@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import type { FamilyPhoto, PhotoStory } from '@/types/family'
 
 interface Tag { value: string; label: string; count: number }
@@ -24,6 +25,7 @@ function monthLabel(ym: string) {
 }
 
 export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }: Props) {
+  const router = useRouter()
   const [activeTag, setActiveTag] = useState('all')
   const [view, setView] = useState<'timeline' | 'stories' | 'upload'>('timeline')
   const [photos, setPhotos] = useState(initialPhotos)
@@ -32,6 +34,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
   const [uploadMsg, setUploadMsg] = useState('')
   const [lightbox, setLightbox] = useState<FamilyPhoto | null>(null)
   const [generatingStory, setGeneratingStory] = useState(false)
+  const [storyError, setStoryError] = useState('')
   const [localStories, setLocalStories] = useState(stories)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,8 +45,9 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
   // Group filtered photos by month
   const filteredByMonth: Record<string, FamilyPhoto[]> = {}
-  for (const p of [...filtered].sort((a, b) => b.takenAt.localeCompare(a.takenAt))) {
-    const m = p.takenAt.slice(0, 7)
+  for (const p of filtered.filter((x): x is FamilyPhoto => !!x).sort((a, b) => (b.takenAt ?? '').localeCompare(a.takenAt ?? ''))) {
+    const m = (p.takenAt ?? '').slice(0, 7)
+    if (!m) continue
     if (!filteredByMonth[m]) filteredByMonth[m] = []
     filteredByMonth[m].push(p)
   }
@@ -56,37 +60,41 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
     setUploading(true)
     setUploadMsg(`Đang upload ${files.length} ảnh...`)
 
+    const uploadedPhotos: FamilyPhoto[] = []
     for (const file of files) {
       try {
-        // Get image dimensions
-        const dims = await getImageDimensions(file)
+        const dims    = await getImageDimensions(file)
         const takenAt = await getExifDate(file) ?? new Date().toISOString()
 
-        // Request presigned URL
+        // Request presigned URL — tags omitted, AI infers them in the background
         const metaRes = await fetch('/api/family/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            filename: file.name,
+            filename:    file.name,
             contentType: file.type,
             takenAt,
-            tags: activeTag !== 'all' ? [activeTag] : ['family'],
-            uploadedBy: 'me',
-            width: dims.width,
-            height: dims.height,
-            sizeBytes: file.size,
+            uploadedBy:  'me',
+            width:       dims.width,
+            height:      dims.height,
+            sizeBytes:   file.size,
           }),
         })
 
+        if (!metaRes.ok) throw new Error(`Upload API error: ${metaRes.status}`)
         const { uploadUrl, photo } = await metaRes.json() as { uploadUrl: string; photo: FamilyPhoto }
+        if (!photo?.id) throw new Error('Invalid photo response from API')
 
         // Direct upload to R2
-        await fetch(uploadUrl, {
+        const putRes = await fetch(uploadUrl, {
           method: 'PUT',
           body: file,
-          headers: { 'Content-Type': file.type },
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
         })
+        if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`)
 
+        // Add to local state immediately so photo appears without reload
+        uploadedPhotos.push(photo)
         setPhotos(prev => [photo, ...prev])
       } catch (err) {
         console.error('Upload error:', err)
@@ -94,25 +102,39 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
     }
 
     setUploading(false)
-    setUploadMsg(`✓ Upload xong ${files.length} ảnh. AI đang viết caption...`)
-    setTimeout(() => setUploadMsg(''), 5000)
+    if (uploadedPhotos.length > 0) {
+      setUploadMsg(`✓ Upload xong ${uploadedPhotos.length} ảnh. AI đang viết caption...`)
+      setView('timeline')  // Switch to timeline to show uploaded photos
+    }
     e.target.value = ''
+    router.refresh()
   }
 
   // Generate story from selected photos
   async function generateStory() {
     if (selected.size < 2) return
     setGeneratingStory(true)
-    const res = await fetch('/api/family/photos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
-    })
-    const { story } = await res.json() as { story: PhotoStory }
-    setLocalStories(prev => [story, ...prev])
-    setSelected(new Set())
-    setView('stories')
-    setGeneratingStory(false)
+    setStoryError('')
+    try {
+      const res = await fetch('/api/family/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate-story', photoIds: Array.from(selected), tag: activeTag !== 'all' ? activeTag : undefined }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(body.error ?? `HTTP ${res.status}`)
+      }
+      const { story } = await res.json() as { story: PhotoStory }
+      setLocalStories(prev => [story, ...prev])
+      setSelected(new Set())
+      setView('stories')
+    } catch (err) {
+      console.error('Story generation error:', err)
+      setStoryError(`Không tạo được story: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setGeneratingStory(false)
+    }
   }
 
   return (
@@ -172,13 +194,27 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
         </div>
       )}
 
+      {/* Story error */}
+      {storyError && (
+        <div style={{ padding: '8px 14px', background: 'var(--red-bg, #FEF2F2)', color: 'var(--red, #DC2626)', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
+          {storyError}
+        </div>
+      )}
+
       {/* ── Timeline view ── */}
       {view === 'timeline' && (
         <div>
           {months.length === 0 ? (
             <EmptyPhotos onUpload={() => setView('upload')} />
           ) : (
-            months.map(month => (
+            <>
+            {selected.size === 0 && photos.length >= 2 && (
+              <div style={{ fontSize: 11.5, color: 'var(--ink3)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ opacity: 0.7 }}>💡</span>
+                Bấm vào ảnh để chọn, sau đó tạo story từ các ảnh đã chọn
+              </div>
+            )}
+            {months.map(month => (
               <div key={month} style={{ marginBottom: 28 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink2)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
                   {monthLabel(month)}
@@ -205,7 +241,8 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
                   ))}
                 </div>
               </div>
-            ))
+            ))}
+            </>
           )}
         </div>
       )}
@@ -224,7 +261,7 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
                 <div key={story.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                   {/* Thumbnail grid from first 4 photos */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, height: 120 }}>
-                    {story.photoIds.slice(0, 4).map(pid => {
+                    {story.photoIds.slice(0, 4).map((pid: string) => {
                       const p = photos.find(x => x.id === pid)
                       return p ? (
                         <img key={pid} src={p.thumbnailUrl || p.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -278,12 +315,45 @@ export default function MemoriesClient({ initialPhotos, byMonth, stories, tags }
 
           <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>Sau khi upload, AI sẽ tự động:</div>
-            {['Viết caption tiếng Việt cho từng ảnh', 'Nhận diện bé / vợ / chồng trong ảnh', 'Gắn tag dựa trên nội dung ảnh'].map(item => (
+            {['Viết caption tiếng Việt cho từng ảnh', 'Nhận diện bé / vợ / chồng trong ảnh', 'Tự động gắn tag (japan · baby · couple · travel · milestone...)'].map(item => (
               <div key={item} style={{ fontSize: 12.5, color: 'var(--ink2)', padding: '3px 0', display: 'flex', gap: 8 }}>
                 <span style={{ color: 'var(--green)' }}>✓</span> {item}
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Floating action bar — appears when photos are selected in timeline */}
+      {view === 'timeline' && selected.size > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--ink)', color: '#fff', borderRadius: 14,
+          padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.25)', zIndex: 50, whiteSpace: 'nowrap',
+        }}>
+          <span style={{ fontSize: 13, opacity: 0.85 }}>
+            {selected.size} ảnh đã chọn
+          </span>
+          <button
+            onClick={generateStory}
+            disabled={generatingStory || selected.size < 2}
+            title={selected.size < 2 ? 'Cần ít nhất 2 ảnh' : ''}
+            style={{
+              padding: '6px 14px', borderRadius: 8, fontSize: 12.5, cursor: selected.size < 2 ? 'not-allowed' : 'pointer',
+              background: selected.size < 2 ? 'rgba(255,255,255,0.15)' : '#EEEDFE',
+              color: selected.size < 2 ? 'rgba(255,255,255,0.4)' : '#3C3489',
+              border: 'none', fontWeight: 500,
+            }}
+          >
+            {generatingStory ? 'Đang tạo...' : `✨ Tạo story${selected.size < 2 ? ' (cần 2+ ảnh)' : ''}`}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 16, padding: '0 2px', lineHeight: 1 }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -318,8 +388,14 @@ function PhotoCell({ photo, selected, onSelect, onClick }: {
   const isJapan = photo.tags.includes('japan')
   return (
     <div style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', outline: selected ? '3px solid var(--blue)' : 'none', outlineOffset: -3 }}>
-      {photo.thumbnailUrl || photo.url ? (
-        <img src={photo.thumbnailUrl || photo.url} alt={photo.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onClick={onClick} />
+      {photo.url ? (
+        <img
+          src={photo.thumbnailUrl || photo.url}
+          alt={photo.caption ?? ''}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onClick={onClick}
+          onError={e => { (e.currentTarget as HTMLImageElement).src = photo.url }}
+        />
       ) : (
         <div style={{ width: '100%', height: '100%', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }} onClick={onClick}>📷</div>
       )}

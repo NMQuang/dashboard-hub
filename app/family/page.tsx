@@ -41,7 +41,7 @@ export default async function FamilyHomePage() {
       <div style={{ marginBottom: 28 }}>
         <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>family</div>
         <h1 style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.03em' }}>
-          Gia đình <span style={{ fontWeight: 300, color: 'var(--ink2)', fontSize: 18 }}>nhà Ba Cafe 🏠</span>
+          Gia đình <span style={{ fontWeight: 300, color: 'var(--ink2)', fontSize: 18 }}>Cafe 🏠</span>
         </h1>
       </div>
 

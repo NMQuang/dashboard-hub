@@ -52,22 +52,30 @@ export async function getPresignedUploadUrl(
   const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`
   const credential      = `${ACCESS_KEY}/${credentialScope}`
 
-  const queryParams = new URLSearchParams({
-    'X-Amz-Algorithm':     'AWS4-HMAC-SHA256',
-    'X-Amz-Credential':    credential,
-    'X-Amz-Date':          amzDate,
-    'X-Amz-Expires':       String(expiresIn),
-    'X-Amz-SignedHeaders': 'host',
-    'X-Amz-Content-SHA256':'UNSIGNED-PAYLOAD',
-  })
+  const safeContentType = contentType || 'application/octet-stream'
+  const signedHeaders   = 'content-type;host'
+
+  // Build params then sort lexicographically — AWS V4 requires sorted canonical query string
+  const rawParams: Record<string, string> = {
+    'X-Amz-Algorithm':      'AWS4-HMAC-SHA256',
+    'X-Amz-Content-SHA256': 'UNSIGNED-PAYLOAD',
+    'X-Amz-Credential':     credential,
+    'X-Amz-Date':           amzDate,
+    'X-Amz-Expires':        String(expiresIn),
+    'X-Amz-SignedHeaders':  signedHeaders,
+  }
+  const canonicalQueryString = Object.keys(rawParams)
+    .sort()
+    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(rawParams[k] as string)}`)
+    .join('&')
 
   const canonicalRequest = [
     'PUT',
-    `/${BUCKET}/${key}`,
-    queryParams.toString(),
-    `host:${host}`,
+    `/${encodeURIComponent(BUCKET)}/${key.split('/').map(encodeURIComponent).join('/')}`,
+    canonicalQueryString,
+    `content-type:${safeContentType}\nhost:${host}`,
     '',
-    'host',
+    signedHeaders,
     'UNSIGNED-PAYLOAD',
   ].join('\n')
 
@@ -86,7 +94,7 @@ export async function getPresignedUploadUrl(
   signingKey = await hmac(signingKey, 'aws4_request')
   const signature = hex(await hmac(signingKey, stringToSign))
 
-  const uploadUrl = `${R2_ENDPOINT}/${BUCKET}/${key}?${queryParams}&X-Amz-Signature=${signature}`
+  const uploadUrl = `${R2_ENDPOINT}/${BUCKET}/${key}?${canonicalQueryString}&X-Amz-Signature=${encodeURIComponent(signature)}`
   const publicUrl = PUBLIC_URL ? `${PUBLIC_URL}/${key}` : `${R2_ENDPOINT}/${BUCKET}/${key}`
 
   return { uploadUrl, publicUrl, key }

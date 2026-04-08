@@ -167,20 +167,40 @@ export async function GET(req: Request): Promise<Response> {
       portfolio_pnl_pct: fmtChange(portfolio.totalPnlPct),
     }
 
-    const raw = await triggerWorkflow(workflowId, inputs) as DifyWorkflowResult
+    const refSell   = mieng?.sell      ?? 0
+    const refChange = mieng?.change24h ?? 0
+    const alertTitle = `Báo Giá Vàng Sáng · ${now.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`
+    const alertSummary = `Vàng Miếng: ${fmtTrieu(refSell)} (${fmtChange(refChange)}%)${news[0] ? ` · ${news[0].title.slice(0, 70)}` : ''}`
+
+    let raw: DifyWorkflowResult
+    try {
+      raw = await triggerWorkflow(workflowId, inputs) as DifyWorkflowResult
+    } catch (difyErr) {
+      // Dify failed — save a failure record so we have visibility, then rethrow
+      console.error('[cron/gold-alert] Dify trigger failed:', difyErr)
+      await saveAlert({
+        action:      'gold-alert',
+        title:       alertTitle,
+        summary:     alertSummary,
+        triggeredAt: now.toISOString(),
+        emailSent:   false,
+        status:      'failed',
+        error:       String(difyErr),
+      })
+      return NextResponse.json({ error: String(difyErr) }, { status: 500 })
+    }
+
     const runId = raw.run_id || raw.workflow_run_id || ''
 
-    const refSell   = mieng?.sell   ?? 0
-    const refChange = mieng?.change24h ?? 0
-
     await saveAlert({
-      action: 'gold-alert',
-      title: `Báo Giá Vàng Sáng · ${now.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
-      summary: `Vàng Miếng: ${fmtTrieu(refSell)} (${fmtChange(refChange)}%)${news[0] ? ` · ${news[0].title.slice(0, 70)}` : ''}`,
+      action:      'gold-alert',
+      title:       alertTitle,
+      summary:     alertSummary,
       triggeredAt: now.toISOString(),
-      emailSent: true,
+      emailSent:   true,
       runId,
-      outputs: raw.data?.outputs ?? raw.outputs,
+      outputs:     raw.data?.outputs ?? raw.outputs,
+      status:      'success',
     })
 
     return NextResponse.json({
@@ -189,12 +209,22 @@ export async function GET(req: Request): Promise<Response> {
       snapshot: {
         vn_mieng_sell:   fmtTrieu(refSell),
         vn_mieng_change: fmtChange(refChange),
-        news_count: news.length,
-        portfolio_qty: portfolio.totalQuantity,
+        news_count:      news.length,
+        portfolio_qty:   portfolio.totalQuantity,
       },
     })
   } catch (e) {
     console.error('[cron/gold-alert]', e)
+    // Top-level catch: save failure record for any unexpected error
+    await saveAlert({
+      action:      'gold-alert',
+      title:       `Báo Giá Vàng Sáng · ${new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
+      summary:     'Unexpected error — see error field',
+      triggeredAt: new Date().toISOString(),
+      emailSent:   false,
+      status:      'failed',
+      error:       String(e),
+    })
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

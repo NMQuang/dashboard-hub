@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
   const all = await getAllPhotos()
   const selected = all.filter(p => photoIds.includes(p.id))
 
+  if (selected.length === 0) {
+    return NextResponse.json({ error: 'Không tìm thấy ảnh đã chọn trong KV. Vui lòng reload và thử lại.' }, { status: 400 })
+  }
+
   try {
     const { title, description } = await generatePhotoStory(selected, tag)
     const story: PhotoStory = {
@@ -74,6 +78,7 @@ export async function POST(req: NextRequest) {
     await saveStory(story)
     return NextResponse.json({ story })
   } catch (e) {
+    console.error('[generate-story] error:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
