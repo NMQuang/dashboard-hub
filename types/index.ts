@@ -89,7 +89,9 @@ export interface GithubEvent {
   payload: {
     commits?: Array<{ message: string }>
     ref?: string
-    pull_request?: { title: string; number: number }
+    action?: string
+    number?: number                                          // top-level PR number GitHub sends
+    pull_request?: { title?: string; number?: number }      // fields may be absent on truncated events
   }
   created_at: string
 }

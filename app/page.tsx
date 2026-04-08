@@ -246,7 +246,14 @@ const EVENT_META: Record<string, { label: string; color: string; msgFn: (p: Gith
   PullRequestEvent: {
     label: 'PR',
     color: '#8b5cf6',
-    msgFn: (p) => p.pull_request ? `PR #${p.pull_request.number}: ${p.pull_request.title}` : 'pull request',
+    msgFn: (p) => {
+      const num   = p.pull_request?.number ?? p.number
+      const title = p.pull_request?.title
+      if (num && title) return `PR #${num}: ${title}`
+      if (num)          return `PR #${num}`
+      if (title)        return title
+      return 'pull request'
+    },
   },
   DeleteEvent: {
     label: 'delete',
