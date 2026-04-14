@@ -94,7 +94,7 @@ export default async function AlertsPage() {
           )}
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--ink3)', marginTop: 6, lineHeight: 1.6 }}>
-          Emails sent to <span className="font-mono" style={{ color: 'var(--ink)' }}>quangnmjp96@gmail.com</span>
+          Emails sent to <span className="font-mono" style={{ color: 'var(--ink)' }}>{process.env.RECIPIENT_EMAIL ?? '(not set)'}</span>
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default async function AlertsPage() {
             {[
               { step: '01', title: 'Create Dify account', desc: 'Go to app.dify.ai → Sign up → Create new app (type: Workflow)' },
               { step: '02', title: 'Build each workflow', desc: 'Create 4 workflows matching the table below. Each should have an HTTP node fetching prices, an LLM node generating the brief, and an Email node sending to Gmail.' },
-              { step: '03', title: 'Add Gmail node', desc: 'In Dify: add "Email" tool node → use input variable recipient_email = quangnmjp96@gmail.com · Or use Resend/SendGrid integration instead.' },
+              { step: '03', title: 'Add Gmail node', desc: 'In Dify: add "Email" tool node → use input variable recipient_email = $RECIPIENT_EMAIL · Or use Resend/SendGrid integration instead.' },
               { step: '04', title: 'Add env vars', desc: 'Copy each Workflow ID from Dify URL and add to .env.local (see table below)' },
               { step: '05', title: 'Deploy to Vercel', desc: 'Push to GitHub → Vercel auto-deploys. Crons start automatically on Vercel Pro (free tier: manual trigger only).' },
             ].map(s => (

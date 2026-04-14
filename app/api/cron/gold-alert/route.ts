@@ -15,7 +15,7 @@
  * ── Dify workflow inputs ─────────────────────────────────────────────────────
  * Configure these variables in your Dify workflow:
  *
- *  recipient_email    string  "quangnmjp96@gmail.com"
+ *  recipient_email    string  $RECIPIENT_EMAIL (env var)
  *  date               string  "Thứ Hai, 06 tháng 4 năm 2026"
  *  triggered_at       string  "07:00 ICT"
  *
@@ -126,7 +126,7 @@ export async function GET(req: Request): Promise<Response> {
     const portfolio = calcGoldPortfolio(GOLD_HOLDINGS, vnGold)
 
     const inputs: Record<string, string> = {
-      recipient_email: 'quangnmjp96@gmail.com',
+      recipient_email: process.env.RECIPIENT_EMAIL ?? '',
       date,
       triggered_at: triggeredAt,
 

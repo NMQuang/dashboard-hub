@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     const result = await triggerWorkflow(workflowId, {
       date,
-      recipient_email: 'quangnmjp96@gmail.com',
+      recipient_email: process.env.RECIPIENT_EMAIL ?? '',
       btc_price:  btc?.price?.toFixed(0)   ?? 'N/A',
       btc_change: btc?.change24h?.toFixed(2) ?? '0',
       eth_price:  eth?.price?.toFixed(0)   ?? 'N/A',

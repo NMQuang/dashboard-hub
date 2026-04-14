@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 
     const result = await triggerWorkflow(workflowId, {
       week: weekLabel,
-      recipient_email: 'quangnmjp96@gmail.com',
+      recipient_email: process.env.RECIPIENT_EMAIL ?? '',
       jpy_rate: jpy?.price?.toFixed(2) ?? 'N/A',
       vnd_rate: vnd?.price?.toFixed(0) ?? 'N/A',
       triggered_at: now.toLocaleString('en-GB', { timeZone: 'Asia/Tokyo' }) + ' JST',

@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
     const result = await triggerWorkflow(workflowId, {
       date,
-      recipient_email: 'quangnmjp96@gmail.com',
+      recipient_email: process.env.RECIPIENT_EMAIL ?? '',
       gold_price: snapshot.gold?.price?.toFixed(2) ?? 'N/A',
       gold_change: snapshot.gold?.change24h?.toFixed(2) ?? '0',
       btc_price: snapshot.coins?.find(c => c.symbol === 'BTC')?.price?.toFixed(0) ?? 'N/A',
