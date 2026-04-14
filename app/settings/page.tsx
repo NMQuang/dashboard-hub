@@ -11,7 +11,8 @@ const ENV_VARS = [
   { key: 'COINGECKO_API_KEY',      label: 'CoinGecko',            required: false, hint: 'Free tier works without key' },
   { key: 'GITHUB_TOKEN',           label: 'GitHub PAT',           required: false, hint: 'Settings ↁEDeveloper ↁEPAT (classic)' },
   { key: 'GITHUB_USERNAME',        label: 'GitHub username',      required: false, hint: 'Your GitHub handle' },
-  { key: 'DIFY_API_KEY',           label: 'Dify API key',         required: false, hint: 'app.dify.ai' },
+  { key: 'DIFY_GOLD_ALERT_API_KEY',    label: 'Dify Gold Alert key',    required: false, hint: 'app.dify.ai → Gold Alert → API Access' },
+  { key: 'DIFY_MORNING_BRIEF_API_KEY', label: 'Dify Morning Brief key', required: false, hint: 'app.dify.ai → Morning Brief → API Access' },
   { key: 'WEATHER_API_KEY',        label: 'OpenWeatherMap',       required: false, hint: 'openweathermap.org (free tier)' },
   { key: 'NEXT_PUBLIC_ONSITE_DATE',label: 'Japan onsite date',    required: false, hint: 'Format: YYYY-MM-DD' },
 ]

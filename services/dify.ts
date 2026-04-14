@@ -2,31 +2,31 @@ import type { DifyRun } from '@/types'
 
 const BASE = process.env.DIFY_BASE_URL ?? 'https://api.dify.ai/v1'
 
-const headers = () => ({
-  Authorization: `Bearer ${process.env.DIFY_API_KEY ?? ''}`,
-  'Content-Type': 'application/json',
-})
-
-const isDifyConfigured = () => Boolean(process.env.DIFY_API_KEY)
-
 /**
- * Trigger a Dify workflow by its workflow_id.
- * The API key must be scoped to the specific Dify app.
+ * Trigger a Dify workflow.
+ * Each Dify app has its own API key — pass the correct key for the target workflow.
  * POST /v1/workflows/run
+ *
+ * Note: The Dify API identifies the workflow by the API key, NOT by workflow_id.
+ * The _workflowId param is kept for logging / identification only.
  */
 export async function triggerWorkflow(
-  workflowId: string,
-  inputs: Record<string, unknown> = {}
+  _workflowId: string,
+  inputs: Record<string, unknown> = {},
+  apiKey?: string
 ): Promise<any> {
-  if (!isDifyConfigured()) {
-    throw new Error('DIFY_API_KEY is not configured')
+  const key = apiKey ?? ''
+  if (!key) {
+    throw new Error('Dify API key is not configured — set the per-workflow DIFY_*_API_KEY env var')
   }
   try {
     const res = await fetch(`${BASE}/workflows/run`, {
       method: 'POST',
-      headers: headers(),
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        workflow_id: workflowId,
         inputs,
         response_mode: 'blocking',
         user: 'dashboard-hub-dashboard',
@@ -44,12 +44,16 @@ export async function triggerWorkflow(
 }
 
 /** Get a workflow run result by run ID */
-export async function getWorkflowRun(runId: string): Promise<DifyRun> {
-  if (!isDifyConfigured()) {
-    throw new Error('DIFY_API_KEY is not configured')
+export async function getWorkflowRun(runId: string, apiKey?: string): Promise<DifyRun> {
+  const key = apiKey ?? ''
+  if (!key) {
+    throw new Error('Dify API key is not configured')
   }
   const res = await fetch(`${BASE}/workflows/run/${runId}`, {
-    headers: headers(),
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
   })
   if (!res.ok) throw new Error(`Dify run error: ${res.status}`)
   const data = await res.json()
@@ -69,15 +73,20 @@ export async function getWorkflowRun(runId: string): Promise<DifyRun> {
  */
 export async function chatWithDify(
   message: string,
-  conversationId?: string
+  conversationId?: string,
+  apiKey?: string
 ): Promise<{ answer: string; conversation_id: string }> {
-  if (!isDifyConfigured()) {
-    throw new Error('DIFY_API_KEY is not configured')
+  const key = apiKey ?? ''
+  if (!key) {
+    throw new Error('Dify API key is not configured')
   }
   try {
     const res = await fetch(`${BASE}/chat-messages`, {
       method: 'POST',
-      headers: headers(),
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         query: message,
         conversation_id: conversationId,

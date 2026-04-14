@@ -6,7 +6,7 @@
  * which generates a bilingual (EN+VI/JA) summary and sends Gmail.
  *
  * Required env vars:
- *   DIFY_API_KEY, DIFY_MORNING_BRIEF_WORKFLOW_ID
+ *   DIFY_MORNING_BRIEF_API_KEY, DIFY_MORNING_BRIEF_WORKFLOW_ID
  */
 import { NextResponse } from 'next/server'
 import { triggerWorkflow } from '@/services/dify'
@@ -36,6 +36,7 @@ export async function GET(req: Request) {
     const result = await triggerWorkflow(workflowId, {
       date,
       recipient_email: process.env.RECIPIENT_EMAIL ?? '',
+      email_subject: `📊 Morning Market Brief – ${date}`,
       gold_price: snapshot.gold?.price?.toFixed(2) ?? 'N/A',
       gold_change: snapshot.gold?.change24h?.toFixed(2) ?? '0',
       btc_price: snapshot.coins?.find(c => c.symbol === 'BTC')?.price?.toFixed(0) ?? 'N/A',
@@ -45,7 +46,7 @@ export async function GET(req: Request) {
       fet_price: snapshot.coins?.find(c => c.symbol === 'FET')?.price?.toFixed(4) ?? 'N/A',
       jpy_rate: snapshot.forex?.find(f => f.symbol === 'JPY')?.price?.toFixed(2) ?? 'N/A',
       vnd_rate: snapshot.forex?.find(f => f.symbol === 'VND')?.price?.toFixed(0) ?? 'N/A',
-    })
+    }, process.env.DIFY_MORNING_BRIEF_API_KEY)
 
     console.log('[cron/morning-brief] Dify result:', JSON.stringify(result, null, 2))
 

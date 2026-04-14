@@ -16,7 +16,7 @@ const WORKFLOW_DEFAULTS: WorkflowDef[] = [
     schedule: 'Daily 07:00 JST / 05:00 ICT',
     cron: '0 22 * * *',
     endpoint: '/api/cron/morning-brief',
-    envKey: 'DIFY_MORNING_BRIEF_WORKFLOW_ID',
+    envKey: 'DIFY_MORNING_BRIEF_API_KEY',
     color: 'var(--amber)',
     bg: 'var(--amber-bg)',
     icon: '☀',
@@ -29,7 +29,7 @@ const WORKFLOW_DEFAULTS: WorkflowDef[] = [
     schedule: 'Daily 07:00 ICT / 00:00 UTC',
     cron: '0 0 * * *',
     endpoint: '/api/cron/gold-alert',
-    envKey: 'DIFY_GOLD_ALERT_WORKFLOW_ID',
+    envKey: 'DIFY_GOLD_ALERT_API_KEY',
     color: 'var(--amber)',
     bg: 'var(--amber-bg)',
     icon: '◈',
@@ -42,7 +42,7 @@ const WORKFLOW_DEFAULTS: WorkflowDef[] = [
     schedule: 'Daily 08:00 JST / 06:00 ICT',
     cron: '0 23 * * *',
     endpoint: '/api/cron/crypto-digest',
-    envKey: 'DIFY_CRYPTO_DIGEST_WORKFLOW_ID',
+    envKey: 'DIFY_CRYPTO_DIGEST_API_KEY',
     color: 'var(--blue)',
     bg: 'var(--blue-bg)',
     icon: '◈',
@@ -55,7 +55,7 @@ const WORKFLOW_DEFAULTS: WorkflowDef[] = [
     schedule: 'Every Monday 09:00 JST / 07:00 ICT',
     cron: '0 0 * * 1',
     endpoint: '/api/cron/fx-digest',
-    envKey: 'DIFY_FX_DIGEST_WORKFLOW_ID',
+    envKey: 'DIFY_FX_DIGEST_API_KEY',
     color: 'var(--purple)',
     bg: 'var(--purple-bg)',
     icon: '¥',
@@ -70,8 +70,8 @@ export default async function AlertsPage() {
   ])
 
   const isDifyConfigured = !!(
-    process.env.DIFY_API_KEY &&
-    process.env.DIFY_MORNING_BRIEF_WORKFLOW_ID
+    process.env.DIFY_GOLD_ALERT_API_KEY ||
+    process.env.DIFY_MORNING_BRIEF_API_KEY
   )
 
   // Compute server-side which workflows have their env key set

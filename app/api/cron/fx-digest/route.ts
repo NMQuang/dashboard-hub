@@ -5,7 +5,7 @@
  * Fetches week's JPY and VND rates, sends a weekly summary via Dify.
  *
  * Required env vars:
- *   DIFY_API_KEY, DIFY_FX_DIGEST_WORKFLOW_ID
+ *   DIFY_FX_DIGEST_API_KEY, DIFY_FX_DIGEST_WORKFLOW_ID
  */
 import { NextResponse } from 'next/server'
 import { triggerWorkflow } from '@/services/dify'
@@ -38,10 +38,11 @@ export async function GET(req: Request) {
     const result = await triggerWorkflow(workflowId, {
       week: weekLabel,
       recipient_email: process.env.RECIPIENT_EMAIL ?? '',
+      email_subject: `💱 FX Weekly – ${weekLabel}`,
       jpy_rate: jpy?.price?.toFixed(2) ?? 'N/A',
       vnd_rate: vnd?.price?.toFixed(0) ?? 'N/A',
       triggered_at: now.toLocaleString('en-GB', { timeZone: 'Asia/Tokyo' }) + ' JST',
-    })
+    }, process.env.DIFY_FX_DIGEST_API_KEY)
 
     await saveAlert({
       action: 'fx-digest',

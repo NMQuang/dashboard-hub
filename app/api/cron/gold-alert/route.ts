@@ -10,7 +10,7 @@
  *  - Family portfolio snapshot (if holdings configured in lib/familyGold.ts)
  *
  * Required env vars:
- *   DIFY_API_KEY, DIFY_GOLD_ALERT_WORKFLOW_ID
+ *   DIFY_GOLD_ALERT_API_KEY, DIFY_GOLD_ALERT_WORKFLOW_ID
  *
  * ── Dify workflow inputs ─────────────────────────────────────────────────────
  * Configure these variables in your Dify workflow:
@@ -127,6 +127,7 @@ export async function GET(req: Request): Promise<Response> {
 
     const inputs: Record<string, string> = {
       recipient_email: process.env.RECIPIENT_EMAIL ?? '',
+      email_subject: `📊 Báo Giá Vàng Sáng ${date}`,
       date,
       triggered_at: triggeredAt,
 
@@ -174,7 +175,7 @@ export async function GET(req: Request): Promise<Response> {
 
     let raw: DifyWorkflowResult
     try {
-      raw = await triggerWorkflow(workflowId, inputs) as DifyWorkflowResult
+      raw = await triggerWorkflow(workflowId, inputs, process.env.DIFY_GOLD_ALERT_API_KEY) as DifyWorkflowResult
     } catch (difyErr) {
       // Dify failed — save a failure record so we have visibility, then rethrow
       console.error('[cron/gold-alert] Dify trigger failed:', difyErr)

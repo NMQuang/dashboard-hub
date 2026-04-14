@@ -5,7 +5,7 @@
  * Fetches latest crypto prices and sends a digest email via Dify workflow.
  *
  * Required env vars:
- *   DIFY_API_KEY, DIFY_CRYPTO_DIGEST_WORKFLOW_ID
+ *   DIFY_CRYPTO_DIGEST_API_KEY, DIFY_CRYPTO_DIGEST_WORKFLOW_ID
  */
 import { NextResponse } from 'next/server'
 import { triggerWorkflow } from '@/services/dify'
@@ -37,13 +37,14 @@ export async function GET(req: Request) {
     const result = await triggerWorkflow(workflowId, {
       date,
       recipient_email: process.env.RECIPIENT_EMAIL ?? '',
+      email_subject: `📈 Crypto Digest – ${date}`,
       btc_price:  btc?.price?.toFixed(0)   ?? 'N/A',
       btc_change: btc?.change24h?.toFixed(2) ?? '0',
       eth_price:  eth?.price?.toFixed(0)   ?? 'N/A',
       eth_change: eth?.change24h?.toFixed(2) ?? '0',
       fet_price:  fet?.price?.toFixed(4)   ?? 'N/A',
       fet_change: fet?.change24h?.toFixed(2) ?? '0',
-    })
+    }, process.env.DIFY_CRYPTO_DIGEST_API_KEY)
 
     await saveAlert({
       action: 'crypto-digest',

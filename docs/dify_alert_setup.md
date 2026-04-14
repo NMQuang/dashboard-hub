@@ -1,6 +1,8 @@
 # Dify Alert Workflows — Setup Guide
 
-Emails will be sent to **quangnmjp96@gmail.com** when each workflow fires.
+Emails will be sent to **$RECIPIENT_EMAIL** when each workflow fires.
+
+> **⚠️ Important:** Each Dify workflow app has its **own unique API key**. You need a separate `DIFY_*_API_KEY` for each workflow.
 
 ---
 
@@ -93,8 +95,15 @@ Refer to [dify-gold-alert-workflow.md](./dify-gold-alert-workflow.md) for the ex
 ## Step 3 — Add to `.env.local`
 
 ```env
-DIFY_API_KEY=app-xxxxxxxxxxxxxxxxxxxx
+# Each workflow needs its own API key (from Dify → API Access)
+DIFY_GOLD_ALERT_API_KEY=app-xxxxxxxxxxxxxxxxxxxx
+DIFY_MORNING_BRIEF_API_KEY=app-xxxxxxxxxxxxxxxxxxxx
+DIFY_CRYPTO_DIGEST_API_KEY=app-xxxxxxxxxxxxxxxxxxxx
+DIFY_FX_DIGEST_API_KEY=app-xxxxxxxxxxxxxxxxxxxx
+
+DIFY_API_KEY=app-xxxxxxxxxxxxxxxxxxxx       # fallback (optional)
 DIFY_BASE_URL=https://api.dify.ai/v1
+RECIPIENT_EMAIL=your_email@gmail.com
 
 DIFY_MORNING_BRIEF_WORKFLOW_ID=wf-xxxxxxxxxxxxxxxx
 DIFY_GOLD_ALERT_WORKFLOW_ID=wf-xxxxxxxxxxxxxxxx
