@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BJT Study Tracker 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;background:#f5f4f0;color:#1a1a18;font-size:14px;min-height:100vh}
+.app{max-width:680px;margin:0 auto;padding:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.app-title{font-size:15px;font-weight:600;color:#1a1a18;white-space:nowrap}
+.topbar-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:6px 12px;font-size:12px;border:1px solid #c8c6be;border-radius:8px;background:#fff;color:#1a1a18;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.btn:hover{background:#eeecea}
+.btn-danger{color:#dc2626;border-color:#fca5a5}.btn-danger:hover{background:#fee2e2}
+.btn-primary{background:#1a1a18;color:#fff;border-color:#1a1a18}.btn-primary:hover{background:#333}
+.btn-warn{color:#b45309;border-color:#fcd34d}.btn-warn:hover{background:#fef9c3}
+.notif-banner{display:none;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#78350f;align-items:center;gap:8px}
+.notif-banner.show{display:flex}
+.notif-banner button{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:#78350f}
+.reminder-setup{background:#fff;border:1px solid #e0ddd5;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:none}
+.reminder-setup.show{display:block}
+.reminder-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reminder-row label{font-size:12px;color:#6b6a65}
+.streak-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e0ddd5;border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.streak-flame{font-size:22px;line-height:1}
+.streak-info{flex:1}
+.streak-num{font-size:22px;font-weight:700;color:#ea580c;line-height:1}
+.streak-label{font-size:11px;color:#6b6a65;margin-top:1px}
+.streak-cal{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap}
+.cal-dot{width:10px;height:10px;border-radius:2px;background:#e0ddd5}
+.cal-dot.done{background:#22c55e}
+.cal-dot.today{outline:2px solid #ea580c;outline-offset:1px}
+.streak-best{font-size:11px;color:#6b6a65;text-align:right;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#fff;border:1px solid #e0ddd5;border-radius:8px;padding:8px 10px}
+.stat-label{font-size:10px;color:#6b6a65;margin-bottom:3px}
+.stat-val{font-size:18px;font-weight:600;color:#1a1a18}
+.mock-panel{background:#fff;border:1px solid #e0ddd5;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.mock-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mock-panel-title{font-size:13px;font-weight:600}
+.mock-scores{display:flex;gap:6px;flex-wrap:wrap;min-height:24px}
+.mock-chip{background:#f5f4f0;border:1px solid #e0ddd5;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.mock-chip.target{border-color:#bbf7d0;background:#f0fdf4;color:#14532d}
+.mock-chip-score{font-weight:600;color:#1a1a18}
+.mock-add{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.mock-add input,.mock-add select{border:1px solid #e0ddd5;border-radius:6px;padding:5px 8px;font-size:12px;background:#f5f4f0;color:#1a1a18;font-family:inherit}
+.score-bar-wrap{height:4px;background:#e0ddd5;border-radius:2px;margin-top:6px;overflow:hidden}
+.score-bar-fill{height:100%;background:#6366f1;border-radius:2px;transition:width .4s}
+.pomo-bar{background:#fff;border:1px solid #e0ddd5;border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.pomo-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pomo-clock{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;color:#1a1a18;min-width:70px}
+.pomo-clock.work{color:#6366f1}.pomo-clock.rest{color:#22c55e}
+.pomo-label{font-size:11px;color:#6b6a65}
+.pomo-btns{display:flex;gap:6px;margin-left:auto}
+.pomo-dots{display:flex;gap:4px;margin-top:4px}
+.pomo-dot{width:8px;height:8px;border-radius:50%;background:#e0ddd5}
+.pomo-dot.done{background:#6366f1}
+.pomo-progress{height:3px;background:#e0ddd5;border-radius:2px;margin-top:6px;overflow:hidden}
+.pomo-progress-fill{height:100%;background:#6366f1;border-radius:2px;transition:width 1s linear}
+.pomo-progress-fill.rest{background:#22c55e}
+.month-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.mtab{padding:5px 10px;font-size:12px;border:1px solid #c8c6be;border-radius:20px;cursor:pointer;background:#fff;color:#6b6a65;font-family:inherit;transition:all .15s}
+.mtab:hover{background:#eeecea}
+.mtab.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
+.phase-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;margin-bottom:8px;font-weight:600}
+.ph1{background:#d1fae5;color:#065f46}
+.ph2{background:#ede9fe;color:#4c1d95}
+.ph3{background:#fee2e0;color:#7f1d1d}
+.src-badge{font-size:10px;padding:1px 6px;border-radius:6px;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;margin-left:4px;font-weight:500}
+.week-block{border:1px solid #e0ddd5;border-radius:12px;margin-bottom:8px;overflow:hidden;background:#fff}
+.week-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#f9f8f5;cursor:pointer;user-select:none;gap:8px}
+.week-hdr:hover{background:#f0efe9}
+.week-hdr-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.week-label{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.week-prog{font-size:11px;color:#6b6a65;white-space:nowrap}
+.prog-bar-wrap{width:60px;height:4px;background:#e0ddd5;border-radius:2px;overflow:hidden;flex-shrink:0}
+.prog-bar-fill{height:100%;border-radius:2px;background:#22c55e;transition:width .3s}
+.chevron{font-size:9px;color:#9b9a95;transition:transform .2s;display:inline-block;flex-shrink:0}
+.chevron.open{transform:rotate(90deg)}
+.task-list{padding:6px 12px 10px}
+.task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f0efe9}
+.task-row:last-child{border-bottom:none}
+.task-check{width:17px;height:17px;min-width:17px;border-radius:4px;border:1.5px solid #c8c6be;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;background:#fff}
+.task-check:hover{border-color:#6366f1}
+.task-check.done{background:#22c55e;border-color:#22c55e}
+.task-check.done::after{content:"";display:block;width:4px;height:7px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:13px;line-height:1.4}
+.task-name.done{color:#9b9a95;text-decoration:line-through}
+.task-meta{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;align-items:center}
+.tag{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.tag-listen{background:#fef3c7;color:#78350f}
+.tag-read{background:#dbeafe;color:#1e3a8a}
+.tag-vocab{background:#dcfce7;color:#14532d}
+.tag-gram{background:#ede9fe;color:#4c1d95}
+.tag-test{background:#fee2e0;color:#7f1d1d}
+.tag-tips{background:#fdf4ff;color:#7e22ce}
+.note-input{width:100%;font-size:11px;padding:3px 7px;border:1px solid #e0ddd5;border-radius:5px;background:#f9f8f5;color:#1a1a18;font-family:inherit;margin-top:4px}
+.note-input:focus{outline:none;border-color:#6366f1}
+.task-min{font-size:11px;color:#9b9a95;white-space:nowrap;padding-top:2px;min-width:44px;text-align:right}
+.tips-box{background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 10px;margin-top:4px;font-size:11px;color:#6b21a8;line-height:1.5;display:none}
+.tips-box.show{display:block}
+.tips-toggle{font-size:10px;color:#7e22ce;cursor:pointer;text-decoration:underline;margin-top:3px;display:inline-block}
+@media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.topbar-actions .btn{padding:5px 9px;font-size:11px}.pomo-clock{font-size:24px}.streak-num{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <span class="app-title">BJT Tracker · T5–T12 / 2026</span>
+  <div class="topbar-actions">
+    <button class="btn btn-warn" onclick="toggleReminder()">⏰ Nhắc giờ</button>
+    <button class="btn" onclick="exportCSV()">↓ CSV</button>
+    <button class="btn btn-primary" onclick="exportPDF()">↓ PDF</button>
+    <button class="btn btn-danger" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+
+<div class="notif-banner" id="notif-banner">
+  <span id="notif-text">Đến giờ học rồi! 📚</span>
+  <button onclick="dismissNotif()">✕</button>
+</div>
+
+<div class="reminder-setup" id="reminder-setup">
+  <div class="reminder-row">
+    <label>Nhắc lúc:</label>
+    <input type="time" id="remind-time" value="09:00" style="border:1px solid #e0ddd5;border-radius:6px;padding:4px 8px;font-size:12px;background:#f5f4f0;color:#1a1a18;font-family:inherit">
+    <label>Múi giờ:</label>
+    <select id="remind-tz" style="border:1px solid #e0ddd5;border-radius:6px;padding:4px 8px;font-size:12px;background:#f5f4f0;color:#1a1a18;font-family:inherit">
+      <option value="Asia/Tokyo">JST (Tokyo)</option>
+      <option value="Asia/Ho_Chi_Minh">ICT (VN)</option>
+    </select>
+    <button class="btn btn-primary" onclick="saveReminder()">Lưu</button>
+    <button class="btn" onclick="toggleReminder()">Đóng</button>
+  </div>
+  <div style="font-size:11px;color:#6b6a65;margin-top:6px">Trình duyệt sẽ hiện thông báo + chuông. Hãy cho phép notification khi được hỏi.</div>
+</div>
+
+<div class="streak-bar">
+  <div class="streak-flame">🔥</div>
+  <div class="streak-info">
+    <div class="streak-num" id="streak-num">0</div>
+    <div class="streak-label">ngày liên tiếp</div>
+    <div class="streak-cal" id="streak-cal"></div>
+  </div>
+  <div class="streak-best" id="streak-best">Kỷ lục: 0 ngày</div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">Hôm nay</div><div class="stat-val" id="s-today">0/0</div></div>
+  <div class="stat"><div class="stat-label">Tuần này</div><div class="stat-val" id="s-week">0%</div></div>
+  <div class="stat"><div class="stat-label">Tháng này</div><div class="stat-val" id="s-month">0%</div></div>
+  <div class="stat"><div class="stat-label">Tổng</div><div class="stat-val" id="s-total">0%</div></div>
+</div>
+
+<div class="mock-panel">
+  <div class="mock-panel-hdr">
+    <span class="mock-panel-title">Điểm Mock Test</span>
+    <span style="font-size:11px;color:#6b6a65">Mục tiêu: 480–599 · Sách BJT chính thức</span>
+  </div>
+  <div class="mock-scores" id="mock-scores"></div>
+  <div class="score-bar-wrap"><div class="score-bar-fill" id="score-bar" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:#9b9a95;margin-top:2px"><span>0</span><span>480 (J2)</span><span>599</span><span>800</span></div>
+  <div class="mock-add">
+    <input type="number" id="mock-score-input" placeholder="Điểm" min="0" max="800" style="width:72px">
+    <select id="mock-label-input">
+      <option>Mock 1</option><option>Mock 2</option><option>Mock 3</option><option>Mock 4</option>
+      <option>Mock 5</option><option>Mock 6</option><option>Mock 7</option><option>Mock 8</option>
+      <option>Mock 9</option><option>Mock 10</option><option>Mock 11</option><option>Mock 12</option>
+    </select>
+    <button class="btn btn-primary" onclick="addMockScore()">+ Thêm</button>
+  </div>
+</div>
+
+<div class="pomo-bar">
+  <div class="pomo-inner">
+    <div>
+      <div class="pomo-clock" id="pomo-clock">25:00</div>
+      <div class="pomo-label" id="pomo-label">Học · Pomodoro 1</div>
+      <div class="pomo-dots" id="pomo-dots"></div>
+    </div>
+    <div class="pomo-btns">
+      <button class="btn btn-primary" id="pomo-start" onclick="pomoStart()">Bắt đầu</button>
+      <button class="btn" onclick="pomoReset()">Reset</button>
+    </div>
+  </div>
+  <div class="pomo-progress"><div class="pomo-progress-fill" id="pomo-fill" style="width:0%"></div></div>
+</div>
+
+<div class="month-tabs" id="month-tabs"></div>
+<div id="wbs-content"></div>
+</div>
+
+<script>
+/* ── DATA ── */
+const SRC = {
+  tango: '<span class="src-badge">Tango/Hyougen</span>',
+  keigo: '<span class="src-badge">Keigo/Bunshou</span>',
+  bitesize: '<span class="src-badge">Bite Size JP</span>',
+  bjt: '<span class="src-badge">Sách BJT</span>',
+  tips: '<span class="src-badge" style="background:#fdf4ff;color:#7e22ce;border-color:#e9d5ff">Tips</span>',
+};
+
+// Tips content per task id
+const TIPS = {
+  // T5
+  t1:`📌 Mở sách BJT quyển 聴解, đọc lời giới thiệu và xem 3 câu mẫu đầu. Mục tiêu hôm nay: hiểu format, không cần làm đúng.`,
+  t2:`📌 Mở sách BJT quyển 読解, đọc phần hướng dẫn. Chú ý: đề BJT Reading toàn email, báo cáo, thông báo nội bộ — không có văn học.`,
+  t3:`📌 Cách tổ chức Anki: tạo 3 deck riêng: (1) Tango/Hyougen, (2) Keigo/Bunshou, (3) Từ mới từ sách BJT. Học deck 1 trước.`,
+  t4:`📌 Tango/Hyougen: bắt đầu từ mục 1. Mỗi thẻ Anki nên có: mặt trước = 日本語, mặt sau = nghĩa + ví dụ câu ngắn. Đừng học quá 15 thẻ mới/ngày.`,
+  t5:`📌 Bite Size Japanese: tập 1–2 là self-intro, bắt đầu từ tập ~50 trở đi để có nội dung phong phú hơn. Nghe 1 lần không hiểu là bình thường.`,
+  t6:`📌 Quy trình nghe Bite Size: (1) Nghe toàn tập không dừng, (2) Ghi những gì nghe được, (3) Nghe lại, dừng chỗ không hiểu, (4) Shadowing 1 đoạn 30 giây.`,
+  t7:`📌 Tango/Hyougen: ưu tiên học nhóm từ về họp trước: 議題、議事録、確認事項、宿題、持ち帰る — những từ này xuất hiện nhiều nhất trong BJT.`,
+  t8:`📌 Keigo/Bunshou: học theo bảng 3 cột — 普通形 / 丁寧語 / 尊敬語または謙譲語. Ví dụ: 言う → おっしゃる / 申す. Học theo cặp, không học đơn lẻ.`,
+  t9:`📌 Sau khi nghe Bite Size, ghi lại 3 từ/cụm mới vào Anki deck "Từ mới từ podcast". Đây là nguồn từ vựng tự nhiên nhất, hơn học từ list thuần túy.`,
+  t10:`📌 Tango/Hyougen: nhóm từ email quan trọng: お世話になっております、ご確認のほど、取り急ぎ、ご対応よろしくお願いします. Ghi vào Anki với ví dụ email thật.`,
+  t11:`📌 Dictation technique: nghe 1 câu → dừng → ghi lại tiếng Nhật → nghe lại → sửa. Chỉ cần 5 câu/ngày. Tập trung vào số liệu: 3月15日、来週の火曜日、3割増し.`,
+  t12:`📌 Tango/Hyougen: nhóm từ báo cáo: 進捗、完了、遅延、原因、対策、挽回策、納期. Những từ này chiếm ~20% điểm BJT listening phần báo cáo tiến độ.`,
+  t13:`📌 Bite Size: tập chủ đề công việc/xã hội Nhật (仕事、会社、生活) đặc biệt hữu ích cho BrSE. Ghi chú cách người Nhật nói về deadlines, expectations.`,
+  t14:`📌 Sách BJT quyển 聴解: làm thử bài số 1, không tính giờ. Mục tiêu: quen với tốc độ nói và format câu hỏi, không phải điểm số.`,
+  t15:`📌 Bite Size shadowing tip: chọn đoạn 30–45 giây, nghe 3 lần trước khi shadowing. Khi shadowing, focus vào rhythm và intonation, không cần hiểu từng từ.`,
+  // T6
+  u1:`📌 Tango/Hyougen: nhóm từ schedule/negotiation: 調整する、折り合い、譲歩、合意、条件、締め切り、期限. Học kèm ví dụ: 納期を調整していただけますか.`,
+  u2:`📌 Sách BJT 聴解: làm bài 2–3. Chú ý: câu hỏi dạng "次に何をしますか" — đáp án thường nằm ở câu cuối cùng của hội thoại, không phải đầu.`,
+  u3:`📌 Dictation nâng cao: nghe và ghi lại tên người + chức vụ. Người Nhật hay nói: 田中部長、鈴木課長、山田さん — dễ nhầm trong phòng thi.`,
+  u4:`📌 Khi đọc tài liệu spec IT, áp dụng kỹ thuật scanning: đọc tiêu đề → đọc câu đầu mỗi đoạn → tìm số liệu/ngày tháng → mới đọc chi tiết.`,
+  u5:`📌 Keigo/Bunshou: 承知しました (cấp dưới → cấp trên, formal) vs わかりました (neutral) vs かしこまりました (rất formal, dùng với khách hàng). BJT hay test sự khác biệt này.`,
+  u6:`📌 Tango/Hyougen: nhóm IT quan trọng nhất cho BJT: 不具合、バグ、修正、対応、リリース、本番環境、テスト、仕様、要件定義、レビュー依頼.`,
+  u7:`📌 Bite Size: tập nghe thuyết trình monologue — ghi bullet points sau khi nghe, không trong lúc nghe. BJT test khả năng tóm tắt ý chính, không phải ghi chép từng từ.`,
+  u8:`📌 Sách BJT 読解: làm bài đọc email đầu tiên. Kỹ thuật: đọc câu hỏi TRƯỚC → scan tìm keyword trong bài → đọc đoạn chứa keyword → chọn đáp án.`,
+  u9:`📌 BJT Listening tip: 3 dạng câu hỏi hay ra nhất: (1) 次は何をしますか, (2) 問題は何ですか, (3) 話し手の意図は何ですか. Học cách nhận dạng từng dạng.`,
+  u10:`📌 Âm nối (連濁) trong Bite Size: ví dụ 手紙 = てがみ (không phải てかみ), 組み合わせ = くみあわせ. Nghe thấy âm nối = nghe được như người Nhật thật sự.`,
+  u11:`📌 Tango/Hyougen: nhóm nhân sự & tổ chức: 部長、課長、係長、担当者、上司、部下、同僚、取引先、顧客. BJT thường hỏi về relationship giữa các nhân vật.`,
+  u12:`📌 Nghe cuộc họp 10 phút: ghi theo format 議事録 thật: (1) 日時・参加者, (2) 議題, (3) 決定事項, (4) 宿題（誰が・何を・いつまでに）. Tập này quyết định điểm BJT.`,
+  u13:`📌 BJT Reading: 3 loại email hay ra: (1) Yêu cầu hành động (〜していただけますか), (2) Thông báo thay đổi, (3) Báo cáo vấn đề. Nhận dạng loại → biết tìm gì.`,
+  u14:`📌 Keigo/Bunshou: もし〜なら/たら (điều kiện giả định), 〜にもかかわらず (mặc dù), 〜をふまえて (dựa trên). Những mẫu này xuất hiện nhiều trong email business.`,
+  u15:`📌 Dictation số liệu tài chính: 売上高、前年比、増減率、目標達成率. Người Nhật nói số rất nhanh trong meeting — luyện ghi: 3割2分増 = tăng 32%.`,
+  u16:`📌 Mock Test 1 checklist: bút chì + tẩy, nước uống, đồng hồ. Listening: đọc câu hỏi trong 30 giây intro. Reading: skip câu khó, làm câu dễ trước.`,
+  u17:`📌 Sau Mock 1: đừng xem điểm trước — phân tích từng câu sai trước. Phân loại: (A) không biết từ, (B) nghe không kịp, (C) hiểu nhầm context. Mỗi loại có cách fix khác nhau.`,
+  // T7
+  v1:`📌 Bite Size: từ tháng 7 tăng lên 1.1x speed. Nếu kênh YouTube không có speed control tốt, dùng Spotify hoặc podcast app để điều chỉnh.`,
+  v2:`📌 BJT 聴解 tip: dạng "次は何をすべきか" — nghe đặc biệt câu cuối của hội thoại. 80% trường hợp đáp án nằm ở đây. Đừng chọn đáp án sớm.`,
+  v3:`📌 Tango/Hyougen: nhóm hợp đồng: 契約、条項、締結、解約、違約金、納品、検収、支払い条件. Đây là từ BJT hay ra trong phần Reading dài.`,
+  v4:`📌 Khi đọc hợp đồng IT: chú ý 3 phần quan trọng nhất: (1) 納期と条件, (2) 支払い方法, (3) 解約条件. BJT Reading thường hỏi về 3 phần này.`,
+  v5:`📌 Attitude words trong Bite Size — cần nhận ra: でも/ただ (nhưng/tuy nhiên → có vấn đề), まあ (miễn cưỡng → không thực sự đồng ý), 一応 (tạm thời → chưa chắc chắn).`,
+  v6:`📌 BJT 聴解: dạng hỏi thái độ — không nghe nội dung, nghe TONE. Nếu nói 確認します nhưng giọng do dự → có vấn đề. Bite Size giúp luyện nhận dạng tone tự nhiên.`,
+  v7:`📌 Dictation số liệu nâng cao: nghe và ghi: 先月比15%増、3月末納期、午後3時締め切り. Lỗi phổ biến: nhầm 来週 (tuần sau) với 先週 (tuần trước).`,
+  v8:`📌 Sách BJT 読解: làm bài báo cáo tháng. Kỹ thuật đọc bảng số liệu: (1) Đọc tiêu đề bảng, (2) Đọc cột/hàng header, (3) Tìm số câu hỏi hỏi đến.`,
+  v9:`📌 Tango/Hyougen: nhóm phân tích & báo cáo: 分析、傾向、要因、課題、改善策、施策、検討、提案. Xuất hiện nhiều trong phần Reading dài của BJT.`,
+  v10:`📌 Email báo cáo trễ hạn — mẫu chuẩn: 納期遅延のご連絡 → お詫び → 原因説明 → 対策・新しい納期 → 今後の対応. Học mẫu này = tăng điểm Writing thật + hiểu BJT Reading.`,
+  v11:`📌 Ghi 議事録: dùng template: 日時、出席者、議題、決定事項、保留事項、次回までのアクション（担当者・期日）. Luyện viết nhanh, không cần hoàn hảo.`,
+  v12:`📌 BJT 読解: dạng email + thông báo — đọc Subject line và câu đầu tiên → 80% đã biết mục đích. Câu hỏi thường hỏi: このメールの目的は何ですか.`,
+  v13:`📌 Tango/Hyougen: nhóm sự cố & khiếu nại: クレーム、苦情、対応、謝罪、補償、再発防止、品質管理. BrSE hay gặp tình huống này với khách hàng Nhật.`,
+  v14:`📌 Shadowing 1.15x: nếu thấy khó, không phải do tai yếu — do input chưa đủ. Tăng số lần nghe trước khi shadowing (5 lần thay vì 3 lần).`,
+  v15:`📌 ていただく vs てもらう: ていただく = nhận ơn từ người trên/ngoài (謙譲語). てもらう = nhận ơn từ người ngang/dưới. BJT test cái này trong keigo section.`,
+  v16:`📌 Làm đề Listening timed: đặt timer đúng 50 phút. Nếu 1 câu không nghe kịp → đoán ngay, không nghe lại, chuyển câu tiếp. Đây là kỹ năng quan trọng nhất trong phòng thi.`,
+  v17:`📌 Review lỗi Listening: nghe lại câu sai không xem script, ghi những gì nghe được. Sau đó mới xem script. So sánh = biết mình miss ở đâu.`,
+  v18:`📌 Làm đề Reading timed: phân bổ thời gian: câu ngắn (email, thông báo) = 2–3 phút/câu. Câu dài (bài báo, báo cáo) = 5–6 phút/câu. Tổng 70 phút = 40 câu.`,
+  // T8
+  w1:`📌 Dạng hỏi thông tin cụ thể — 3 loại: (1) Số liệu/ngày tháng, (2) Tên người/chức vụ, (3) Địa điểm/phòng họp. Ghi ngay khi nghe, không đợi câu hỏi.`,
+  w2:`📌 Tango/Hyougen: nhóm offshore/outsourcing: オフショア、委託、外注、協力会社、SES、常駐、プロパー、請負. BrSE hay gặp context này.`,
+  w3:`📌 Bảng kế hoạch vs thực tế (計画対実績): chú ý từ: 予定、実績、差異、乖離、達成率、未達. BJT Reading hay dùng bảng này.`,
+  w4:`📌 Keigo/Bunshou: bài tập chuyển đổi — cho câu thường, viết lại bằng 尊敬語 và 謙譲語. Ví dụ: 見る → ご覧になる / 拝見する. Làm 10 câu/ngày.`,
+  w5:`📌 Shadowing 1.2x: nếu Bite Size bắt đầu cảm thấy "dễ" ở tốc độ này → bạn đang tiến bộ. Thử chuyển sang nghe không xem script lần đầu.`,
+  w6:`📌 Điện thoại business — cụm từ quan trọng: ただいま席を外しております、折り返しお電話いたします、〜の件でお電話しました. BJT hay ra scenario điện thoại.`,
+  w7:`📌 Dictation 5 phút: mục tiêu cuối tháng 8 — ghi được 60–70% nội dung. Nếu chỉ 30–40% → cần tăng tốc nghe Bite Size và giảm bớt tốc độ dictation về 0.9x.`,
+  w8:`📌 Đọc bài báo kinh doanh: câu hỏi hay ra là "筆者が最も言いたいこと" — đáp án thường ở đoạn cuối bài, không phải đầu. Đây là trap phổ biến nhất.`,
+  w9:`📌 Tango/Hyougen: nhóm quản lý rủi ro: リスク、懸念事項、影響範囲、対応策、エスカレーション、優先度. BrSE cần biết để báo cáo rủi ro cho khách hàng.`,
+  w10:`📌 Sách BJT: làm 15 câu tổng hợp không phân loại. Mục tiêu: luyện khả năng chuyển đổi nhanh giữa các dạng câu hỏi — kỹ năng quan trọng khi thi thật.`,
+  w11:`📌 Lỗi phổ biến cần tránh: (1) Đọc lại câu hỏi trong lúc nghe → miss nội dung. (2) Dùng kiến thức ngoài đời để đoán → sai. Chỉ dùng thông tin nghe được.`,
+  w12:`📌 Q&A trong thuyết trình: phần này khó nhất vì không có script sẵn. Chú ý câu mở đầu Q: ご質問はありますか / ちょっとよろしいですか. Câu trả lời thường có đáp án.`,
+  w13:`📌 Reading speed drill: đặt timer 3 phút → đọc 1 email dài → trả lời câu hỏi. Không đọc lại. Mục tiêu: tăng tốc độ xử lý thông tin, không phải hiểu 100%.`,
+  w14:`📌 Từ hay quên nhất trong Tango/Hyougen: 検討する (đang xem xét — chưa quyết), 対応する (xử lý — chưa nói cách nào), 確認する (xác nhận — chưa xong). Biết sắc thái này = không hiểu lầm khách Nhật.`,
+  w15:`📌 議事録 thật: sau cuộc họp với khách hàng, thử viết lại bằng tiếng Nhật trong 10 phút. Gửi cho teammate check không? Nếu được, đây là luyện tập tốt nhất.`,
+  w16:`📌 Sprint 3 ngày trước Mock 2: đừng học mới. Chỉ ôn: (1) Anki deck toàn bộ, (2) Đọc lại ghi chú lỗi từ Mock 1, (3) Nghe lại 3–5 bài Bite Size quen thuộc.`,
+  w17:`📌 Mock 2 strategy: Listening — không được nghe lại băng. Nếu miss → đoán ngay. Reading — skip câu dài trước, làm câu ngắn trước, quay lại câu dài sau.`,
+  // T9
+  x1:`📌 Phân tích lỗi Mock 1 & 2: nếu Listening sai nhiều dạng "số liệu/ngày" → tăng dictation. Nếu sai nhiều dạng "ý kiến/thái độ" → tăng nghe Bite Size và chú ý attitude words.`,
+  x2:`📌 Tango/Hyougen: đến T9 nên review lại toàn bộ 1000 từ bằng Anki. Set "due: overdue" trong Anki để xem những thẻ lâu không ôn.`,
+  x3:`📌 Scan reading drill: đọc câu hỏi → gạch chân keyword → scan tìm keyword trong bài → chỉ đọc đoạn đó. Luyện kỹ năng này giúp tiết kiệm 30% thời gian làm bài.`,
+  x4:`📌 Shadowing native speed: nếu Bite Size ở 1x bắt đầu nghe rõ hầu hết → thử các podcast khó hơn: ゆる言語学ラジオ hoặc NHKラジオニュース (thật sự native speed).`,
+  x5:`📌 Keigo/Bunshou: 300 từ — đến T9 nên thuộc hết. Nếu còn thiếu: ưu tiên nhóm 謙譲語 vì BJT test cái này nhiều hơn 尊敬語.`,
+  x6:`📌 So sánh điểm Listening: nếu điểm không tăng dù đã luyện nhiều → vấn đề thường là "nghe được nhưng xử lý không kịp". Fix: tăng tốc độ nghe lên 1.3x thường xuyên hơn.`,
+  x7:`📌 Nghe cuộc họp thật (recording hoặc recall): ghi lại theo format 議事録. Đây là tài liệu luyện thi tốt nhất vì 100% relevant với BJT business context.`,
+  x8:`📌 Sách BJT 読解: bài báo dài (200–300 chữ) — phân bổ thời gian: 1 phút đọc câu hỏi, 4 phút scan + đọc đoạn liên quan, 1 phút chọn đáp án.`,
+  x9:`📌 Tango/Hyougen: nhóm ngân sách & tài chính: 予算、決算、収支、黒字、赤字、コスト削減、費用対効果. Nhóm này hay xuất hiện trong BJT Reading phần bài báo.`,
+  x10:`📌 Time management trong phòng thi: Listening 50 phút (45 câu = ~67 giây/câu). Reading 70 phút (40 câu = ~105 giây/câu). Nếu 1 câu quá 2 phút → đoán và đi tiếp.`,
+  x11:`📌 Mock 3 — mục tiêu 430–460: nếu đạt → đúng track. Nếu dưới 400 → cần thêm 1 tháng ôn từ vựng và giảm số mock. Nếu trên 460 → đẩy mạnh mock T10–T11.`,
+  x12:`📌 Phân tích Mock 3: vẽ bảng: dạng câu | số câu | số sai | tỷ lệ. Tìm dạng có tỷ lệ sai cao nhất → đó là điểm cần ôn nhất T10.`,
+  x13:`📌 Nghe lại Listening sai: quy trình: (1) Nghe không script, (2) Ghi đáp án mới, (3) Nghe lại với script, (4) Highlight từ/câu không nhận ra được. Đây là nguồn từ vựng quý.`,
+  x14:`📌 Anki 500 từ review: set Anki về "review only" mode. Mục tiêu: 0 thẻ overdue trước khi thi. Mỗi ngày 30–40 phút review là đủ.`,
+  x15:`📌 Sách BJT: chọn 20 câu Reading từ các bài đã làm sai → làm lại không xem đáp án → so sánh. Nếu làm đúng lần 2 = đã hiểu. Nếu vẫn sai = cần ôn thêm dạng này.`,
+  // T10
+  y1:`📌 Mock 4: bắt đầu mô phỏng điều kiện thi thật hoàn toàn — tắt điện thoại, không pause, không tra từ. Sau đó mới phân tích.`,
+  y2:`📌 Kỹ thuật review Listening: nghe lại câu sai ở tốc độ 0.85x → ghi lại được chưa? Nếu được = vấn đề là tốc độ xử lý. Nếu vẫn không → vấn đề là từ vựng/âm thanh.`,
+  y3:`📌 Vocabulary gap filler: dùng Anki "leech" (thẻ sai nhiều nhất) → đây là danh sách ưu tiên ôn. Xóa thẻ quá khó, thêm ví dụ mới dễ nhớ hơn.`,
+  y4:`📌 Reading scan drill: đặt timer 90 giây/câu. Nếu không xong → đoán và đi. Không được phép ở lại 1 câu quá 2 phút trong phòng thi.`,
+  y5:`📌 Bite Size ở T10: mục tiêu đã chuyển — nghe để maintain fluency, không phải để học mới. 15 phút/ngày, không cần ghi chú nhiều.`,
+  y6:`📌 Mock 5: dùng đề từ quyển sách BJT còn lại (quyển 2 nếu có). Nếu hết đề → tìm đề cũ BJT trên mạng (search: ビジネス日本語能力テスト 過去問).`,
+  y7:`📌 Pattern sai lặp lại: nếu vẫn sai dạng "次にすること" → trước khi nghe, đọc câu hỏi và nhủ bản thân "tôi cần nghe hành động ở CUỐI hội thoại".`,
+  y8:`📌 Business vocabulary nâng cao: 的確な判断、迅速な対応、適切な措置、合理的な提案. Những cụm này xuất hiện trong BJT Reading phần bình luận/đánh giá.`,
+  y9:`📌 議事録 nâng cao: thêm phần "保留事項" (vấn đề chưa quyết) và "リスク" vào format. Khách hàng Nhật đánh giá cao khi BrSE viết đủ các mục này.`,
+  y10:`📌 Câu khó trong Listening: nếu không nghe kịp câu đầu → không hoảng, tiếp tục nghe. Thường câu đầu là context, câu hỏi hỏi về nội dung câu sau.`,
+  y11:`📌 Listening ôn tổng hợp: làm lại tất cả câu sai từ Mock 1–5. Nếu làm đúng lần này = đã hiểu pattern. Nếu vẫn sai = cần nghe thêm loại hội thoại đó.`,
+  y12:`📌 Reading 40 câu không xem câu hỏi trước: luyện khả năng đọc chủ động. Sau khi đọc xong mới xem câu hỏi → trả lời. Kỹ năng này giúp đọc hiểu thật sự, không chỉ scan.`,
+  y13:`📌 Anki 600 từ review: nếu retention rate dưới 80% → giảm số thẻ mới, tăng review. Mục tiêu tháng 10: không có thẻ nào sai quá 3 lần.`,
+  y14:`📌 Dictation 8 phút: đây là mức độ cần thiết cho BJT Listening section dài nhất. Nếu tay viết không kịp → thử gõ bàn phím (nếu thi trên máy).`,
+  y15:`📌 Danh sách lỗi cá nhân: mỗi người có pattern sai khác nhau. Viết ra 5 lỗi hay mắc nhất → dán lên màn hình → nhìn mỗi ngày trước khi học.`,
+  // T11
+  z1:`📌 Mock 7: nếu điểm >= 460 → đúng track cho mục tiêu 480+. Nếu dưới 450 → tăng mock lên 2 lần/tuần, giảm học mới.`,
+  z2:`📌 Dictation T11: thử dictation câu dài (複文) — ví dụ: "先月の売上が目標比20%増加したため、今月の予算を見直す必要があります". Đây là level câu hỏi thi thật.`,
+  z3:`📌 Bite Size T11: chỉ nghe các tập về chủ đề xã hội/công việc để maintain business sense. Các tập về ẩm thực hay travel ít liên quan đến BJT.`,
+  z4:`📌 Đọc câu hỏi trước khi nghe: trong phòng thi có ~30 giây intro + instruction. Dùng thời gian này đọc câu hỏi, gạch chân keyword cần nghe.`,
+  z5:`📌 Câu khó Listening — chiến lược không hoảng: nếu hoàn toàn không hiểu → nhìn đáp án, loại trừ 1–2 đáp án sai rõ ràng → đoán trong số còn lại. Không bỏ trống.`,
+  z6:`📌 Mock 8: so sánh điểm với Mock đầu tiên (Mock 1 tháng 6). Nếu tăng 80–120 điểm → tiến độ tốt. Nếu tăng dưới 60 điểm → cần tập trung ôn điểm yếu chủ đạo.`,
+  z7:`📌 Phân tích tổng: vẽ biểu đồ điểm Mock 1→8. Nếu đường thẳng đi lên đều → tốt. Nếu plateau → thường do từ vựng không đủ hoặc listening speed chưa bắt kịp.`,
+  z8:`📌 3 dạng Listening hay sai nhất: nhìn lại toàn bộ phân tích lỗi. Fix dạng sai nhiều nhất trong 2 tuần cuối T11 — đừng ôn đều, ôn tập trung.`,
+  z9:`📌 Reading 60 phút timed: nếu hoàn thành đúng giờ với > 70% đúng → sẵn sàng cho thi thật. Nếu chưa → luyện thêm speed, không cần học thêm nội dung mới.`,
+  z10:`📌 Anki 700 từ: lúc này nên có ~1300 từ học + ~từ mới từ sách BJT. Mục tiêu: retention 85%+ trước khi thi.`,
+  z11:`📌 Mock 9: làm trong điều kiện thi thật nhất có thể — cùng giờ sáng, ngồi bàn, không điện thoại. Tập làm quen với tâm lý thi.`,
+  z12:`📌 Sprint ôn không học mới: nguyên tắc: não cần thời gian consolidate. Học mới trong tuần cuối → dễ confuse với kiến thức cũ. Chỉ ôn và củng cố.`,
+  z13:`📌 NHK Web Easy: thay thế Bite Size 1–2 ngày để nghe giọng khác (news style vs casual). BJT listening có cả 2 style này.`,
+  z14:`📌 Đọc câu hỏi trước drill: chỉ có 30 giây. Luyện: nhìn 4 đáp án trong 10 giây → đoán câu hỏi hỏi gì → chuẩn bị nghe đúng nội dung đó.`,
+  z15:`📌 Keigo review cuối: bảng 5 động từ quan trọng nhất — いる→いらっしゃる/おる, する→なさる/いたす, 言う→おっしゃる/申す, 食べる→召し上がる/いただく, もらう→いただく/頂戴する.`,
+  z16:`📌 Mock 10 target > 460: nếu đạt → T12 chỉ cần maintain và polish. Nếu 440–459 → vẫn kịp, tăng tốc T12. Nếu dưới 440 → cần đánh giá lại strategy.`,
+  // T12
+  a1:`📌 Mock 11 T12: dùng đề chưa làm (nếu còn). Nếu hết đề sách → tìm đề mẫu online hoặc làm lại đề cũ nhưng không xem đáp án cũ.`,
+  a2:`📌 Nguyên tắc cuối khóa: không học từ mới, không ôn nội dung lạ. Chỉ củng cố những gì đã biết. Não cần ổn định trước thi.`,
+  a3:`📌 Nghe cuộc họp thật T12: lần này không ghi chú — chỉ nghe và kiểm tra xem mình hiểu bao nhiêu % so với T5. Đây là thước đo progress thực tế nhất.`,
+  a4:`📌 Anki T12: giảm còn 15 thẻ/ngày. Chỉ review, không thêm mới. Tập trung vào thẻ "leech" còn lại.`,
+  a5:`📌 Mock 12: đây là mock cuối cùng. Nếu đạt 470+ → tự tin vào phòng thi. Nếu 450–469 → vẫn trong range đạt J2 với một chút may mắn về đề. Đừng panic.`,
+  a6:`📌 Tuần trước thi: nghe nhẹ nhàng = maintain, không phải study. Bite Size 1 tập/ngày, không ghi chú, chỉ nghe để tai không "nguội".`,
+  a7:`📌 Anki tuần cuối: 15 thẻ/ngày là đủ. Không cần ôn hết — não không thể xử lý hết 1300 từ trong 1 tuần. Tin vào quá trình 8 tháng đã học.`,
+  a8:`📌 Chiến lược làm bài — đọc lại lần cuối: Listening: đọc câu hỏi 30 giây đầu, ghi số liệu ngay khi nghe, không bỏ trống. Reading: scan câu hỏi → locate → đọc đoạn đó.`,
+  a9:`📌 Ngủ đủ > ôn thêm 1 tiếng. Nghiên cứu về memory consolidation cho thấy: ngủ đủ giấc 2 đêm trước thi quan trọng hơn ôn thêm. Tin cơ thể của bạn.`,
+  a10:`📌 Ngày trước thi: nếu thấy lo → đọc lại danh sách điểm đã tiến bộ (Mock 1 vs Mock cuối). Bạn đã học 8 tháng, không phải vào thi tay không.`,
+  a11:`📌 Buổi sáng ngày thi: ăn sáng đủ chất (không bỏ bữa), mang nước, đến sớm 20 phút để quen không gian phòng thi. Không ôn bài trong phòng chờ.`,
+  a12:`📌 Listening ngày thi: 30 giây đầu mỗi bài = đọc câu hỏi. Khi băng chạy = chỉ nghe, đừng đọc lại câu hỏi. Ghi số liệu/tên bằng ký hiệu tắt nếu cần.`,
+  a13:`📌 Reading ngày thi: làm câu ngắn trước (email, thông báo = 2–3 phút). Để câu dài (bài báo = 5–6 phút) về sau. Không bao giờ để trống — đoán nếu hết giờ.`,
+  a14:`📌 Câu không biết = đoán ngay, không bỏ. Xác suất đoán đúng 1/4 = 25%. Điểm bỏ trống = 0%. Luôn đoán tốt hơn bỏ trống.`,
+  a15:`📌 Sau thi: ghi lại những câu nhớ được đã làm (nếu muốn). Kết quả thường có sau 1–2 tháng. Dù kết quả thế nào, 8 tháng học đã nâng trình độ thực tế của bạn rõ rệt.`,
+};
+
+const DATA={
+"T5":{phase:1,label:"Tháng 5 · Nền tảng — bắt đầu từ đầu",weeks:[
+  {id:"T5W1",label:"Tuần 1 (1–7/5) · Làm quen tài liệu",tasks:[
+    {id:"t1",name:"Mở sách BJT 聴解 — xem format, nghe thử 3 câu đầu",tags:["test"],src:"bjt",min:20},
+    {id:"t2",name:"Mở sách BJT 読解 — xem format, đọc thử 3 câu đầu",tags:["read"],src:"bjt",min:15},
+    {id:"t3",name:"Cài Anki — tạo 3 deck: Tango/Hyougen · Keigo/Bunshou · BJT mới",tags:["vocab"],src:"tips",min:20},
+    {id:"t4",name:"Tango/Hyougen: nhập 50 từ đầu vào Anki, học lần đầu",tags:["vocab"],src:"tango",min:40},
+    {id:"t5",name:"Bite Size JP: nghe tập 50–55, không dừng, ghi những gì nghe được",tags:["listen"],src:"bitesize",min:25},
+  ]},
+  {id:"T5W2",label:"Tuần 2 (8–14/5) · Thiết lập thói quen",tasks:[
+    {id:"t6",name:"Anki hàng ngày: 15 thẻ cũ + 10 thẻ mới từ Tango/Hyougen (x7 ngày)",tags:["vocab"],src:"tango",min:15},
+    {id:"t7",name:"Bite Size JP: nghe tập 56–60 — quy trình 3 bước (nghe → ghi → nghe lại)",tags:["listen"],src:"bitesize",min:20},
+    {id:"t8",name:"Bite Size JP: shadowing 1 đoạn 30 giây từ tập đã nghe",tags:["listen"],src:"bitesize",min:10},
+    {id:"t9",name:"Tango/Hyougen: nhóm họp — 議事録、確認事項、宿題、持ち帰る (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"t10",name:"BJT 読解: đọc 1 email mẫu trong sách — ghi từ không biết vào Anki deck BJT",tags:["read"],src:"bjt",min:20},
+  ]},
+  {id:"T5W3",label:"Tuần 3 (15–21/5) · Keigo + Dictation bắt đầu",tasks:[
+    {id:"t11",name:"Dictation: nghe Bite Size, ghi lại 5 câu có số liệu/ngày tháng",tags:["listen"],src:"bitesize",min:20},
+    {id:"t12",name:"Tango/Hyougen: nhóm email — お世話、ご確認、取り急ぎ、ご対応 (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"t13",name:"Keigo/Bunshou: bắt đầu từ đầu — học bảng 3 cột (普通形/丁寧語/敬語) x20 từ",tags:["gram"],src:"keigo",min:35},
+    {id:"t14",name:"BJT 聴解: nghe + làm bài số 1 trong sách, không tính giờ",tags:["test"],src:"bjt",min:30},
+    {id:"t15",name:"Bite Size JP: shadowing tập mới — focus vào rhythm & intonation",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"T5W4",label:"Tuần 4 (22–31/5) · Tổng kết tháng 1",tasks:[
+    {id:"t16",name:"Tango/Hyougen: nhóm báo cáo — 進捗、完了、遅延、原因、納期 (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"t17",name:"BJT 聴解: làm bài 2–3, ghi lại dạng câu hỏi (hỏi gì: hành động/thông tin/thái độ?)",tags:["test"],src:"bjt",min:35},
+    {id:"t18",name:"Keigo/Bunshou: 承知/かしこまり/了解の違い + 10 câu bài tập",tags:["gram"],src:"keigo",min:30},
+    {id:"t19",name:"Bite Size JP: shadowing tập mới ở tốc độ 1x — đã thuộc chưa?",tags:["listen"],src:"bitesize",min:15},
+    {id:"t20",name:"Ôn Anki: toàn bộ 150 từ tháng 5 — xem có thẻ leech nào không",tags:["vocab"],src:"tango",min:20},
+  ]},
+]},
+"T6":{phase:1,label:"Tháng 6 · Nền tảng (tt) + Mock 1",weeks:[
+  {id:"T6W1",label:"Tuần 1 (1–7/6)",tasks:[
+    {id:"u1",name:"Tango/Hyougen: nhóm schedule/negotiation — 調整、折り合い、合意、期限 (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"u2",name:"Bite Size JP: nghe tập chủ đề công việc/xã hội — ghi 3 từ/cụm mới vào Anki",tags:["listen"],src:"bitesize",min:20},
+    {id:"u3",name:"Dictation: nghe Bite Size, ghi lại tên người + chức vụ xuất hiện",tags:["listen"],src:"bitesize",min:15},
+    {id:"u4",name:"BJT 読解: làm 2 bài email ngắn — áp dụng kỹ thuật scan (câu hỏi trước → keyword)",tags:["read"],src:"bjt",min:25},
+    {id:"u5",name:"Keigo/Bunshou: 承知 / かしこまり / 了解 — phân biệt + 10 câu bài tập",tags:["gram"],src:"keigo",min:25},
+  ]},
+  {id:"T6W2",label:"Tuần 2 (8–14/6)",tasks:[
+    {id:"u6",name:"Tango/Hyougen: nhóm IT — 不具合、修正、リリース、本番環境、テスト (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"u7",name:"Bite Size JP: nghe monologue 10 phút — sau đó tóm tắt ý chính bằng tiếng Nhật (3 câu)",tags:["listen"],src:"bitesize",min:25},
+    {id:"u8",name:"BJT 読解: làm 2 bài thông báo nội bộ + 1 bài báo cáo ngắn",tags:["read"],src:"bjt",min:30},
+    {id:"u9",name:"BJT 聴解: làm bài 4–6, phân loại câu hỏi: hành động / thông tin / thái độ",tags:["test"],src:"bjt",min:35},
+    {id:"u10",name:"Bite Size JP: shadowing — chú ý âm nối 連濁, ghi lại ví dụ nghe được",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"T6W3",label:"Tuần 3 (15–21/6)",tasks:[
+    {id:"u11",name:"Tango/Hyougen: nhóm nhân sự — 部長、課長、担当者、取引先、顧客 (50 từ)",tags:["vocab"],src:"tango",min:30},
+    {id:"u12",name:"Bite Size JP: nghe tập 10 phút → viết 議事録 mini (quyết định, hành động tiếp theo)",tags:["listen"],src:"bitesize",min:30},
+    {id:"u13",name:"BJT 読解: 3 bài email — nhận dạng loại: yêu cầu / thông báo / báo cáo vấn đề",tags:["read"],src:"bjt",min:25},
+    {id:"u14",name:"Keigo/Bunshou: もし〜なら、〜ため、〜にもかかわらず + 10 câu bài tập",tags:["gram"],src:"keigo",min:25},
+    {id:"u15",name:"Dictation: ghi lại số liệu tài chính (% tăng/giảm, ngày tháng) từ Bite Size",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"T6W4",label:"Tuần 4 (22–30/6) · MOCK TEST 1",tasks:[
+    {id:"u16",name:"Sprint ôn 3 ngày: Anki 200 từ đã học + đọc lại ghi chú lỗi sách BJT",tags:["vocab"],src:"tango",min:30},
+    {id:"u17",name:"FULL MOCK TEST — dùng đề trong sách BJT lần 1 · đúng giờ, nghiêm túc",tags:["test"],src:"bjt",min:120},
+    {id:"u18",name:"Phân tích lỗi Mock 1 — phân loại: (A) không biết từ, (B) nghe không kịp, (C) hiểu nhầm",tags:["test"],src:"tips",min:45},
+    {id:"u19",name:"Nghe lại phần Listening sai trong sách — nghe 2 lần, lần 2 có script",tags:["listen"],src:"bjt",min:30},
+    {id:"u20",name:"Ghi từ/mẫu câu mới từ đề thi vào Anki deck BJT",tags:["vocab"],src:"bjt",min:20},
+  ]},
+]},
+"T7":{phase:2,label:"Tháng 7 · Tăng tốc Listening",weeks:[
+  {id:"V1",label:"Tuần 1 (1–7/7)",tasks:[
+    {id:"v1",name:"Phân tích kết quả Mock 1 — lên danh sách điểm yếu cụ thể cần ôn T7",tags:["test"],src:"tips",min:20},
+    {id:"v2",name:"BJT 聴解: luyện 10 câu dạng 次は何をしますか — ghi pattern nghe",tags:["listen"],src:"bjt",min:30},
+    {id:"v3",name:"Tango/Hyougen: nhóm hợp đồng — 契約、条項、締結、納品、検収 (40 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"v4",name:"BJT 読解: 2 bài hợp đồng/điều khoản — tập scan 3 phần chính",tags:["read"],src:"bjt",min:25},
+    {id:"v5",name:"Bite Size JP: tăng tốc 1.1x — nghe tập mới, ghi 3 attitude word nghe được",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"V2",label:"Tuần 2 (8–14/7)",tasks:[
+    {id:"v6",name:"BJT 聴解: 10 câu dạng hỏi thái độ — chú ý: でも / ただ / まあ / 一応",tags:["listen"],src:"bjt",min:30},
+    {id:"v7",name:"Dictation từ Bite Size: ghi số liệu + ngày tháng — 5 câu/ngày",tags:["listen"],src:"bitesize",min:20},
+    {id:"v8",name:"BJT 読解: 2 bài báo cáo tháng — tìm ý chính, không đọc toàn bài",tags:["read"],src:"bjt",min:25},
+    {id:"v9",name:"Tango/Hyougen: nhóm báo cáo/phân tích — 分析、傾向、要因、課題、改善策 (40 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"v10",name:"Keigo/Bunshou: viết email báo cáo trễ hạn theo mẫu chuẩn (お詫び→原因→対策)",tags:["gram"],src:"keigo",min:25},
+  ]},
+  {id:"V3",label:"Tuần 3 (15–21/7)",tasks:[
+    {id:"v11",name:"Bite Size JP: nghe 1 tập → viết 議事録 đầy đủ: 日時・決定事項・アクション",tags:["listen"],src:"bitesize",min:35},
+    {id:"v12",name:"BJT 読解: 20 câu email + thông báo nội bộ — timed (2–3 phút/câu)",tags:["read"],src:"bjt",min:50},
+    {id:"v13",name:"Tango/Hyougen: nhóm sự cố — クレーム、謝罪、補償、再発防止 (40 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"v14",name:"Bite Size JP: shadowing tập mới ở 1.15x — nếu khó, nghe 5 lần trước",tags:["listen"],src:"bitesize",min:15},
+    {id:"v15",name:"Keigo/Bunshou: ていただく vs てもらう — 10 câu bài tập chuyển đổi",tags:["gram"],src:"keigo",min:25},
+  ]},
+  {id:"V4",label:"Tuần 4 (22–31/7)",tasks:[
+    {id:"v16",name:"BJT 聴解: làm 1 bộ đề nghe đầy đủ trong sách — timed 50 phút",tags:["test"],src:"bjt",min:55},
+    {id:"v17",name:"Review Listening: nghe lại câu sai, ghi lại từ/câu không nhận ra",tags:["test"],src:"bjt",min:30},
+    {id:"v18",name:"BJT 読解: làm 1 bộ đề đọc đầy đủ trong sách — timed 70 phút",tags:["test"],src:"bjt",min:75},
+    {id:"v19",name:"Anki: ôn toàn bộ từ T5–T7 — chú ý thẻ leech",tags:["vocab"],src:"tango",min:25},
+    {id:"v20",name:"Ghi từ mới từ sách BJT vào Anki deck BJT",tags:["vocab"],src:"bjt",min:15},
+  ]},
+]},
+"T8":{phase:2,label:"Tháng 8 · Tăng tốc + Mock 2",weeks:[
+  {id:"W1",label:"Tuần 1 (1–7/8)",tasks:[
+    {id:"w1",name:"BJT 聴解: 10 câu dạng hỏi thông tin cụ thể — luyện ghi số liệu ngay khi nghe",tags:["listen"],src:"bjt",min:30},
+    {id:"w2",name:"Tango/Hyougen: nhóm outsourcing — オフショア、委託、外注、SES、常駐 (40 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"w3",name:"BJT 読解: bảng kế hoạch vs thực tế — tập đọc 計画・実績・差異・達成率",tags:["read"],src:"bjt",min:25},
+    {id:"w4",name:"Keigo/Bunshou: bài tập chuyển đổi 3 loại — 10 động từ x3 chiều",tags:["gram"],src:"keigo",min:30},
+    {id:"w5",name:"Bite Size JP: nghe 1.2x — nếu bắt đầu nghe rõ = đang tiến bộ tốt",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"W2",label:"Tuần 2 (8–14/8)",tasks:[
+    {id:"w6",name:"BJT 聴解: 8 câu điện thoại business — chú ý 折り返し、席を外す、〜の件で",tags:["listen"],src:"bjt",min:30},
+    {id:"w7",name:"Dictation: nghe Bite Size, ghi lại toàn bộ 1 đoạn 3–4 câu",tags:["listen"],src:"bitesize",min:25},
+    {id:"w8",name:"BJT 読解: 2 bài báo kinh doanh dài — tìm 筆者が言いたいこと (thường ở cuối bài)",tags:["read"],src:"bjt",min:25},
+    {id:"w9",name:"Tango/Hyougen: nhóm quản lý rủi ro — リスク、懸念、影響範囲、エスカレーション (40 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"w10",name:"BJT 聴解+読解: 15 câu hỗn hợp không phân loại — timed",tags:["test"],src:"bjt",min:35},
+  ]},
+  {id:"W3",label:"Tuần 3 (15–21/8)",tasks:[
+    {id:"w11",name:"Tổng hợp lỗi T5–T8: viết danh sách 5 lỗi cá nhân hay mắc nhất",tags:["test"],src:"tips",min:20},
+    {id:"w12",name:"Bite Size JP: nghe tập có Q&A hoặc 2 người nói — khó hơn monologue",tags:["listen"],src:"bitesize",min:25},
+    {id:"w13",name:"BJT 読解: speed drill — 1 email ngắn trong 3 phút, không đọc lại",tags:["read"],src:"bjt",min:20},
+    {id:"w14",name:"Tango/Hyougen: ôn nhóm leech (thẻ sai nhiều nhất) — xem lại ví dụ câu",tags:["vocab"],src:"tango",min:25},
+    {id:"w15",name:"Viết 議事録 từ cuộc họp thật tuần này bằng tiếng Nhật",tags:["gram"],src:"tips",min:25},
+  ]},
+  {id:"W4",label:"Tuần 4 (22–31/8) · MOCK TEST 2",tasks:[
+    {id:"w16",name:"Sprint ôn 3 ngày: Anki toàn bộ + đọc lại ghi chú lỗi Mock 1",tags:["vocab"],src:"tango",min:30},
+    {id:"w17",name:"FULL MOCK TEST — dùng đề tiếp theo trong sách BJT · đúng giờ",tags:["test"],src:"bjt",min:120},
+    {id:"w18",name:"Phân tích Mock 2: so sánh điểm và loại lỗi với Mock 1",tags:["test"],src:"tips",min:40},
+    {id:"w19",name:"Nghe lại Listening sai — quy trình: nghe → ghi → xem script → highlight",tags:["listen"],src:"bjt",min:30},
+    {id:"w20",name:"Cập nhật Anki deck BJT với từ mới từ đề Mock 2",tags:["vocab"],src:"bjt",min:15},
+  ]},
+]},
+"T9":{phase:2,label:"Tháng 9 · Ôn điểm yếu từ Mock",weeks:[
+  {id:"X1",label:"Tuần 1 (1–7/9)",tasks:[
+    {id:"x1",name:"Phân tích lỗi Mock 1+2: xác định dạng câu sai nhiều nhất → lên kế hoạch ôn T9",tags:["test"],src:"tips",min:20},
+    {id:"x2",name:"Tango/Hyougen: review toàn bộ 700 từ đã học — Anki filter: 'overdue'",tags:["vocab"],src:"tango",min:30},
+    {id:"x3",name:"BJT 読解: speed scan — đọc câu hỏi → gạch keyword → scan bài 90 giây/câu",tags:["read"],src:"bjt",min:25},
+    {id:"x4",name:"Bite Size JP: shadowing native speed (1x) — không chỉnh tốc độ",tags:["listen"],src:"bitesize",min:15},
+    {id:"x5",name:"Keigo/Bunshou: ôn 謙譲語 toàn bộ — ưu tiên vì BJT test nhiều hơn 尊敬語",tags:["gram"],src:"keigo",min:25},
+  ]},
+  {id:"X2",label:"Tuần 2 (8–14/9)",tasks:[
+    {id:"x6",name:"BJT 聴解: làm lại dạng câu sai nhiều nhất từ Mock 1+2 — 15 câu",tags:["test"],src:"bjt",min:40},
+    {id:"x7",name:"Bite Size JP: nghe tập chủ đề công việc → viết 議事録 3 mục (quyết định, hành động, bảo lưu)",tags:["listen"],src:"bitesize",min:25},
+    {id:"x8",name:"BJT 読解: 2 bài báo kinh doanh dài — timed 6 phút/bài",tags:["read"],src:"bjt",min:35},
+    {id:"x9",name:"Tango/Hyougen: nhóm tài chính — 予算、決算、収支、黒字、赤字、コスト削減 (30 từ)",tags:["vocab"],src:"tango",min:25},
+    {id:"x10",name:"Chiến lược thi: vẽ timeline 50 phút Listening + 70 phút Reading — phân bổ thời gian/câu",tags:["test"],src:"tips",min:20},
+  ]},
+  {id:"X3",label:"Tuần 3 (15–21/9) · MOCK TEST 3",tasks:[
+    {id:"x11",name:"FULL MOCK TEST 3 — dùng đề mới trong sách BJT · mục tiêu 430–460",tags:["test"],src:"bjt",min:120},
+    {id:"x12",name:"Phân tích Mock 3: vẽ bảng dạng câu / số câu / số sai / tỷ lệ",tags:["test"],src:"tips",min:40},
+    {id:"x13",name:"Nghe lại Listening sai Mock 3: nghe → ghi → script → highlight",tags:["listen"],src:"bjt",min:35},
+    {id:"x14",name:"Anki: review 500+ từ đã học — mục tiêu 0 thẻ overdue",tags:["vocab"],src:"tango",min:30},
+    {id:"x15",name:"BJT 読解: làm lại 10 câu sai từ Mock 3 — không xem đáp án trước",tags:["read"],src:"bjt",min:30},
+  ]},
+  {id:"X4",label:"Tuần 4 (22–30/9)",tasks:[
+    {id:"x16",name:"Ôn pattern lỗi tái phát: so sánh Mock 1, 2, 3 — lỗi nào lặp lại?",tags:["test"],src:"tips",min:25},
+    {id:"x17",name:"Bite Size JP: nghe 5 tập liên tiếp không dừng — luyện concentration",tags:["listen"],src:"bitesize",min:40},
+    {id:"x18",name:"BJT 読解: đọc spec IT thật + bài báo kinh doanh — ghi từ mới vào Anki",tags:["read"],src:"bjt",min:30},
+    {id:"x19",name:"Tango/Hyougen: ôn nhóm leech + 30 từ mới từ sách BJT chưa biết",tags:["vocab"],src:"tango",min:25},
+    {id:"x20",name:"Lập kế hoạch Sprint T10–T12 dựa trên kết quả 3 Mock",tags:["test"],src:"tips",min:15},
+  ]},
+]},
+"T10":{phase:3,label:"Tháng 10 · Sprint đích",weeks:[
+  {id:"Y1",label:"Tuần 1 (1–7/10) · MOCK 4",tasks:[
+    {id:"y1",name:"FULL MOCK TEST 4 — điều kiện thi thật hoàn toàn (tắt điện thoại, không pause)",tags:["test"],src:"bjt",min:120},
+    {id:"y2",name:"Review Listening Mock 4: nghe lại câu sai ở 0.85x → ghi lại được chưa?",tags:["listen"],src:"tips",min:45},
+    {id:"y3",name:"Anki: xử lý thẻ leech — thêm ví dụ mới, xóa thẻ quá khó không thực tế",tags:["vocab"],src:"tango",min:20},
+    {id:"y4",name:"BJT 読解: speed drill — 90 giây/câu, đoán nếu quá thời gian",tags:["read"],src:"bjt",min:25},
+    {id:"y5",name:"Bite Size JP: 15 phút/ngày — maintain, không cần ghi chú nhiều",tags:["listen"],src:"bitesize",min:15},
+  ]},
+  {id:"Y2",label:"Tuần 2 (8–14/10) · MOCK 5",tasks:[
+    {id:"y6",name:"FULL MOCK TEST 5 — dùng đề mới (tìm 過去問 nếu hết sách)",tags:["test"],src:"bjt",min:120},
+    {id:"y7",name:"Ôn pattern lỗi lặp lại từ Mock 4: nếu vẫn sai 次にすること → đọc câu hỏi trước",tags:["test"],src:"tips",min:35},
+    {id:"y8",name:"Tango/Hyougen: business nâng cao — 的確な判断、迅速な対応、合理的な提案 (20 từ)",tags:["vocab"],src:"tango",min:20},
+    {id:"y9",name:"Bite Size JP: nghe → viết 議事録 nâng cao (thêm 保留事項 & リスク)",tags:["listen"],src:"bitesize",min:30},
+    {id:"y10",name:"Chiến lược: nếu miss câu đầu Listening → tiếp tục nghe, câu đầu là context",tags:["test"],src:"tips",min:15},
+  ]},
+  {id:"Y3",label:"Tuần 3 (15–21/10)",tasks:[
+    {id:"y11",name:"BJT 聴解: làm lại toàn bộ câu sai từ Mock 1–5 theo dạng — pattern nào vẫn sai?",tags:["listen"],src:"bjt",min:40},
+    {id:"y12",name:"BJT 読解: 40 câu — đọc bài TRƯỚC, câu hỏi SAU (luyện đọc chủ động)",tags:["read"],src:"bjt",min:65},
+    {id:"y13",name:"Anki: review 600+ từ — mục tiêu retention 85%",tags:["vocab"],src:"tango",min:30},
+    {id:"y14",name:"Dictation 8 phút từ Bite Size: ghi hoàn chỉnh — đây là level thi thật",tags:["listen"],src:"bitesize",min:25},
+    {id:"y15",name:"Ghi danh sách 5 lỗi cá nhân — dán lên màn hình, nhìn mỗi ngày trước học",tags:["test"],src:"tips",min:15},
+  ]},
+  {id:"Y4",label:"Tuần 4 (22–31/10) · MOCK 6",tasks:[
+    {id:"y16",name:"FULL MOCK TEST 6",tags:["test"],src:"bjt",min:120},
+    {id:"y17",name:"Đánh giá tiến độ tổng thể — điều chỉnh kế hoạch T11 nếu cần",tags:["test"],src:"tips",min:20},
+    {id:"y18",name:"Ôn toàn bộ lỗi tháng 10 — tập trung 2 dạng câu sai nhiều nhất",tags:["test"],src:"bjt",min:30},
+    {id:"y19",name:"Tango/Hyougen + Keigo: ôn thẻ leech toàn bộ",tags:["vocab"],src:"tango",min:20},
+    {id:"y20",name:"Bite Size JP: shadowing native speed — maintain fluency",tags:["listen"],src:"bitesize",min:15},
+  ]},
+]},
+"T11":{phase:3,label:"Tháng 11 · Sprint đích (tt)",weeks:[
+  {id:"Z1",label:"Tuần 1 (1–7/11) · MOCK 7",tasks:[
+    {id:"z1",name:"FULL MOCK TEST 7 — nếu >= 460: đúng track. Nếu < 450: tăng lên 2 đề/tuần",tags:["test"],src:"bjt",min:120},
+    {id:"z2",name:"Dictation câu phức (複文): ghi câu dài có mệnh đề điều kiện/nhượng bộ",tags:["listen"],src:"bitesize",min:30},
+    {id:"z3",name:"Bite Size JP: chỉ nghe tập chủ đề công việc/xã hội — skip tập ẩm thực/du lịch",tags:["listen"],src:"bitesize",min:20},
+    {id:"z4",name:"BJT 聴解: drill đọc câu hỏi trong 30 giây — tập nhận dạng keyword cần nghe",tags:["test"],src:"bjt",min:25},
+    {id:"z5",name:"Chiến lược câu khó: loại trừ 2 đáp án sai rõ → đoán trong 2 còn lại, không bỏ trống",tags:["test"],src:"tips",min:15},
+  ]},
+  {id:"Z2",label:"Tuần 2 (8–14/11) · MOCK 8",tasks:[
+    {id:"z6",name:"FULL MOCK TEST 8 — so sánh điểm với Mock 1 (tháng 6): tăng bao nhiêu?",tags:["test"],src:"bjt",min:120},
+    {id:"z7",name:"Vẽ biểu đồ điểm Mock 1→8 — nếu plateau → vấn đề từ vựng hay tốc độ?",tags:["test"],src:"tips",min:25},
+    {id:"z8",name:"BJT 聴解: ôn tập trung 2–3 dạng sai nhiều nhất trong tất cả Mock",tags:["listen"],src:"bjt",min:40},
+    {id:"z9",name:"BJT 読解: 40 câu timed trong 60 phút — nếu hoàn thành 70%+ đúng: OK",tags:["read"],src:"bjt",min:65},
+    {id:"z10",name:"Anki: review 700+ từ (Tango/Hyougen + Keigo + BJT deck) — toàn bộ",tags:["vocab"],src:"tango",min:30},
+  ]},
+  {id:"Z3",label:"Tuần 3 (15–21/11) · MOCK 9",tasks:[
+    {id:"z11",name:"FULL MOCK TEST 9 — mô phỏng điều kiện thi thật: buổi sáng, bàn học",tags:["test"],src:"bjt",min:120},
+    {id:"z12",name:"Ôn sprint: chỉ củng cố đã biết — không học nội dung mới từ đây",tags:["test"],src:"tips",min:25},
+    {id:"z13",name:"Bite Size JP: 1 tập/ngày — maintain. Hoặc thử NHK Web Easy để nghe giọng khác",tags:["listen"],src:"bitesize",min:20},
+    {id:"z14",name:"BJT 聴解: drill đọc câu hỏi 30 giây — luyện đến khi thành phản xạ",tags:["test"],src:"bjt",min:20},
+    {id:"z15",name:"Keigo/Bunshou: bảng 5 động từ quan trọng nhất — thuộc 100% cả 2 chiều",tags:["gram"],src:"keigo",min:20},
+  ]},
+  {id:"Z4",label:"Tuần 4 (22–30/11) · MOCK 10",tasks:[
+    {id:"z16",name:"FULL MOCK TEST 10 — mục tiêu > 460. Kết quả = thước đo khả năng thi thật",tags:["test"],src:"bjt",min:120},
+    {id:"z17",name:"Lập kế hoạch 3 tuần cuối T12 dựa trên kết quả Mock 10",tags:["test"],src:"tips",min:20},
+    {id:"z18",name:"Nghe lại Listening sai Mock 10 — lần cuối review kiểu này",tags:["listen"],src:"bjt",min:30},
+    {id:"z19",name:"Anki: giảm còn 20 thẻ/ngày — maintain, không thêm mới",tags:["vocab"],src:"tango",min:15},
+    {id:"z20",name:"Nghỉ 1 ngày hoàn toàn — giữ tinh thần & motivation",tags:["tips"],src:"tips",min:0},
+  ]},
+]},
+"T12":{phase:3,label:"Tháng 12 · Tuần quyết định",weeks:[
+  {id:"A1",label:"Tuần 1–2 (1–14/12) · Mock 11 & 12",tasks:[
+    {id:"a1",name:"FULL MOCK TEST 11 (tuần 1) — dùng đề chưa làm hoặc 過去問 online",tags:["test"],src:"bjt",min:120},
+    {id:"a2",name:"Ôn điểm yếu lần cuối — chỉ ôn, không học gì mới",tags:["test"],src:"tips",min:30},
+    {id:"a3",name:"Bite Size JP: nghe 1 tập → kiểm tra mình hiểu bao nhiêu % so với tháng 5",tags:["listen"],src:"bitesize",min:20},
+    {id:"a4",name:"Anki: 20 thẻ/ngày — maintain thôi",tags:["vocab"],src:"tango",min:15},
+    {id:"a5",name:"FULL MOCK TEST 12 (tuần 2) — nếu 470+: tự tin vào thi",tags:["test"],src:"bjt",min:120},
+  ]},
+  {id:"A2",label:"Tuần 3 — 1 tuần trước thi · Giảm tốc",tasks:[
+    {id:"a6",name:"Bite Size JP: 1 tập/ngày nhẹ nhàng — chỉ nghe, không ghi chú",tags:["listen"],src:"bitesize",min:15},
+    {id:"a7",name:"Anki: 15 thẻ/ngày — chỉ review, không thêm mới",tags:["vocab"],src:"tango",min:15},
+    {id:"a8",name:"Đọc lại: chiến lược làm bài (Listening: đọc câu hỏi trước · Reading: scan trước)",tags:["test"],src:"tips",min:15},
+    {id:"a9",name:"Ngủ đủ giấc: memory consolidation quan trọng hơn ôn thêm 1 giờ",tags:["tips"],src:"tips",min:0},
+    {id:"a10",name:"Ngày trước thi: nghỉ ngơi hoàn toàn. Tin vào 8 tháng đã học.",tags:["tips"],src:"tips",min:0},
+  ]},
+  {id:"A3",label:"Ngày thi BJT · Thực chiến",tasks:[
+    {id:"a11",name:"Sáng thi: ăn đủ, đến sớm 20 phút, không ôn trong phòng chờ",tags:["tips"],src:"tips",min:0},
+    {id:"a12",name:"Listening: 30 giây đầu = đọc câu hỏi, gạch keyword. Ghi số liệu ngay khi nghe.",tags:["listen"],src:"tips",min:0},
+    {id:"a13",name:"Reading: làm câu ngắn (email) trước, câu dài (bài báo) sau. Scan câu hỏi → locate.",tags:["read"],src:"tips",min:0},
+    {id:"a14",name:"Không bỏ trống câu nào: đoán 25% > bỏ trống 0%. Luôn chọn đáp án.",tags:["tips"],src:"tips",min:0},
+    {id:"a15",name:"Sau thi: ghi lại cảm nhận. Kết quả ra sau 1–2 tháng. がんばった！",tags:["tips"],src:"tips",min:0},
+  ]},
+]},
+};
+
+/* ── STATE ── */
+const MONTHS=Object.keys(DATA);
+const PC=["","ph1","ph2","ph3"];
+const PL=["","Giai đoạn 1","Giai đoạn 2","Giai đoạn 3"];
+let state={},notes={},openWeeks={},showTips={},curMonth="T5";
+let mockScores=[],streakDays={};
+let remindTime="09:00",remindTz="Asia/Tokyo",remindInterval=null;
+
+function sk(k){return"bjt2_"+k}
+function load(){
+  try{
+    ["state","notes","openWeeks","showTips","mockScores","streakDays"].forEach(k=>{
+      const v=localStorage.getItem(sk(k));
+      if(v){
+        if(k==="state")state=JSON.parse(v);
+        else if(k==="notes")notes=JSON.parse(v);
+        else if(k==="openWeeks")openWeeks=JSON.parse(v);
+        else if(k==="showTips")showTips=JSON.parse(v);
+        else if(k==="mockScores")mockScores=JSON.parse(v);
+        else if(k==="streakDays")streakDays=JSON.parse(v);
+      }
+    });
+    const m=localStorage.getItem(sk("month"));if(m)curMonth=m;
+    const rt=localStorage.getItem(sk("remindTime"));if(rt)remindTime=rt;
+    const rz=localStorage.getItem(sk("remindTz"));if(rz)remindTz=rz;
+  }catch(e){}
+}
+function save(){
+  try{
+    localStorage.setItem(sk("state"),JSON.stringify(state));
+    localStorage.setItem(sk("notes"),JSON.stringify(notes));
+    localStorage.setItem(sk("openWeeks"),JSON.stringify(openWeeks));
+    localStorage.setItem(sk("showTips"),JSON.stringify(showTips));
+    localStorage.setItem(sk("mockScores"),JSON.stringify(mockScores));
+    localStorage.setItem(sk("streakDays"),JSON.stringify(streakDays));
+    localStorage.setItem(sk("month"),curMonth);
+    localStorage.setItem(sk("remindTime"),remindTime);
+    localStorage.setItem(sk("remindTz"),remindTz);
+  }catch(e){}
+}
+
+function allTasks(){const a=[];MONTHS.forEach(m=>{DATA[m].weeks.forEach(w=>{w.tasks.forEach(t=>{a.push(t)})})});return a;}
+function monthTasks(m){const a=[];DATA[m].weeks.forEach(w=>{w.tasks.forEach(t=>{a.push(t)})});return a;}
+function pct(d,t){return t===0?0:Math.round(d/t*100);}
+function todayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+
+function tagHtml(tags){
+  return tags.map(t=>{
+    const c={listen:"tag-listen",read:"tag-read",vocab:"tag-vocab",gram:"tag-gram",test:"tag-test",tips:"tag-tips"}[t]||"";
+    const l={listen:"Listening",read:"Reading",vocab:"Từ vựng",gram:"Ngữ pháp",test:"Luyện đề",tips:"Tips"}[t]||t;
+    return`<span class="tag ${c}">${l}</span>`;
+  }).join("");
+}
+
+/* ── STREAK ── */
+function markTodayStudied(){streakDays[todayKey()]=true;save();renderStreak();}
+function computeStreak(){
+  let cur=0,best=0;const d=new Date();
+  for(let i=0;i<90;i++){
+    const k=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+    if(streakDays[k]){cur++;best=Math.max(best,cur);}
+    else{if(i>0)cur=0;}
+    d.setDate(d.getDate()-1);
+  }
+  const tk=new Date();const todK=tk.getFullYear()+"-"+(tk.getMonth()+1)+"-"+tk.getDate();
+  return{streak:streakDays[todK]?cur:0,best};
+}
+function renderStreak(){
+  const {streak,best}=computeStreak();
+  document.getElementById("streak-num").textContent=streak;
+  document.getElementById("streak-best").textContent="Kỷ lục: "+best+" ngày";
+  let html="";const d=new Date();
+  for(let i=13;i>=0;i--){
+    const dd=new Date(d);dd.setDate(d.getDate()-i);
+    const k=dd.getFullYear()+"-"+(dd.getMonth()+1)+"-"+dd.getDate();
+    html+=`<div class="cal-dot${streakDays[k]?" done":""}${i===0?" today":""}"></div>`;
+  }
+  document.getElementById("streak-cal").innerHTML=html;
+}
+
+/* ── MOCK SCORES ── */
+function addMockScore(){
+  const s=parseInt(document.getElementById("mock-score-input").value);
+  const l=document.getElementById("mock-label-input").value;
+  if(isNaN(s)||s<0||s>800)return;
+  mockScores=mockScores.filter(x=>x.label!==l);
+  mockScores.push({label:l,score:s});
+  mockScores.sort((a,b)=>{const n=x=>parseInt(x.label.replace(/\D/g,""));return n(a)-n(b);});
+  document.getElementById("mock-score-input").value="";
+  save();renderMockScores();
+}
+function removeMockScore(label){mockScores=mockScores.filter(x=>x.label!==label);save();renderMockScores();}
+function renderMockScores(){
+  const el=document.getElementById("mock-scores");
+  if(!mockScores.length){el.innerHTML="<span style='font-size:12px;color:#9b9a95'>Chưa có — thêm sau khi làm mock test</span>";document.getElementById("score-bar").style.width="0%";return;}
+  el.innerHTML=mockScores.map(x=>`<div class="mock-chip${x.score>=480?" target":""}" onclick="removeMockScore('${x.label}')"><span>${x.label}</span><span class="mock-chip-score">${x.score}</span></div>`).join("");
+  const last=mockScores[mockScores.length-1].score;
+  document.getElementById("score-bar").style.width=Math.min(100,Math.round(last/800*100))+"%";
+}
+
+/* ── POMODORO ── */
+const POMO_WORK=25*60,POMO_REST=5*60;
+let pomoTimer=null,pomoLeft=POMO_WORK,pomoIsWork=true,pomoSession=0,pomoDone=[];
+function pomoTick(){
+  pomoLeft--;
+  if(pomoLeft<=0){
+    if(pomoIsWork){pomoDone.push(++pomoSession);pomoIsWork=false;pomoLeft=POMO_REST;}
+    else{pomoIsWork=true;pomoLeft=POMO_WORK;}
+    renderPomoUI();showBanner(pomoIsWork?"Hết giờ nghỉ! Bắt đầu học thôi 💪":"Nghỉ 5 phút đi bạn ☕");return;
+  }
+  renderPomoUI();
+}
+function pomoStart(){
+  if(pomoTimer){clearInterval(pomoTimer);pomoTimer=null;document.getElementById("pomo-start").textContent="Bắt đầu";return;}
+  pomoTimer=setInterval(pomoTick,1000);
+  document.getElementById("pomo-start").textContent="Dừng";
+  markTodayStudied();
+}
+function pomoReset(){clearInterval(pomoTimer);pomoTimer=null;pomoLeft=POMO_WORK;pomoIsWork=true;pomoSession=0;pomoDone=[];document.getElementById("pomo-start").textContent="Bắt đầu";renderPomoUI();}
+function fmtTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+function renderPomoUI(){
+  const total=pomoIsWork?POMO_WORK:POMO_REST;
+  const p=Math.round((total-pomoLeft)/total*100);
+  document.getElementById("pomo-clock").textContent=fmtTime(pomoLeft);
+  document.getElementById("pomo-clock").className="pomo-clock "+(pomoIsWork?"work":"rest");
+  document.getElementById("pomo-label").textContent=(pomoIsWork?"Học":"Nghỉ")+" · Pomodoro "+(pomoDone.length+1);
+  document.getElementById("pomo-fill").style.width=p+"%";
+  document.getElementById("pomo-fill").className="pomo-progress-fill"+(pomoIsWork?"":" rest");
+  let dots="";for(let i=0;i<4;i++)dots+=`<div class="pomo-dot${i<pomoDone.length?" done":""}"></div>`;
+  document.getElementById("pomo-dots").innerHTML=dots;
+}
+
+/* ── REMINDER ── */
+function toggleReminder(){document.getElementById("reminder-setup").classList.toggle("show");document.getElementById("remind-time").value=remindTime;document.getElementById("remind-tz").value=remindTz;}
+function saveReminder(){
+  remindTime=document.getElementById("remind-time").value;
+  remindTz=document.getElementById("remind-tz").value;
+  save();setupReminderInterval();
+  document.getElementById("reminder-setup").classList.remove("show");
+  showBanner("Đã lưu! Nhắc lúc "+remindTime+" ("+remindTz+")");
+  if(Notification.permission==="default")Notification.requestPermission();
+}
+function setupReminderInterval(){
+  if(remindInterval)clearInterval(remindInterval);
+  remindInterval=setInterval(()=>{
+    try{
+      const now=new Date(),tz=remindTz||"Asia/Tokyo";
+      const parts=new Intl.DateTimeFormat("en-US",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now);
+      const h=parts.find(p=>p.type==="hour")?.value,mi=parts.find(p=>p.type==="minute")?.value;
+      const cur=(h||"00").padStart(2,"0")+":"+(mi||"00").padStart(2,"0");
+      if(cur===remindTime){
+        showBanner("Đến giờ học BJT rồi! 📚 がんばって！");
+        if(Notification.permission==="granted")new Notification("BJT Study Time!",{body:"Đến giờ học rồi！がんばって！"});
+      }
+    }catch(e){}
+  },60000);
+}
+function showBanner(msg){
+  const b=document.getElementById("notif-banner");
+  document.getElementById("notif-text").textContent=msg;
+  b.classList.add("show");setTimeout(()=>b.classList.remove("show"),7000);
+}
+function dismissNotif(){document.getElementById("notif-banner").classList.remove("show");}
+
+/* ── STATS ── */
+function updateStats(){
+  const all=allTasks();const td=all.filter(t=>state[t.id]).length;
+  document.getElementById("s-total").textContent=pct(td,all.length)+"%";
+  const mt=monthTasks(curMonth);const md=mt.filter(t=>state[t.id]).length;
+  document.getElementById("s-month").textContent=pct(md,mt.length)+"%";
+  const openWk=Object.entries(openWeeks).find(([,v])=>v);
+  if(openWk){
+    const wid=openWk[0];let wt=[];
+    MONTHS.forEach(m=>{DATA[m].weeks.forEach(w=>{if(w.id===wid)wt=w.tasks;})});
+    const wd=wt.filter(t=>state[t.id]).length;
+    document.getElementById("s-week").textContent=pct(wd,wt.length)+"%";
+    document.getElementById("s-today").textContent=wt.filter(t=>state[t.id]).length+"/"+Math.min(3,wt.length);
+  } else {
+    const fw=DATA[curMonth].weeks[0].tasks;
+    document.getElementById("s-week").textContent=pct(fw.filter(t=>state[t.id]).length,fw.length)+"%";
+    document.getElementById("s-today").textContent=fw.filter(t=>state[t.id]).length+"/"+Math.min(3,fw.length);
+  }
+}
+
+/* ── RENDER ── */
+function renderMonthTabs(){
+  document.getElementById("month-tabs").innerHTML=MONTHS.map(m=>`<button class="mtab${m===curMonth?" active":""}" onclick="switchMonth('${m}')">${m}</button>`).join("");
+}
+function renderContent(){
+  const md=DATA[curMonth];
+  let html=`<span class="phase-badge ${PC[md.phase]}">${PL[md.phase]} · ${md.label}</span>`;
+  md.weeks.forEach(w=>{
+    const wd=w.tasks.filter(t=>state[t.id]).length,wt=w.tasks.length,wp=pct(wd,wt),io=!!openWeeks[w.id];
+    html+=`<div class="week-block">
+      <div class="week-hdr" onclick="toggleWeek('${w.id}')">
+        <div class="week-hdr-left">
+          <span class="chevron${io?" open":""}">&#9654;</span>
+          <span class="week-label">${w.label}</span>
+          <span class="week-prog">${wd}/${wt}</span>
+        </div>
+        <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${wp}%"></div></div>
+      </div>`;
+    if(io){
+      html+=`<div class="task-list">`;
+      w.tasks.forEach(t=>{
+        const done=!!state[t.id];
+        const nv=(notes[t.id]||"").replace(/"/g,"&quot;");
+        const mt=t.min>0?t.min+"ph":"";
+        const srcHtml=SRC[t.src]||"";
+        const hasTip=!!TIPS[t.id];
+        const tipOpen=!!showTips[t.id];
+        const tipContent=TIPS[t.id]||"";
+        html+=`<div class="task-row">
+          <div class="task-check${done?" done":""}" onclick="toggleTask('${t.id}')"></div>
+          <div class="task-info">
+            <div class="task-name${done?" done":""}">${t.name}</div>
+            <div class="task-meta">${tagHtml(t.tags)}${srcHtml}${hasTip?`<span class="tips-toggle" onclick="toggleTip('${t.id}')">💡 Tips</span>`:""}</div>
+            ${hasTip?`<div class="tips-box${tipOpen?" show":""}" id="tip-${t.id}">${tipContent}</div>`:""}
+            <input class="note-input" placeholder="Ghi chú..." value="${nv}" onchange="saveNote('${t.id}',this.value)">
+          </div>
+          <div class="task-min">${mt}</div>
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  document.getElementById("wbs-content").innerHTML=html;
+}
+
+function toggleTip(id){showTips[id]=!showTips[id];save();renderContent();}
+function toggleTask(id){state[id]=!state[id];if(state[id])markTodayStudied();save();renderContent();updateStats();}
+function toggleWeek(id){openWeeks[id]=!openWeeks[id];save();renderContent();updateStats();}
+function switchMonth(m){curMonth=m;save();renderMonthTabs();renderContent();updateStats();}
+function saveNote(id,val){notes[id]=val;save();}
+function resetAll(){if(!confirm("Reset toàn bộ tiến độ? Không thể hoàn tác."))return;state={};notes={};openWeeks={};mockScores=[];streakDays={};showTips={};save();renderAll();}
+
+/* ── EXPORT ── */
+function exportCSV(){
+  const rows=[["Tháng","Tuần","Nhiệm vụ","Nguồn","Tags","Phút","Hoàn thành","Ghi chú"]];
+  MONTHS.forEach(m=>{DATA[m].weeks.forEach(w=>{w.tasks.forEach(t=>{rows.push([m,w.label,t.name,t.src,t.tags.join("|"),t.min,state[t.id]?"Yes":"No",notes[t.id]||""])})})});
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));a.download="bjt_progress.csv";a.click();
+}
+function exportPDF(){
+  const scores=mockScores.map(x=>`${x.label}: ${x.score}điểm`).join(" | ")||"Chưa có";
+  const all=allTasks(),done=all.filter(t=>state[t.id]).length;
+  const si=computeStreak();
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>BJT Progress</title>
+  <style>body{font-family:sans-serif;padding:24px;color:#1a1a18;max-width:700px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:4px}h2{font-size:15px;margin:16px 0 6px;border-bottom:1px solid #ddd;padding-bottom:4px}
+  .meta{font-size:12px;color:#666;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#f5f4f0;text-align:left;padding:5px 8px;border:1px solid #ddd}
+  td{padding:4px 8px;border:1px solid #e0ddd5;vertical-align:top}
+  .done{color:#16a34a}.nd{color:#9b9a95}
+  @media print{button{display:none}}</style></head><body>
+  <h1>BJT Study Progress Report</h1>
+  <div class="meta">Xuất ngày: ${new Date().toLocaleDateString("vi-VN")} · Tài liệu: Tango/Hyougen + Keigo/Bunshou + Bite Size JP + Sách BJT</div>
+  <h2>Tổng quan</h2>
+  <table><tr><th>Chỉ số</th><th>Giá trị</th></tr>
+  <tr><td>Tổng tiến độ</td><td>${done}/${all.length} nhiệm vụ (${pct(done,all.length)}%)</td></tr>
+  <tr><td>Streak</td><td>${si.streak} ngày · Kỷ lục: ${si.best} ngày</td></tr>
+  <tr><td>Mock Test</td><td>${scores}</td></tr></table>
+  <h2>Chi tiết tháng</h2>
+  <table><tr><th>Tháng</th><th>Giai đoạn</th><th>Hoàn thành</th><th>%</th></tr>
+  ${MONTHS.map(m=>{const mt=monthTasks(m);const md2=mt.filter(t=>state[t.id]).length;return`<tr><td>${m}</td><td>${PL[DATA[m].phase]}</td><td>${md2}/${mt.length}</td><td>${pct(md2,mt.length)}%</td></tr>`;}).join("")}
+  </table>
+  <h2>Danh sách nhiệm vụ</h2>
+  <table><tr><th>Tháng</th><th>Tuần</th><th>Nhiệm vụ</th><th>Nguồn</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+  ${MONTHS.map(m=>DATA[m].weeks.map(w=>w.tasks.map(t=>`<tr><td>${m}</td><td style="font-size:11px">${w.label}</td><td>${t.name}</td><td>${t.src}</td><td class="${state[t.id]?"done":"nd"}">${state[t.id]?"✓":"—"}</td><td style="font-size:11px">${notes[t.id]||""}</td></tr>`).join("")).join("")).join("")}
+  </table><br><button onclick="window.print()">In / Lưu PDF</button></body></html>`);
+  w.document.close();
+}
+
+function renderAll(){renderMonthTabs();renderContent();updateStats();renderStreak();renderMockScores();renderPomoUI();}
+load();renderAll();setupReminderInterval();
+if(Notification.permission==="default")Notification.requestPermission();
+</script>
+</body>
+</html>
