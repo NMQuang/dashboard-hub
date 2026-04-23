@@ -15,7 +15,7 @@ export const revalidate = 1800
 const GITHUB_USERNAME = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? 'NMQuang'
 
 const NAV_ITEMS = [
-  { href: '/learn/japanese', icon: '日', label: 'Japanese', desc: 'AI chat · shadowing · N2', color: '#edfaf4' },
+  { href: '/learn/japanese', icon: '日', label: 'Japanese', desc: 'AI chat · shadowing', color: '#edfaf4' },
   { href: '/learn/mainframe', icon: '⬛', label: 'Mainframe', desc: 'COBOL · JCL · IBM docs', color: '#f0f0ed' },
   { href: '/learn/ai-dev', icon: '◈', label: 'AI / Dev', desc: 'Dify · AWS · Claude', color: '#f2f0fd' },
   { href: '/work/tools', icon: '⚙', label: 'Tools', desc: 'Web3 · Analytics', color: '#f5f4f2' },
