@@ -73,6 +73,15 @@ export default function PlanClient({ initialEvents }: PlanClientProps) {
     ? Math.min(100, Math.round((daysApart / (daysApart + daysUntil)) * 100))
     : null
 
+  // 3-month summary for Reunite Tracker
+  const threeMonthLimit = toDateStr(new Date(Date.now() + 90 * 86400000))
+  const next3Months = events.filter(e => e.date >= today && e.date <= threeMonthLimit)
+  const summaryByCategory = next3Months.reduce<Record<string, FamilyEvent[]>>((acc, e) => {
+    if (!acc[e.category]) acc[e.category] = []
+    acc[e.category].push(e)
+    return acc
+  }, {})
+
   // Countdown top 3
   const countdownEvents = upcoming.slice(0, 3)
 
@@ -98,6 +107,16 @@ export default function PlanClient({ initialEvents }: PlanClientProps) {
       console.error('Failed to refresh events:', err)
     }
   }, [])
+
+  // Sync initialEvents if they change from server
+  useEffect(() => {
+    setEvents(initialEvents)
+  }, [initialEvents])
+
+  // Fetch fresh data on client mount to bypass any Next.js router cache
+  useEffect(() => {
+    refreshEvents()
+  }, [refreshEvents])
 
   async function handleSaveEvent(data: EventFormData) {
     try {
@@ -155,6 +174,8 @@ export default function PlanClient({ initialEvents }: PlanClientProps) {
           progress={reuniteProgress}
           nextFlightDate={nextFlight?.date}
           nextFlightTitle={nextFlight?.title}
+          summaryByCategory={summaryByCategory}
+          totalNext3Months={next3Months.length}
         />
         <DualClock />
       </div>
@@ -283,13 +304,19 @@ export default function PlanClient({ initialEvents }: PlanClientProps) {
 
 function ReuniteTracker({
   daysApart, daysUntil, progress, nextFlightDate, nextFlightTitle,
+  summaryByCategory, totalNext3Months,
 }: {
   daysApart: number | null
   daysUntil: number | null
   progress: number | null
   nextFlightDate?: string
   nextFlightTitle?: string
+  summaryByCategory: Record<string, FamilyEvent[]>
+  totalNext3Months: number
 }) {
+  const categoryEntries = Object.entries(summaryByCategory)
+    .sort((a, b) => a[1][0].date.localeCompare(b[1][0].date))
+
   return (
     <div className="reunite-card">
       <div className="reunite-header">🛫 Reunite Tracker</div>
@@ -331,6 +358,37 @@ function ReuniteTracker({
           Thêm sự kiện &quot;flight&quot; để bắt đầu tracking 🛫
         </div>
       )}
+
+      {/* ── 3-month summary ─────────────────────────────────── */}
+      {totalNext3Months > 0 && (
+        <div className="reunite-summary">
+          <div className="reunite-summary-header">
+            <span>📋 3 tháng tới</span>
+            <span className="reunite-summary-count">{totalNext3Months} sự kiện</span>
+          </div>
+          <div className="reunite-summary-chips">
+            {categoryEntries.map(([cat, evts]) => {
+              const meta = CATEGORY_META[cat as EventCategory]
+              const nearest = evts[0]
+              const daysTo = daysBetween(toDateStr(new Date()), nearest.date)
+              return (
+                <div key={cat} className="reunite-chip">
+                  <span className="reunite-chip-icon">{meta?.icon ?? '📅'}</span>
+                  <div className="reunite-chip-body">
+                    <span className="reunite-chip-label">
+                      {meta?.labelVi ?? cat}
+                      {evts.length > 1 && <span className="reunite-chip-count">×{evts.length}</span>}
+                    </span>
+                    <span className="reunite-chip-next">
+                      {daysTo === 0 ? 'Hôm nay' : daysTo <= 7 ? `${daysTo}d ⚡` : `${daysTo}d`}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -354,20 +412,51 @@ function DualClock() {
         <div className="clock-flag">🇯🇵</div>
         <div className="clock-info">
           <div className="clock-city">Tokyo · JST</div>
-          <div className="clock-time">{jpTime}</div>
-          <div className="clock-date">{jpDate}</div>
+          <div className="clock-time-wrapper">
+            <AnalogClock now={now} timeZone="Asia/Tokyo" />
+            <div>
+              <div className="clock-time">{jpTime}</div>
+              <div className="clock-date">{jpDate}</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="clock-divider" />
-      <div className="clock-diff">+2h so với Việt Nam</div>
-      <div className="clock-divider" />
-      <div className="clock-row">
+      <div className="clock-row" style={{ marginTop: '14px' }}>
         <div className="clock-flag">🇻🇳</div>
         <div className="clock-info">
           <div className="clock-city">Sài Gòn · ICT</div>
-          <div className="clock-time">{vnTime}</div>
-          <div className="clock-date">{vnDate}</div>
+          <div className="clock-time-wrapper">
+            <AnalogClock now={now} timeZone="Asia/Ho_Chi_Minh" />
+            <div>
+              <div className="clock-time">{vnTime}</div>
+              <div className="clock-date">{vnDate}</div>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function AnalogClock({ now, timeZone }: { now: Date; timeZone: string }) {
+  const tzStr = now.toLocaleString('en-US', { timeZone })
+  const tzTime = new Date(tzStr)
+
+  const seconds = tzTime.getSeconds()
+  const minutes = tzTime.getMinutes()
+  const hours = tzTime.getHours()
+
+  const secDeg = seconds * 6
+  const minDeg = minutes * 6 + seconds * 0.1
+  const hrDeg = (hours % 12) * 30 + minutes * 0.5
+
+  return (
+    <div className="analog-clock">
+      <div className="clock-face">
+        <div className="hand hour-hand" style={{ transform: `translateX(-50%) rotate(${hrDeg}deg)` }} />
+        <div className="hand min-hand" style={{ transform: `translateX(-50%) rotate(${minDeg}deg)` }} />
+        <div className="hand sec-hand" style={{ transform: `translateX(-50%) rotate(${secDeg}deg)` }} />
+        <div className="clock-center" />
       </div>
     </div>
   )
