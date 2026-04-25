@@ -82,6 +82,8 @@ export type EventCategory =
   | 'medical'     // lịch bác sĩ con
   | 'holiday'     // ngày nghỉ lễ
   | 'trip'        // du lịch
+  | 'vaccine'     // lịch tiêm chủng bé
+  | 'school'      // trường học / nhà trẻ
   | 'other'
 
 export interface FamilyEvent {
