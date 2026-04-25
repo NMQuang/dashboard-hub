@@ -1,0 +1,28 @@
+/* app/learn/japanese/japanese-tabs.css */
+
+/* ── Page-level tab bar ── */
+.jp-tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.jp-tab {
+  padding: 8px 16px; font-size: 13px; font-weight: 500;
+  border: none; background: none; cursor: pointer;
+  color: var(--ink3); font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.jp-tab:hover { color: var(--ink); }
+.jp-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* ── Tab panel ── */
+.jp-panel { animation: jp-fade 0.18s ease; }
+@keyframes jp-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ── Tab section header (shared across both tabs) ── */
+.jp-section-hdr {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  color: var(--ink3); text-transform: uppercase;
+  margin-bottom: 10px; margin-top: 18px;
+}
+.jp-section-hdr:first-child { margin-top: 0; }

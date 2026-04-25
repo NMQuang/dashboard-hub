@@ -11,6 +11,11 @@ export default function Sidebar() {
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
   const [open, setOpen] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))
+  }
 
   // Clock tick
   useEffect(() => {
@@ -87,29 +92,54 @@ export default function Sidebar() {
         </div>
 
         {/* Nav groups */}
-        {NAV_ITEMS.map(group => (
-          <div key={group.group} style={{ padding: '0 8px', marginBottom: 4 }}>
-            <div style={{
-              fontSize: 10.5, fontWeight: 500, color: 'var(--ink3)',
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-              padding: '8px 8px 4px', fontFamily: 'inherit',
-            }}>
-              {group.group}
+        {NAV_ITEMS.map(group => {
+          const isCollapsed = collapsedGroups[group.group]
+          return (
+            <div key={group.group} style={{ padding: '0 8px', marginBottom: 4 }}>
+              <div
+                onClick={() => toggleGroup(group.group)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: 10.5, fontWeight: 500, color: 'var(--ink3)',
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  padding: '8px 8px 6px', fontFamily: 'inherit',
+                  cursor: 'pointer', userSelect: 'none',
+                }}
+              >
+                <span>{group.group}</span>
+                <span style={{
+                  fontSize: 8, transition: 'transform 0.2s ease', color: 'var(--ink3)', opacity: 0.6,
+                  transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'
+                }}>
+                  ▼
+                </span>
+              </div>
+              
+              <div style={{
+                display: 'grid',
+                transition: 'grid-template-rows 0.2s ease, opacity 0.2s ease',
+                gridTemplateRows: isCollapsed ? '0fr' : '1fr',
+                opacity: isCollapsed ? 0 : 1,
+              }}>
+                <div style={{ overflow: 'hidden' }}>
+                  {group.items.map(item => (
+                    <NavLink
+                      key={item.href}
+                      href={item.href}
+                      label={item.label}
+                      icon={item.icon}
+                      badge={'badge' in item ? (item as { badge: string }).badge : undefined}
+                      active={'exact' in item && item.exact
+                        ? pathname === item.href
+                        : pathname === item.href || pathname.startsWith(item.href + '/')}
+                    />
+                  ))}
+                  {group.group === 'System' && <ThemeToggle />}
+                </div>
+              </div>
             </div>
-            {group.items.map(item => (
-              <NavLink
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                icon={item.icon}
-                badge={'badge' in item ? (item as { badge: string }).badge : undefined}
-                active={'exact' in item && item.exact
-                  ? pathname === item.href
-                  : pathname === item.href || pathname.startsWith(item.href + '/')}
-              />
-            ))}
-          </div>
-        ))}
+          )
+        })}
 
         {/* Footer */}
         <div style={{
@@ -117,7 +147,6 @@ export default function Sidebar() {
           padding: '12px 8px 0',
           borderTop: '1px solid var(--border)',
         }}>
-          <ThemeToggle />
           <div style={{ padding: '8px 8px 0' }}>
             <div className="font-mono" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink3)' }}>
               <span className="dot-live" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', flexShrink: 0 }} />

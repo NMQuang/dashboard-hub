@@ -13,7 +13,10 @@
       "Bash(curl:*)",
       "Bash(node:*)",
       "Bash(echo \"no .env.local or no safe vars\" ls D:/OTHER/Dashboard/dashboard-hub/.env*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(python3 -c \"import json,sys; ids=json.load\\(sys.stdin\\)[:60]; print\\(ids[:5]\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(list\\(k for k in a.keys\\(\\)\\)\\) for a in d[:1]]\")",
+      "Bash(dir D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\app\\\\learn\\\\japanese:*)"
     ]
   }
 }

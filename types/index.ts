@@ -26,6 +26,33 @@ export interface MarketSnapshot {
   vnGold: VNGoldPrice[]
 }
 
+// ── AI News ──────────────────────────────────────
+export type AiNewsProvider = 'claude' | 'openai' | 'gemini'
+
+export interface AiNewsItem {
+  title: string
+  url: string
+  source: string          // e.g. 'Anthropic Blog', 'OpenAI Blog'
+  provider: AiNewsProvider
+  summary?: string
+  publishedAt: string     // ISO string
+}
+
+// ── Dev News ─────────────────────────────────────
+export type DevNewsSource = 'dev.to' | 'Qiita'
+
+export interface DevNewsItem {
+  title: string
+  url: string
+  source: DevNewsSource
+  author: string
+  summary?: string
+  tags: string[]
+  reactions: number
+  publishedAt: string       // ISO string
+  readingTime?: number      // minutes (dev.to only)
+}
+
 // ── Gold News ────────────────────────────────────
 export interface GoldNewsItem {
   title: string
@@ -135,6 +162,24 @@ export interface DifyRun {
   output: string
   startedAt: string
   finishedAt: string | null
+}
+
+// ── Japanese / Onsite Phrases ────────────────────
+export const ONSITE_CATEGORIES = [
+  '会議', 'メール', '電話', '報告', '相談', '依頼', '謝罪', '確認',
+] as const
+
+export type OnsiteCategory = typeof ONSITE_CATEGORIES[number]
+
+export interface JapanesePhrase {
+  id: string
+  category: OnsiteCategory
+  japanese: string
+  vietnamese?: string
+  note?: string
+  tags?: string[]
+  createdAt: string
+  updatedAt?: string
 }
 
 // ── Navigation ───────────────────────────────────

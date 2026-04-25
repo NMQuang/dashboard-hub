@@ -14,7 +14,6 @@ export const NAV_ITEMS = [
     group: 'Learn',
     items: [
       { label: 'Japanese', href: '/learn/japanese', icon: '日' },
-      { label: 'Mainframe', href: '/learn/mainframe', icon: '⬛' },
       { label: 'AI / Dev', href: '/learn/ai-dev', icon: '◈' },
     ],
   },
@@ -22,7 +21,6 @@ export const NAV_ITEMS = [
     group: 'Work',
     items: [
       { label: 'Tools', href: '/work/tools', icon: '⚙' },
-      { label: 'AI Hub', href: '/work/ai-hub', icon: '◎' },
       { label: 'Projects', href: '/work/projects', icon: '⌥' },
       { label: 'Accounts', href: '/work/accounts', icon: '👤' },
     ],

@@ -1,0 +1,104 @@
+/* app/learn/japanese/onsite-phrases.css */
+
+/* ── Category tabs ── */
+.op-cat-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.op-cat-tab {
+  padding: 5px 12px; font-size: 12px;
+  border: 1px solid var(--border2); border-radius: 20px;
+  cursor: pointer; background: var(--surface); color: var(--ink2);
+  font-family: inherit; transition: all 0.15s; white-space: nowrap;
+}
+.op-cat-tab:hover { background: var(--surface2); }
+.op-cat-tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.op-cat-count {
+  display: inline-block; margin-left: 4px; font-size: 10px;
+  background: var(--border); border-radius: 8px; padding: 0 5px;
+  font-weight: 600; color: var(--ink3);
+}
+.op-cat-tab.active .op-cat-count { background: rgba(255,255,255,0.25); color: inherit; }
+
+/* ── Phrase list ── */
+.op-list {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; min-height: 40px;
+}
+.op-empty {
+  font-size: 12px; color: var(--ink3); padding: 12px 0; text-align: center;
+}
+.op-phrase-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.op-phrase-body { flex: 1; min-width: 0; }
+.op-phrase-jp {
+  font-size: 14px; color: var(--ink); line-height: 1.5; margin-bottom: 2px;
+}
+.op-phrase-vn { font-size: 12px; color: var(--ink2); margin-bottom: 2px; }
+.op-phrase-note { font-size: 11px; color: var(--ink3); font-style: italic; }
+.op-phrase-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.op-tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 8px;
+  background: var(--surface2); color: var(--ink3);
+  border: 1px solid var(--border);
+}
+.op-phrase-delete {
+  flex-shrink: 0; background: none; border: none; cursor: pointer;
+  color: var(--ink3); font-size: 14px; padding: 2px 4px; border-radius: 4px;
+  transition: all 0.15s; font-family: inherit; line-height: 1;
+}
+.op-phrase-delete:hover { color: var(--red); background: var(--red-bg); }
+
+/* ── Add form ── */
+.op-add-form {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+}
+.op-add-title {
+  font-size: 12px; font-weight: 600; color: var(--ink2);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.op-add-row { display: flex; flex-direction: column; gap: 6px; }
+.op-add-field {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.op-add-label { font-size: 10px; color: var(--ink3); font-weight: 500; }
+.op-add-input,
+.op-add-textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 10px; font-size: 13px; font-family: inherit;
+  background: var(--surface2); color: var(--ink);
+  transition: border-color 0.15s; resize: none;
+}
+.op-add-input:focus,
+.op-add-textarea:focus { outline: none; border-color: var(--purple); }
+.op-add-actions { display: flex; gap: 6px; margin-top: 4px; align-items: center; }
+.op-add-btn {
+  padding: 7px 16px; font-size: 12px; border-radius: 8px;
+  border: 1px solid var(--ink); background: var(--ink); color: var(--bg);
+  cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+}
+.op-add-btn:hover:not(:disabled) { opacity: 0.82; }
+.op-add-btn:disabled { opacity: 0.45; cursor: default; }
+.op-add-btn-secondary {
+  padding: 7px 12px; font-size: 12px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--ink2); cursor: pointer; font-family: inherit;
+  transition: background 0.15s;
+}
+.op-add-btn-secondary:hover { background: var(--surface2); }
+.op-err { font-size: 11px; color: var(--red); margin-left: auto; }
+.op-ok { font-size: 11px; color: var(--green); margin-left: auto; }
+
+/* ── Supabase unavailable banner ── */
+.op-db-warn {
+  background: var(--amber-bg); border: 1px solid var(--amber);
+  border-radius: 10px; padding: 8px 14px; margin-bottom: 12px;
+  font-size: 11px; color: var(--amber);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .op-cat-tab { padding: 4px 9px; font-size: 11px; }
+}
