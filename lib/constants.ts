@@ -13,7 +13,7 @@ export const NAV_ITEMS = [
   {
     group: 'Learn',
     items: [
-      { label: 'Japanese', href: '/learn/japanese', icon: '日', badge: 'N2' },
+      { label: 'Japanese', href: '/learn/japanese', icon: '日' },
       { label: 'Mainframe', href: '/learn/mainframe', icon: '⬛' },
       { label: 'AI / Dev', href: '/learn/ai-dev', icon: '◈' },
     ],
