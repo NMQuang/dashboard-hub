@@ -1,0 +1,907 @@
+[
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "sample_phrase",
+    "title": "Nêu chủ đề cuộc họp",
+    "japanese": "本日の議題は〜についてです。",
+    "vietnamese": "Chủ đề hôm nay là về ~.",
+    "note": "Dùng để mở đầu meeting.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "meeting"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "sample_phrase",
+    "title": "Bắt đầu phần giải thích",
+    "japanese": "まず、〜について説明いたします。",
+    "vietnamese": "Trước tiên, tôi xin giải thích về ~.",
+    "note": "Dùng khi trình bày thiết kế, spec, issue.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "meeting"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "sample_phrase",
+    "title": "Xin ý kiến trong meeting",
+    "japanese": "ご意見をいただけますでしょうか。",
+    "vietnamese": "Anh/chị có thể cho tôi ý kiến được không?",
+    "note": "Dùng khi cần confirm từ khách hàng Nhật.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "meeting"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "template",
+    "title": "Meeting opening template",
+    "japanese": "お時間いただきありがとうございます。\n本日の議題は〜についてです。\n\nまず、〜について説明いたします。\n次に、〜についてご意見を伺いたいです。",
+    "vietnamese": "Cảm ơn anh/chị đã dành thời gian. Chủ đề hôm nay là ~. Trước tiên tôi xin giải thích về ~. Sau đó tôi muốn xin ý kiến về ~.",
+    "note": "Template mở đầu meeting IT với khách hàng Nhật.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "meeting"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "scenario_example",
+    "title": "Review thiết kế API",
+    "japanese": "本日の議題は、API設計についてです。\nまず、エンドポイント構成について説明いたします。\nこの設計で問題ないか、ご意見をいただけますでしょうか。",
+    "vietnamese": "Chủ đề hôm nay là thiết kế API. Trước tiên tôi xin giải thích cấu trúc endpoint. Anh/chị có thể cho ý kiến xem thiết kế này có vấn đề gì không?",
+    "note": "Tình huống họp review basic/detail design API.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "meeting",
+      "api_design"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "会議",
+    "category_vi": "Cuộc họp",
+    "type": "scenario_example",
+    "title": "Họp tiến độ dự án",
+    "japanese": "本日の議題は、開発進捗についてです。\n現在、バックエンドは80％完了しております。\nスケジュールについてご確認いただけますでしょうか。",
+    "vietnamese": "Chủ đề hôm nay là tiến độ phát triển. Hiện backend đã hoàn thành 80%. Anh/chị có thể xác nhận lại schedule giúp tôi được không?",
+    "note": "Tình huống daily/weekly progress meeting.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "meeting",
+      "progress"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "sample_phrase",
+    "title": "Mở đầu email",
+    "japanese": "お世話になっております。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ.",
+    "note": "Câu mở đầu email business phổ biến.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "email"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "sample_phrase",
+    "title": "Nêu mục đích liên hệ",
+    "japanese": "〜についてご連絡いたしました。",
+    "vietnamese": "Tôi xin liên hệ về ~.",
+    "note": "Dùng khi gửi mail về spec, bug, schedule.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "email"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "sample_phrase",
+    "title": "Nhờ xác nhận",
+    "japanese": "お手数ですが、〜していただけますでしょうか。",
+    "vietnamese": "Phiền anh/chị ~ giúp tôi được không?",
+    "note": "Câu nhờ vả lịch sự trong email.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "email",
+      "request"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "template",
+    "title": "Business email template",
+    "japanese": "お世話になっております。\n[会社名]の[名前]です。\n\n〜についてご連絡いたしました。\nお手数ですが、〜していただけますでしょうか。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi là [Tên] từ [Công ty]. Tôi xin liên hệ về ~. Phiền anh/chị ~ giúp tôi được không?",
+    "note": "Template email cơ bản khi làm việc với khách hàng Nhật.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "email"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "scenario_example",
+    "title": "Gửi tài liệu thiết kế",
+    "japanese": "お世話になっております。\n設計書を添付いたしました。\nお手数ですが、ご確認いただけますでしょうか。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi đã đính kèm tài liệu thiết kế. Phiền anh/chị xác nhận giúp tôi.",
+    "note": "Tình huống gửi basic design/detail design.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "email",
+      "design_doc"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "メール",
+    "category_vi": "Email",
+    "type": "scenario_example",
+    "title": "Nhờ review code",
+    "japanese": "お世話になっております。\n本日の実装内容についてご連絡いたしました。\nお手数ですが、コードレビューをお願いできますでしょうか。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi xin liên hệ về nội dung implement hôm nay. Phiền anh/chị review code giúp tôi.",
+    "note": "Tình huống nhờ review PR/code.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "email",
+      "code_review"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "sample_phrase",
+    "title": "Nêu lý do gọi",
+    "japanese": "〜の件でお電話いたしました。",
+    "vietnamese": "Tôi gọi về việc ~.",
+    "note": "Dùng khi gọi điện business.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "phone"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "sample_phrase",
+    "title": "Nhờ chờ máy",
+    "japanese": "少々お待ちいただけますでしょうか。",
+    "vietnamese": "Anh/chị vui lòng chờ một chút được không?",
+    "note": "Dùng khi cần kiểm tra thông tin.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "phone"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "sample_phrase",
+    "title": "Gọi lại sau",
+    "japanese": "折り返しご連絡いたします。",
+    "vietnamese": "Tôi sẽ liên hệ lại sau.",
+    "note": "Dùng khi chưa thể trả lời ngay.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "phone"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "template",
+    "title": "Phone call opening template",
+    "japanese": "お世話になっております。\n[会社名]の[名前]でございます。\n\n〜の件でお電話いたしました。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi là [Tên] từ [Công ty]. Tôi gọi về việc ~.",
+    "note": "Template mở đầu cuộc gọi với khách hàng Nhật.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "phone"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "scenario_example",
+    "title": "Báo lỗi production",
+    "japanese": "お世話になっております。\nシステム障害の件でお電話いたしました。\n現在、調査中でございます。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi gọi về việc sự cố hệ thống. Hiện tại chúng tôi đang điều tra.",
+    "note": "Tình huống gọi điện khi production incident.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "phone",
+      "incident"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "電話",
+    "category_vi": "Điện thoại",
+    "type": "scenario_example",
+    "title": "Xác nhận lịch họp",
+    "japanese": "お世話になっております。\n打ち合わせ日程の件でお電話いたしました。\n明日の10時でよろしいでしょうか。",
+    "vietnamese": "Cảm ơn anh/chị luôn hỗ trợ. Tôi gọi về lịch họp. 10 giờ ngày mai có được không ạ?",
+    "note": "Tình huống gọi xác nhận meeting schedule.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "phone",
+      "meeting"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "sample_phrase",
+    "title": "Mở đầu báo cáo",
+    "japanese": "〜についてご報告いたします。",
+    "vietnamese": "Tôi xin báo cáo về ~.",
+    "note": "Dùng khi báo cáo tiến độ/lỗi/kết quả.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "report"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "sample_phrase",
+    "title": "Nêu hiện trạng",
+    "japanese": "現状は〜となっております。",
+    "vietnamese": "Hiện trạng đang là ~.",
+    "note": "Dùng trong status report.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "report"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "sample_phrase",
+    "title": "Nêu kế hoạch tiếp theo",
+    "japanese": "今後は〜予定です。",
+    "vietnamese": "Sau đây dự kiến sẽ ~.",
+    "note": "Dùng khi nói next action.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "report"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "template",
+    "title": "Status report template",
+    "japanese": "〜についてご報告いたします。\n現状は〜となっております。\n問題点は〜です。\n今後は〜予定です。",
+    "vietnamese": "Tôi xin báo cáo về ~. Hiện trạng là ~. Vấn đề là ~. Sau đây dự kiến sẽ ~.",
+    "note": "Template báo cáo tiến độ/vấn đề trong dự án IT.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "report"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "scenario_example",
+    "title": "Báo cáo tiến độ dev",
+    "japanese": "本日の進捗についてご報告いたします。\n現在、API開発は完了しております。\nフロント側は対応中です。",
+    "vietnamese": "Tôi xin báo cáo tiến độ hôm nay. Hiện phần phát triển API đã hoàn thành. Phía frontend đang được xử lý.",
+    "note": "Tình huống daily progress report.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "report",
+      "progress"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "報告",
+    "category_vi": "Báo cáo",
+    "type": "scenario_example",
+    "title": "Báo cáo bug",
+    "japanese": "不具合対応についてご報告いたします。\n原因はデータ不整合でした。\n修正は完了しております。",
+    "vietnamese": "Tôi xin báo cáo về xử lý lỗi. Nguyên nhân là dữ liệu không đồng nhất. Việc sửa lỗi đã hoàn thành.",
+    "note": "Tình huống bug fix report.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "report",
+      "bug"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "sample_phrase",
+    "title": "Xin trao đổi",
+    "japanese": "〜についてご相談させていただきたいです。",
+    "vietnamese": "Tôi muốn trao đổi/xin ý kiến về ~.",
+    "note": "Dùng khi cần hỏi hướng xử lý.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "consultation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "sample_phrase",
+    "title": "Nêu tình trạng hiện tại",
+    "japanese": "現在、〜という状況です。",
+    "vietnamese": "Hiện tại tình hình là ~.",
+    "note": "Dùng để cung cấp context.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "consultation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "sample_phrase",
+    "title": "Xin ý kiến",
+    "japanese": "ご意見をいただけますでしょうか。",
+    "vietnamese": "Anh/chị có thể cho tôi ý kiến được không?",
+    "note": "Dùng khi cần decision hoặc direction.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "consultation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "template",
+    "title": "Consultation template",
+    "japanese": "〜についてご相談させていただきたいです。\n現在、〜という状況です。\nご意見をいただけますでしょうか。",
+    "vietnamese": "Tôi muốn trao đổi/xin ý kiến về ~. Hiện tại tình hình là ~. Anh/chị có thể cho tôi ý kiến được không?",
+    "note": "Template xin ý kiến khách hàng/leader Nhật.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "consultation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "scenario_example",
+    "title": "Chọn hướng implement",
+    "japanese": "実装方法についてご相談させていただきたいです。\n現在、パフォーマンスに問題がある可能性があります。\nご意見をいただけますでしょうか。",
+    "vietnamese": "Tôi muốn trao đổi về cách implement. Hiện có khả năng phát sinh vấn đề performance. Anh/chị có thể cho tôi ý kiến được không?",
+    "note": "Tình huống cân nhắc implementation approach.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "consultation",
+      "implementation"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "相談",
+    "category_vi": "Trao đổi / xin ý kiến",
+    "type": "scenario_example",
+    "title": "Quyết định design",
+    "japanese": "設計方針についてご相談があります。\nこの方法で問題ないか、ご意見をいただけますでしょうか。",
+    "vietnamese": "Tôi muốn trao đổi về phương hướng thiết kế. Anh/chị có thể cho ý kiến xem cách này có vấn đề gì không?",
+    "note": "Tình huống xin ý kiến basic/detail design.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "consultation",
+      "design"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "sample_phrase",
+    "title": "Mở đầu nhờ vả",
+    "japanese": "お手数ですが〜",
+    "vietnamese": "Phiền anh/chị ~.",
+    "note": "Cushion phrase khi nhờ việc.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "request"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "sample_phrase",
+    "title": "Nhờ xử lý",
+    "japanese": "〜していただけますでしょうか。",
+    "vietnamese": "Anh/chị có thể ~ giúp tôi được không?",
+    "note": "Cách nhờ lịch sự.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "request"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "sample_phrase",
+    "title": "Kết thúc request",
+    "japanese": "ご対応のほどよろしくお願いいたします。",
+    "vietnamese": "Rất mong anh/chị hỗ trợ xử lý.",
+    "note": "Dùng cuối email/request.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "request"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "template",
+    "title": "Request template",
+    "japanese": "お手数ですが、〜していただけますでしょうか。",
+    "vietnamese": "Phiền anh/chị ~ giúp tôi được không?",
+    "note": "Template request ngắn gọn.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "request"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "scenario_example",
+    "title": "Nhờ fix bug",
+    "japanese": "お手数ですが、不具合を修正していただけますでしょうか。",
+    "vietnamese": "Phiền anh/chị sửa lỗi này giúp tôi được không?",
+    "note": "Tình huống nhờ member/customer-side team fix bug.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "request",
+      "bug"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "依頼",
+    "category_vi": "Nhờ vả / yêu cầu",
+    "type": "scenario_example",
+    "title": "Nhờ confirm spec",
+    "japanese": "お手数ですが、仕様をご確認いただけますでしょうか。",
+    "vietnamese": "Phiền anh/chị xác nhận spec giúp tôi được không?",
+    "note": "Tình huống cần customer confirm spec trước khi implement.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "request",
+      "spec"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "sample_phrase",
+    "title": "Xin lỗi trang trọng",
+    "japanese": "大変申し訳ございません。",
+    "vietnamese": "Thành thật xin lỗi.",
+    "note": "Cách xin lỗi trang trọng.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "apology"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "sample_phrase",
+    "title": "Xin lỗi vì gây phiền toái",
+    "japanese": "ご迷惑をおかけして申し訳ございません。",
+    "vietnamese": "Xin lỗi vì đã gây phiền toái.",
+    "note": "Dùng khi lỗi ảnh hưởng tới khách hàng.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "apology"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "sample_phrase",
+    "title": "Cam kết chú ý hơn",
+    "japanese": "今後は注意いたします。",
+    "vietnamese": "Từ nay tôi sẽ chú ý hơn.",
+    "note": "Dùng sau khi xin lỗi.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "apology"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "template",
+    "title": "Apology template",
+    "japanese": "大変申し訳ございません。\n〜について不備がございました。\n今後は再発防止に努めます。",
+    "vietnamese": "Thành thật xin lỗi. Đã có thiếu sót về ~. Chúng tôi sẽ cố gắng ngăn tái phát.",
+    "note": "Template xin lỗi khi có lỗi trong dự án IT.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "apology"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "scenario_example",
+    "title": "Deploy lỗi",
+    "japanese": "大変申し訳ございません。\nリリースに不具合がございました。\n現在修正中です。",
+    "vietnamese": "Thành thật xin lỗi. Có lỗi trong bản release. Hiện chúng tôi đang sửa.",
+    "note": "Tình huống lỗi sau deploy/release.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "apology",
+      "release"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "謝罪",
+    "category_vi": "Xin lỗi",
+    "type": "scenario_example",
+    "title": "Trễ deadline",
+    "japanese": "ご迷惑をおかけして申し訳ございません。\n対応が遅れております。\n本日中に完了できるよう対応いたします。",
+    "vietnamese": "Xin lỗi vì đã gây phiền toái. Việc xử lý đang bị chậm. Tôi sẽ cố gắng hoàn thành trong hôm nay.",
+    "note": "Tình huống báo delay task/deadline.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "apology",
+      "delay"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "sample_phrase",
+    "title": "Xin xác nhận lại",
+    "japanese": "念のため確認させていただきます。",
+    "vietnamese": "Để chắc chắn, tôi xin xác nhận lại.",
+    "note": "Dùng khi tránh hiểu sai.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "confirmation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "sample_phrase",
+    "title": "Xác nhận có được không",
+    "japanese": "〜でよろしいでしょうか。",
+    "vietnamese": "~ có được không ạ?",
+    "note": "Dùng để confirm spec/schedule/decision.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "confirmation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "sample_phrase",
+    "title": "Nhờ xác nhận",
+    "japanese": "ご確認いただけますでしょうか。",
+    "vietnamese": "Anh/chị có thể xác nhận giúp tôi được không?",
+    "note": "Dùng trong meeting/email.",
+    "tags": [
+      "business_japanese",
+      "onsite",
+      "it_project",
+      "confirmation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "template",
+    "title": "Confirmation template",
+    "japanese": "念のため確認させていただきます。\n〜でよろしいでしょうか。",
+    "vietnamese": "Để chắc chắn, tôi xin xác nhận lại. ~ có được không ạ?",
+    "note": "Template xác nhận nội dung với khách hàng Nhật.",
+    "tags": [
+      "business_japanese",
+      "template",
+      "onsite",
+      "it_project",
+      "confirmation"
+    ],
+    "difficulty": "basic",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "scenario_example",
+    "title": "Confirm spec",
+    "japanese": "念のため確認させていただきます。\nこの仕様で問題ないでしょうか。",
+    "vietnamese": "Để chắc chắn, tôi xin xác nhận lại. Spec này có vấn đề gì không ạ?",
+    "note": "Tình huống confirm spec trước khi development.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "confirmation",
+      "spec"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  },
+  {
+    "category": "確認",
+    "category_vi": "Xác nhận",
+    "type": "scenario_example",
+    "title": "Confirm deploy",
+    "japanese": "念のため確認させていただきます。\n本日リリースでよろしいでしょうか。",
+    "vietnamese": "Để chắc chắn, tôi xin xác nhận lại. Hôm nay release có được không ạ?",
+    "note": "Tình huống confirm thời điểm release/deploy.",
+    "tags": [
+      "business_japanese",
+      "scenario",
+      "onsite",
+      "it_project",
+      "confirmation",
+      "release"
+    ],
+    "difficulty": "practical",
+    "created_at": "2026-04-25T13:45:03.663628+00:00",
+    "updated_at": "2026-04-25T13:45:03.663628+00:00"
+  }
+]

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { getPhrasesAll } from '@/services/japanesePhrases'
 import JapaneseTabs from './JapaneseTabs'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Japanese Learning' }
 
 export default async function JapanesePage() {

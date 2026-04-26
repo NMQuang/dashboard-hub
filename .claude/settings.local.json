@@ -16,7 +16,14 @@
       "Bash(npm install:*)",
       "Bash(python3 -c \"import json,sys; ids=json.load\\(sys.stdin\\)[:60]; print\\(ids[:5]\\)\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(list\\(k for k in a.keys\\(\\)\\)\\) for a in d[:1]]\")",
-      "Bash(dir D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\app\\\\learn\\\\japanese:*)"
+      "Bash(dir D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\app\\\\learn\\\\japanese:*)",
+      "PowerShell(Stop-Process *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d[\\\\\"phrases\\\\\"]\\)}'\\); [print\\(f'  {p[\\\\\"title\\\\\"]} \\({p.get\\(\\\\\"phraseType\\\\\",\\\\\"?\\\\\"\\)}\\)'\\) for p in d['phrases'][:6]]\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d[\\\\\"phrases\\\\\"]\\)}'\\); [print\\(f'  [{p.get\\(\\\\\"phraseType\\\\\",\\\\\"?\\\\\"\\)}] {p[\\\\\"title\\\\\"]} - {p[\\\\\"category\\\\\"]}'\\) for p in d['phrases'][:8]]\")"
     ]
   }
 }

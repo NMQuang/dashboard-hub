@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ONSITE_CATEGORIES } from '@/types'
-import type { JapanesePhrase, OnsiteCategory } from '@/types'
+import type { JapanesePhrase, OnsiteCategory, PhraseType } from '@/types'
 import './onsite-phrases.css'
 
 /* ── Static starter hints per category ──────────────────────────────────── */
@@ -29,6 +29,16 @@ const CATEGORY_ICONS: Record<OnsiteCategory, string> = {
   '確認':  '✅',
 }
 
+const TYPE_LABELS: Record<PhraseType, string> = {
+  sample_phrase:    'Câu mẫu',
+  template:         'Template',
+  scenario_example: 'Tình huống',
+}
+
+const DIFFICULTY_LABELS = { basic: 'Cơ bản', practical: 'Thực tế' } as const
+
+type TypeFilter = 'all' | PhraseType
+
 /* ── Props ───────────────────────────────────────────────────────────────── */
 
 interface OnsitePhrasesProps {
@@ -41,15 +51,18 @@ interface OnsitePhrasesProps {
 export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhrasesProps) {
   const [phrases, setPhrases]       = useState<JapanesePhrase[]>(initialPhrases)
   const [activeCategory, setActive] = useState<OnsiteCategory>('会議')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [showForm, setShowForm]     = useState(false)
 
   /* add form state */
-  const [jpInput, setJp]     = useState('')
-  const [vnInput, setVn]     = useState('')
-  const [noteInput, setNote] = useState('')
-  const [saving, setSaving]  = useState(false)
-  const [err, setErr]        = useState<string | null>(null)
-  const [ok, setOk]          = useState(false)
+  const [jpInput, setJp]         = useState('')
+  const [vnInput, setVn]         = useState('')
+  const [noteInput, setNote]     = useState('')
+  const [titleInput, setTitle]   = useState('')
+  const [typeInput, setTypeInput] = useState<PhraseType | ''>('')
+  const [saving, setSaving]      = useState(false)
+  const [err, setErr]            = useState<string | null>(null)
+  const [ok, setOk]              = useState(false)
 
   /* deleting state (tracks which ids are being deleted) */
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
@@ -61,11 +74,18 @@ export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhr
   }
 
   function visiblePhrases(): JapanesePhrase[] {
-    return phrases.filter(p => p.category === activeCategory)
+    return phrases.filter(p =>
+      p.category === activeCategory &&
+      (typeFilter === 'all' || p.phraseType === typeFilter),
+    )
+  }
+
+  function hasTypedPhrases(): boolean {
+    return phrases.some(p => p.category === activeCategory && p.phraseType)
   }
 
   function resetForm() {
-    setJp(''); setVn(''); setNote(''); setErr(null); setOk(false)
+    setJp(''); setVn(''); setNote(''); setTitle(''); setTypeInput(''); setErr(null); setOk(false)
   }
 
   /* ── add phrase ── */
@@ -85,6 +105,8 @@ export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhr
           japanese: jp,
           vietnamese: vnInput.trim() || undefined,
           note: noteInput.trim() || undefined,
+          title: titleInput.trim() || undefined,
+          phraseType: typeInput || undefined,
         }),
       })
 
@@ -167,7 +189,7 @@ export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhr
           <button
             key={cat}
             className={`op-cat-tab${cat === activeCategory ? ' active' : ''}`}
-            onClick={() => { setActive(cat); setShowForm(false); resetForm() }}
+            onClick={() => { setActive(cat); setTypeFilter('all'); setShowForm(false); resetForm() }}
           >
             {CATEGORY_ICONS[cat]} {cat}
             {countForCategory(cat) > 0 && (
@@ -177,17 +199,47 @@ export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhr
         ))}
       </div>
 
+      {/* Type filter tabs — only shown when category has typed phrases */}
+      {hasTypedPhrases() && (
+        <div className="op-type-tabs">
+          {(['all', 'sample_phrase', 'template', 'scenario_example'] as TypeFilter[]).map(tf => (
+            <button
+              key={tf}
+              className={`op-type-tab${typeFilter === tf ? ' active' : ''}`}
+              onClick={() => setTypeFilter(tf)}
+            >
+              {tf === 'all' ? 'Tất cả' : TYPE_LABELS[tf]}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Phrase list */}
       <div className="op-list">
         {visiblePhrases().length === 0 ? (
           <div className="op-empty">
-            Chưa có phrase nào trong mục <strong>{activeCategory}</strong>.
-            Bấm &ldquo;+ Thêm&rdquo; để lưu phrase đầu tiên.
+            Chưa có phrase nào{typeFilter !== 'all' ? ` (${TYPE_LABELS[typeFilter]})` : ''} trong mục <strong>{activeCategory}</strong>.
+            {typeFilter === 'all' && <> Bấm &ldquo;+ Thêm&rdquo; để lưu phrase đầu tiên.</>}
           </div>
         ) : (
           visiblePhrases().map(phrase => (
             <div key={phrase.id} className="op-phrase-card">
               <div className="op-phrase-body">
+                {phrase.title && (
+                  <div className="op-phrase-title">{phrase.title}</div>
+                )}
+                <div className="op-phrase-badges">
+                  {phrase.phraseType && (
+                    <span className={`op-badge op-badge-type op-badge-${phrase.phraseType}`}>
+                      {TYPE_LABELS[phrase.phraseType]}
+                    </span>
+                  )}
+                  {phrase.difficulty && (
+                    <span className={`op-badge op-badge-diff op-badge-${phrase.difficulty}`}>
+                      {DIFFICULTY_LABELS[phrase.difficulty]}
+                    </span>
+                  )}
+                </div>
                 <div className="op-phrase-jp">{phrase.japanese}</div>
                 {phrase.vietnamese && (
                   <div className="op-phrase-vn">{phrase.vietnamese}</div>
@@ -230,6 +282,30 @@ export default function OnsitePhrases({ initialPhrases, dbAvailable }: OnsitePhr
             {CATEGORY_ICONS[activeCategory]} Thêm phrase — {activeCategory}
           </div>
           <div className="op-add-row">
+            <div className="op-add-row-inline">
+              <div className="op-add-field op-add-field-grow">
+                <label className="op-add-label">Tiêu đề (tùy chọn)</label>
+                <input
+                  className="op-add-input"
+                  placeholder="Ví dụ: Mở đầu cuộc họp"
+                  value={titleInput}
+                  onChange={e => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="op-add-field op-add-field-type">
+                <label className="op-add-label">Loại</label>
+                <select
+                  className="op-add-select"
+                  value={typeInput}
+                  onChange={e => setTypeInput(e.target.value as PhraseType | '')}
+                >
+                  <option value="">—</option>
+                  <option value="sample_phrase">Câu mẫu</option>
+                  <option value="template">Template</option>
+                  <option value="scenario_example">Tình huống</option>
+                </select>
+              </div>
+            </div>
             <div className="op-add-field">
               <label className="op-add-label">Tiếng Nhật *</label>
               <input

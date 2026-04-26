@@ -171,6 +171,9 @@ export const ONSITE_CATEGORIES = [
 
 export type OnsiteCategory = typeof ONSITE_CATEGORIES[number]
 
+export type PhraseType = 'sample_phrase' | 'template' | 'scenario_example'
+export type PhraseDifficulty = 'basic' | 'practical'
+
 export interface JapanesePhrase {
   id: string
   category: OnsiteCategory
@@ -178,6 +181,10 @@ export interface JapanesePhrase {
   vietnamese?: string
   note?: string
   tags?: string[]
+  phraseType?: PhraseType
+  title?: string
+  difficulty?: PhraseDifficulty
+  categoryVi?: string
   createdAt: string
   updatedAt?: string
 }
