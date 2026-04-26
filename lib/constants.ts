@@ -14,7 +14,7 @@ export const NAV_ITEMS = [
     group: 'Learn',
     items: [
       { label: 'Japanese', href: '/learn/japanese', icon: '日' },
-      { label: 'AI / Dev', href: '/learn/ai-dev', icon: '◈' },
+      { label: 'AI', href: '/learn/ai-dev', icon: '◈' },
     ],
   },
   {

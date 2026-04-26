@@ -31,7 +31,7 @@ export function timeAgo(dateStr: string): string {
 export function daysUntil(dateStr: string): number {
   const target = new Date(dateStr)
   const now = new Date()
-  return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86_400_000))
+  return Math.ceil((target.getTime() - now.getTime()) / 86_400_000)
 }
 
 export function greetingJapanese(): { jp: string; en: string } {
