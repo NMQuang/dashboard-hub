@@ -39,7 +39,10 @@ export default function HomeClient({ daysLeft }: HomeClientProps) {
       </div>
       <div className="font-mono" style={{ textAlign: 'right', fontSize: 11, color: 'var(--ink3)', lineHeight: 1.8 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{dateStr}</div>
-        <div>Japan onsite · <span style={{ fontWeight: 500, color: 'var(--ink2)' }}>{daysLeft} days</span> away</div>
+        {daysLeft <= 0
+          ? <div>On-site in Japan 🇯🇵 · <span style={{ fontWeight: 500, color: 'var(--blue)' }}>Day {Math.abs(daysLeft)}</span></div>
+          : <div>Japan onsite · <span style={{ fontWeight: 500, color: 'var(--ink2)' }}>{daysLeft} days</span> away</div>
+        }
       </div>
     </div>
   )

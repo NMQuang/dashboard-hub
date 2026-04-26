@@ -16,13 +16,14 @@ const GITHUB_USERNAME = process.env.NEXT_PUBLIC_GITHUB_USERNAME ?? 'NMQuang'
 
 const NAV_ITEMS = [
   { href: '/learn/japanese', icon: '日', label: 'Japanese', desc: 'AI chat · shadowing', color: '#edfaf4' },
-  { href: '/learn/mainframe', icon: '⬛', label: 'Mainframe', desc: 'COBOL · JCL · IBM docs', color: '#f0f0ed' },
-  { href: '/learn/ai-dev', icon: '◈', label: 'AI / Dev', desc: 'Dify · AWS · Claude', color: '#f2f0fd' },
-  { href: '/work/tools', icon: '⚙', label: 'Tools', desc: 'Web3 · Analytics', color: '#f5f4f2' },
-  { href: '/work/ai-hub', icon: '◎', label: 'AI Hub', desc: 'Claude · GPT · Gemini', color: '#f0f5fd' },
+  { href: '/learn/ai-dev', icon: '◈', label: 'AI', desc: 'Claude · OpenAI · Gemini', color: '#f2f0fd' },
+  { href: '/work/tools', icon: '⚙', label: 'Tools', desc: 'Web3 · COBOL · Analytics', color: '#f5f4f2' },
   { href: '/work/projects', icon: '⌥', label: 'Projects', desc: 'web3 · ai · aws · ibm · dify', color: '#f0f5fd' },
   { href: '/work/accounts', icon: '👤', label: 'Accounts', desc: 'Dify · Vercel · Udemy', color: '#f0f5fd' },
+  { href: '/family', icon: '🏠', label: 'Family', desc: 'Memories · Plan · Finance', color: '#fdf0f5' },
   { href: '/invest/market', icon: '◎', label: 'Market', desc: 'Gold · BTC · ETH · SOL', color: '#fdf8ed' },
+  { href: '/invest/domestic-gold', icon: '◈', label: 'VN Gold', desc: 'BTMC · Nhẫn · Portfolio', color: '#fdf8ed' },
+  { href: '/invest/watchlist', icon: '☆', label: 'Watchlist', desc: 'BTC · ETH · SOL · FET', color: '#fdf8ed' },
   { href: '/invest/alerts', icon: '◉', label: 'Alerts', desc: 'Dify daily report', color: '#fdf8ed' },
 ]
 
@@ -45,7 +46,7 @@ async function getPageData() {
 
 export default async function HomePage() {
   const { market, events, weather, news } = await getPageData()
-  const onsiteDate = process.env.NEXT_PUBLIC_ONSITE_DATE ?? '2025-07-01'
+  const onsiteDate = process.env.NEXT_PUBLIC_ONSITE_DATE ?? '2026-04-09'
   const daysLeft = daysUntil(onsiteDate)
 
   return (
@@ -190,15 +191,39 @@ function WeatherCard({
         />
       </div>
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 11.5, color: 'var(--ink2)', marginBottom: 8, fontWeight: 500 }}>Onsite countdown</div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span className="font-mono" style={{ fontSize: 32, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--ink)' }}>{daysLeft}</span>
-          <span style={{ fontSize: 12, color: 'var(--ink3)' }}>days until Japan ({new Date(onsiteDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})</span>
-        </div>
-        <div style={{ marginTop: 8, height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: 'var(--green)', borderRadius: 99, width: '35%', transition: 'width 0.6s ease' }} />
-        </div>
-        <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', marginTop: 4 }}>Prep progress</div>
+        {daysLeft <= 0 ? (
+          <>
+            <div style={{ fontSize: 11.5, color: 'var(--ink2)', marginBottom: 8, fontWeight: 500 }}>On-site in Japan 🇯🇵</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span className="font-mono" style={{ fontSize: 32, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--blue)' }}>{Math.abs(daysLeft)}</span>
+              <span style={{ fontSize: 12, color: 'var(--ink3)' }}>
+                days on-site · since {new Date(onsiteDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+            <div style={{ marginTop: 8, height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', background: 'var(--blue)', borderRadius: 99,
+                width: `${Math.min(100, Math.round(Math.abs(daysLeft) / 365 * 100))}%`,
+                transition: 'width 0.6s ease',
+              }} />
+            </div>
+            <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', marginTop: 4 }}>Year 1 progress</div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 11.5, color: 'var(--ink2)', marginBottom: 8, fontWeight: 500 }}>Onsite countdown</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span className="font-mono" style={{ fontSize: 32, fontWeight: 300, letterSpacing: '-0.04em', color: 'var(--ink)' }}>{daysLeft}</span>
+              <span style={{ fontSize: 12, color: 'var(--ink3)' }}>
+                days until Japan · {new Date(onsiteDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+            <div style={{ marginTop: 8, height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--green)', borderRadius: 99, width: '35%', transition: 'width 0.6s ease' }} />
+            </div>
+            <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', marginTop: 4 }}>Prep progress</div>
+          </>
+        )}
       </div>
     </Card>
   )
