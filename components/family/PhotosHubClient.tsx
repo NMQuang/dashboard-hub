@@ -402,8 +402,12 @@ export default function PhotosHubClient({
         })
         if (!metaRes.ok) throw new Error(`Upload API error: ${metaRes.status}`)
 
-        const { uploadUrl, photo } = await metaRes.json() as { uploadUrl: string; photo: FamilyPhoto }
+        const { uploadUrl, photo, kvPersisted } = await metaRes.json() as { uploadUrl: string; photo: FamilyPhoto; kvPersisted?: boolean }
         if (!photo?.id) throw new Error('Invalid response from upload API')
+        if (kvPersisted === false) {
+          console.warn('[upload] KV not configured — photo will not persist after page reload')
+          setUploadMsg('⚠ KV chưa cấu hình — ảnh sẽ mất sau khi reload. Cần thêm FAMILY_KV_REST_API_URL / FAMILY_KV_REST_API_TOKEN vào Vercel.')
+        }
 
         const putRes = await fetch(uploadUrl, {
           method: 'PUT',

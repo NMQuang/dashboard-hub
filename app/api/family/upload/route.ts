@@ -8,11 +8,20 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
+const KV_CONFIGURED = Boolean(
+  (process.env.FAMILY_KV_REST_API_URL ?? '').trim() &&
+  (process.env.FAMILY_KV_REST_API_TOKEN ?? '').trim()
+)
+
 // POST /api/family/upload
 // Body: { filename, contentType, takenAt, location, uploadedBy, width, height, sizeBytes }
 // Returns: { uploadUrl, photo } — client PUTs to uploadUrl, then photo is already saved
 // Tags are NOT sent by client — AI infers them from the image in the background step.
 export async function POST(req: NextRequest) {
+  if (!KV_CONFIGURED) {
+    console.error('[upload] FAMILY_KV_REST_API_URL / FAMILY_KV_REST_API_TOKEN not set — photos will not persist across requests')
+  }
+
   try {
     const body = await req.json() as {
       filename: string
@@ -77,7 +86,7 @@ export async function POST(req: NextRequest) {
       }
     })()
 
-    return NextResponse.json({ uploadUrl, photo })
+    return NextResponse.json({ uploadUrl, photo, kvPersisted: KV_CONFIGURED })
   } catch (e) {
     console.error('[upload] POST error:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
