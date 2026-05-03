@@ -156,6 +156,54 @@ export interface FamilyTask {
   updatedAt: string
 }
 
+// ── Google Photos album ───────────────────────────────────────────────────
+
+export interface GooglePhotoAlbum {
+  id: string
+  title: string
+  mediaItemsCount: number
+  coverPhotoBaseUrl?: string
+}
+
+// ── Unified display photo ─────────────────────────────────────────────────
+// Single format for rendering both Google Photos and R2-uploaded photos.
+
+export interface DisplayPhoto {
+  id: string
+  url: string
+  thumbnailUrl: string
+  filename: string
+  caption?: string
+  description?: string
+  takenAt: string        // ISO — primary sort key
+  location?: string
+  tags: string[]
+  source: 'google_photos' | 'local'
+  width: number
+  height: number
+  albumTitle?: string
+  googleAlbumId?: string // populated when photo was fetched via album filter
+}
+
+// ── Family photo story (source-agnostic, replaces PhotoStory in /photos hub) ──
+
+export type StorySyncStatus = 'local' | 'pending' | 'synced' | 'failed'
+
+export interface FamilyPhotoStory {
+  id: string
+  title: string
+  description?: string
+  photoIds: string[]      // DisplayPhoto ids (google or local)
+  dateFrom?: string       // YYYY-MM-DD
+  dateTo?: string         // YYYY-MM-DD
+  location?: string
+  notes?: string
+  googleAlbumId?: string  // populated after Google Photos album sync
+  syncStatus: StorySyncStatus
+  createdAt: string
+  updatedAt?: string
+}
+
 // ── Upload ────────────────────────────────────────────────────────────────
 
 export interface PresignedUploadUrl {

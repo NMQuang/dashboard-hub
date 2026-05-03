@@ -198,6 +198,22 @@ export interface NavItem {
   children?: NavItem[]
 }
 
+// ── Google Photos ────────────────────────────────
+export interface GoogleFamilyPhoto {
+  id: string
+  url: string
+  thumbnailUrl: string
+  filename: string
+  description?: string
+  takenAt: string          // ISO string — from Google Photos metadata
+  createdAt: string        // ISO string
+  albumTitle?: string
+  mimeType: string
+  width: number
+  height: number
+  source: 'google_photos'
+}
+
 // ── Settings ─────────────────────────────────────
 export interface UserSettings {
   onsiteDate: string
