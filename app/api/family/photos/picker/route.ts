@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStoredGoogleRefreshToken, savePickedGooglePhotos } from '@/services/family-storage'
 import { createPickerSession, getPickerSession, getPickerMediaItems } from '@/services/googlePhotosPicker'
-import { getPresignedUploadUrl } from '@/services/family-r2'
 import type { GoogleFamilyPhoto } from '@/types'
-import type { PickerMediaItem } from '@/services/googlePhotosPicker'
 
-export const maxDuration = 300 // allow up to 5 min for batch R2 uploads (Vercel Pro)
+export const maxDuration = 60
 
 const CLIENT_ID     = (process.env.GOOGLE_CLIENT_ID     ?? '').trim()
 const CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET ?? '').trim()
@@ -64,18 +62,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PUT { sessionId } — fetch selected items, download to R2, save to KV
+// PUT { sessionId } — fetch selected items and save Google CDN URLs to KV
+// No R2 download — photos are served directly from Google's CDN.
+// baseUrl from Picker API is a time-limited CDN URL; re-sync to refresh.
 export async function PUT(req: NextRequest) {
   const body = await req.json() as { sessionId?: string }
   const { sessionId } = body
   if (!sessionId) return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
-
-  // Validate R2 config before doing any work
-  const r2AccountId = (process.env.R2_ACCOUNT_ID ?? '').trim()
-  if (!r2AccountId) {
-    console.error('[picker] R2_ACCOUNT_ID is not set — cannot upload to R2')
-    return NextResponse.json({ error: 'R2 storage is not configured (missing env vars)' }, { status: 500 })
-  }
 
   try {
     const accessToken = await getAccessToken()
@@ -84,91 +77,31 @@ export async function PUT(req: NextRequest) {
     const items = await getPickerMediaItems(accessToken, sessionId)
     const imageItems = items.filter(item => item.mediaFile.mimeType.startsWith('image/'))
 
-    console.info('[picker] downloading', imageItems.length, 'photos to R2...')
+    console.info('[picker] saving', imageItems.length, 'photos (Google CDN URLs) to KV...')
 
-    // Download all photos to R2 in parallel (batches of 5 to stay within memory)
-    const photos: GoogleFamilyPhoto[] = []
-    let failCount = 0
-    for (let i = 0; i < imageItems.length; i += 5) {
-      const batch = imageItems.slice(i, i + 5)
-      const results = await Promise.allSettled(batch.map(item => downloadToR2(item, accessToken)))
-      for (const r of results) {
-        if (r.status === 'fulfilled' && r.value) photos.push(r.value)
-        else failCount++
+    const photos: GoogleFamilyPhoto[] = imageItems.map(item => {
+      const { id, createTime, mediaFile } = item
+      const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
+      return {
+        id,
+        url:          `${baseUrl}=d`,
+        thumbnailUrl: `${baseUrl}=w400`,
+        filename:     filename ?? `photo_${id}`,
+        description:  undefined,
+        takenAt:      createTime,
+        createdAt:    createTime,
+        mimeType,
+        width:        mediaFileMetadata?.width  ?? 0,
+        height:       mediaFileMetadata?.height ?? 0,
+        source:       'google_photos' as const,
       }
-    }
+    })
 
-    if (failCount > 0) console.warn('[picker] failed to upload', failCount, 'photos to R2')
     await savePickedGooglePhotos(photos)
-    console.info('[picker] saved', photos.length, 'photos to KV (R2 URLs)')
+    console.info('[picker] saved', photos.length, 'photos to KV')
     return NextResponse.json({ count: photos.length, photos })
   } catch (err) {
     console.error('[picker] PUT error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
-  }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function uploadToR2(sourceUrl: string, key: string, contentType: string, authToken?: string): Promise<string> {
-  const { uploadUrl, publicUrl } = await getPresignedUploadUrl(key, contentType)
-
-  const fetchHeaders: Record<string, string> = {}
-  if (authToken) fetchHeaders['Authorization'] = `Bearer ${authToken}`
-  const imgRes = await fetch(sourceUrl, { headers: fetchHeaders, cache: 'no-store' })
-  if (!imgRes.ok) throw new Error(`Fetch ${sourceUrl} failed: ${imgRes.status}`)
-
-  const bytes = await imgRes.arrayBuffer()
-  const r2Res = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': contentType },
-    body: bytes,
-  })
-  if (!r2Res.ok) throw new Error(`R2 upload failed: ${r2Res.status}`)
-
-  return publicUrl
-}
-
-async function downloadToR2(item: PickerMediaItem, authToken: string): Promise<GoogleFamilyPhoto | null> {
-  const { id, createTime, mediaFile } = item
-  const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
-  const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg'
-
-  const fullKey  = `google-photos/${id}.${ext}`
-  const thumbKey = `google-photos/${id}_thumb.jpg`
-
-  const [fullResult, thumbResult] = await Promise.allSettled([
-    uploadToR2(`${baseUrl}=w2048`, fullKey,  mimeType,       authToken),
-    uploadToR2(`${baseUrl}=w400`,  thumbKey, 'image/jpeg',   authToken),
-  ])
-
-  if (fullResult.status === 'rejected') {
-    console.error('[picker] full upload failed for', id, fullResult.reason)
-  }
-  if (thumbResult.status === 'rejected') {
-    console.error('[picker] thumb upload failed for', id, thumbResult.reason)
-  }
-
-  const url          = fullResult.status  === 'fulfilled' ? fullResult.value  : null
-  const thumbnailUrl = thumbResult.status === 'fulfilled' ? thumbResult.value : null
-
-  // Skip this photo entirely if both failed
-  if (!url && !thumbnailUrl) {
-    console.error('[picker] skipping photo', id, '— both R2 uploads failed')
-    return null
-  }
-
-  return {
-    id,
-    url:          url          ?? thumbnailUrl!,
-    thumbnailUrl: thumbnailUrl ?? url!,
-    filename:     filename ?? `photo_${id}.${ext}`,
-    description:  undefined,
-    takenAt:      createTime,
-    createdAt:    createTime,
-    mimeType,
-    width:        mediaFileMetadata?.width  ?? 0,
-    height:       mediaFileMetadata?.height ?? 0,
-    source:       'google_photos' as const,
   }
 }

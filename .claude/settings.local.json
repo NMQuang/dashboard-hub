@@ -40,7 +40,8 @@
       "Bash(git push *)",
       "Bash(claude mcp *)",
       "Bash(dir /s /b \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\*.tsx\")",
-      "Bash(findstr -i photo)"
+      "Bash(findstr -i photo)",
+      "Bash(git *)"
     ]
   }
 }
