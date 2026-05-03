@@ -25,7 +25,10 @@ import type {
   FamilyTask,
   BudgetEntry,
   PhotoStory,
+  FamilyPhotoStory,
+  GooglePhotoAlbum,
 } from '@/types/family-types'
+import type { GoogleFamilyPhoto } from '@/types'
 
 const KV_URL = (process.env.FAMILY_KV_REST_API_URL ?? '').trim()
 const KV_TOKEN = (process.env.FAMILY_KV_REST_API_TOKEN ?? '').trim()
@@ -375,4 +378,87 @@ export async function saveStory(story: PhotoStory): Promise<void> {
   else all.unshift(story)
 
   await kvSet('family:stories', all)
+}
+
+// ── Family Photo Stories (source-agnostic, used by /family/photos hub) ────────
+// Stored separately from legacy 'family:stories' to avoid type conflicts.
+
+export async function getFamilyPhotoStories(): Promise<FamilyPhotoStory[]> {
+  const result = await kvGet<FamilyPhotoStory[]>('family:photo_stories')
+  return Array.isArray(result) ? result : []
+}
+
+export async function saveFamilyPhotoStory(story: FamilyPhotoStory): Promise<void> {
+  const all = Array.from(await getFamilyPhotoStories())
+  const idx = all.findIndex((s) => s.id === story.id)
+
+  if (idx >= 0) all[idx] = story
+  else all.unshift(story)
+
+  await kvSet('family:photo_stories', all)
+}
+
+export async function deleteFamilyPhotoStory(id: string): Promise<void> {
+  const all = Array.from(await getFamilyPhotoStories())
+  await kvSet('family:photo_stories', all.filter((s) => s.id !== id))
+}
+
+// ── Google OAuth token store ──────────────────────────────────────────────────
+// Allows storing the refresh_token in KV so the setup page can persist it
+// without requiring .env.local to be manually edited.
+
+export async function getStoredGoogleRefreshToken(): Promise<string | null> {
+  return kvGet<string>('google_oauth:refresh_token')
+}
+
+export async function saveStoredGoogleRefreshToken(token: string): Promise<void> {
+  await kvSet('google_oauth:refresh_token', token)
+}
+
+export async function deleteStoredGoogleRefreshToken(): Promise<void> {
+  await kvDelete('google_oauth:refresh_token')
+}
+
+// ── Google Albums cache ───────────────────────────────────────────────────────
+// Cached list of Google Photos albums with a timestamp for cache validation.
+
+interface GoogleAlbumsCache {
+  albums: GooglePhotoAlbum[]
+  cachedAt: string
+}
+
+export async function getCachedGoogleAlbums(): Promise<GoogleAlbumsCache | null> {
+  return kvGet<GoogleAlbumsCache>('family:google_albums_cache')
+}
+
+export async function saveGoogleAlbumsCache(albums: GooglePhotoAlbum[]): Promise<void> {
+  await kvSet('family:google_albums_cache', {
+    albums,
+    cachedAt: new Date().toISOString(),
+  } satisfies GoogleAlbumsCache)
+}
+
+// ── Google Photos Picker — synced photos ──────────────────────────────────────
+// Photos the user has selected via the Picker API flow, saved permanently in KV.
+
+interface PickedPhotosStore {
+  photos: GoogleFamilyPhoto[]
+  syncedAt: string
+}
+
+export async function getPickedGooglePhotos(): Promise<GoogleFamilyPhoto[]> {
+  const result = await kvGet<PickedPhotosStore>('family:google_picked_photos')
+  return Array.isArray(result?.photos) ? result!.photos : []
+}
+
+export async function getPickedPhotosSyncedAt(): Promise<string | null> {
+  const result = await kvGet<PickedPhotosStore>('family:google_picked_photos')
+  return result?.syncedAt ?? null
+}
+
+export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promise<void> {
+  await kvSet('family:google_picked_photos', {
+    photos,
+    syncedAt: new Date().toISOString(),
+  } satisfies PickedPhotosStore)
 }
