@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Family' }
 export const dynamic = 'force-dynamic'
 
 const SECTIONS = [
-  { href: '/family/memories', icon: '📸', label: 'Memories', desc: 'Ảnh gia đình · timeline · albums', color: '#FBEAF0' },
+  { href: '/family/photos', icon: '📷', label: 'Photos', desc: 'Ảnh gia đình · Google Photos · stories', color: '#FBEAF0' },
   { href: '/family/connect', icon: '💬', label: 'Connect', desc: 'Daily check-in · nhật ký từ Nhật', color: '#E1F5EE' },
   { href: '/family/plan', icon: '📅', label: 'Plan', desc: 'Lịch chung · sự kiện · du lịch', color: '#EEEDFE' },
   { href: '/family/finance', icon: '💴', label: 'Finance', desc: 'Chi tiêu · JPY↔VND · tiết kiệm', color: '#FAEEDA' },
@@ -121,7 +121,7 @@ export default async function FamilyHomePage() {
           <Card>
             <CardHeader>
               <CardTitle>Ảnh mới nhất</CardTitle>
-              <CardAction href="/family/memories">Xem tất cả →</CardAction>
+              <CardAction href="/family/photos">Xem tất cả →</CardAction>
             </CardHeader>
             {latestPhoto ? (
               <div>
