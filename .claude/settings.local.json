@@ -23,7 +23,22 @@
       "mcp__claude_ai_Supabase__apply_migration",
       "mcp__claude_ai_Supabase__execute_sql",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d[\\\\\"phrases\\\\\"]\\)}'\\); [print\\(f'  {p[\\\\\"title\\\\\"]} \\({p.get\\(\\\\\"phraseType\\\\\",\\\\\"?\\\\\"\\)}\\)'\\) for p in d['phrases'][:6]]\")",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d[\\\\\"phrases\\\\\"]\\)}'\\); [print\\(f'  [{p.get\\(\\\\\"phraseType\\\\\",\\\\\"?\\\\\"\\)}] {p[\\\\\"title\\\\\"]} - {p[\\\\\"category\\\\\"]}'\\) for p in d['phrases'][:8]]\")"
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d[\\\\\"phrases\\\\\"]\\)}'\\); [print\\(f'  [{p.get\\(\\\\\"phraseType\\\\\",\\\\\"?\\\\\"\\)}] {p[\\\\\"title\\\\\"]} - {p[\\\\\"category\\\\\"]}'\\) for p in d['phrases'][:8]]\")",
+      "PowerShell(Get-Content *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('email:', d.get\\('email','?'\\)\\)\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(jobs)",
+      "Bash(kill %1)",
+      "Bash(python3 -c \"import sys,urllib.parse; print\\(urllib.parse.unquote\\(sys.stdin.read\\(\\).strip\\(\\).split\\('=',1\\)[1]\\)\\)\")",
+      "Bash(npx kill-port *)",
+      "Bash(pnpm dev *)",
+      "Bash(git checkout *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); photos=json.loads\\(d['result']\\)['photos']; [print\\(p['thumbnailUrl']\\) for p in photos[:3]]\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(claude mcp *)"
     ]
   }
 }
