@@ -5,6 +5,8 @@ import { getPresignedUploadUrl } from '@/services/family-r2'
 import type { GoogleFamilyPhoto } from '@/types'
 import type { PickerMediaItem } from '@/services/googlePhotosPicker'
 
+export const maxDuration = 300 // allow up to 5 min for batch R2 uploads (Vercel Pro)
+
 const CLIENT_ID     = (process.env.GOOGLE_CLIENT_ID     ?? '').trim()
 const CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET ?? '').trim()
 
@@ -68,6 +70,13 @@ export async function PUT(req: NextRequest) {
   const { sessionId } = body
   if (!sessionId) return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
 
+  // Validate R2 config before doing any work
+  const r2AccountId = (process.env.R2_ACCOUNT_ID ?? '').trim()
+  if (!r2AccountId) {
+    console.error('[picker] R2_ACCOUNT_ID is not set — cannot upload to R2')
+    return NextResponse.json({ error: 'R2 storage is not configured (missing env vars)' }, { status: 500 })
+  }
+
   try {
     const accessToken = await getAccessToken()
     if (!accessToken) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -77,16 +86,19 @@ export async function PUT(req: NextRequest) {
 
     console.info('[picker] downloading', imageItems.length, 'photos to R2...')
 
-    // Download all photos to R2 in parallel (batches of 10)
+    // Download all photos to R2 in parallel (batches of 5 to stay within memory)
     const photos: GoogleFamilyPhoto[] = []
-    for (let i = 0; i < imageItems.length; i += 10) {
-      const batch = imageItems.slice(i, i + 10)
+    let failCount = 0
+    for (let i = 0; i < imageItems.length; i += 5) {
+      const batch = imageItems.slice(i, i + 5)
       const results = await Promise.allSettled(batch.map(item => downloadToR2(item, accessToken)))
       for (const r of results) {
         if (r.status === 'fulfilled' && r.value) photos.push(r.value)
+        else failCount++
       }
     }
 
+    if (failCount > 0) console.warn('[picker] failed to upload', failCount, 'photos to R2')
     await savePickedGooglePhotos(photos)
     console.info('[picker] saved', photos.length, 'photos to KV (R2 URLs)')
     return NextResponse.json({ count: photos.length, photos })
