@@ -462,3 +462,8 @@ export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promi
     syncedAt: new Date().toISOString(),
   } satisfies PickedPhotosStore)
 }
+
+export async function deletePickedGooglePhoto(id: string): Promise<void> {
+  const current = await getPickedGooglePhotos()
+  await savePickedGooglePhotos(current.filter(p => p.id !== id))
+}

@@ -263,6 +263,27 @@ export default function PhotosHubClient({
     })
   }, [])
 
+  // ── Delete photo ───────────────────────────────────────────────────────────
+
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDelete = useCallback(async (id: string, source: string) => {
+    setDeletingId(id)
+    try {
+      const res = await fetch(
+        `/api/family/photos?id=${encodeURIComponent(id)}&source=${encodeURIComponent(source)}`,
+        { method: 'DELETE' }
+      )
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setPhotos(prev => prev.filter(p => p.id !== id))
+      setSelected(prev => { const next = new Set(prev); next.delete(id); return next })
+    } catch (e) {
+      console.error('[delete]', e)
+    } finally {
+      setDeletingId(null)
+    }
+  }, [])
+
   // ── Load more (Google Photos pagination) ───────────────────────────────────
 
   async function loadMore() {
@@ -698,6 +719,8 @@ export default function PhotosHubClient({
                         selected={selected.has(photo.id)}
                         onSelect={() => toggleSelect(photo.id)}
                         onClick={() => openLightbox(photo)}
+                        onDelete={() => handleDelete(photo.id, photo.source)}
+                        deleting={deletingId === photo.id}
                       />
                     ))}
                   </div>
@@ -1109,13 +1132,23 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   )
 }
 
-function PhotoCell({ photo, selected, onSelect, onClick }: {
-  photo: DisplayPhoto; selected: boolean; onSelect: () => void; onClick: () => void
+function PhotoCell({ photo, selected, onSelect, onClick, onDelete, deleting }: {
+  photo: DisplayPhoto
+  selected: boolean
+  onSelect: () => void
+  onClick: () => void
+  onDelete?: () => void
+  deleting?: boolean
 }) {
   const [errored, setErrored] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   return (
-    <div style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface2)' }}>
+    <div
+      style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: 'var(--surface2)', opacity: deleting ? 0.4 : 1, transition: 'opacity 0.15s' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {!errored ? (
         <img
           src={photo.thumbnailUrl}
@@ -1163,6 +1196,24 @@ function PhotoCell({ photo, selected, onSelect, onClick }: {
       >
         {selected ? '✓' : ''}
       </button>
+
+      {/* Delete button — shown on hover */}
+      {onDelete && hovered && !deleting && (
+        <button
+          onClick={e => { e.stopPropagation(); onDelete() }}
+          title="Xóa ảnh"
+          style={{
+            position: 'absolute', bottom: 5, right: 5,
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'rgba(220,38,38,0.85)',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 11, color: '#fff', lineHeight: 1,
+          }}
+        >
+          ✕
+        </button>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllPhotos, getPhotosByTag, groupByMonth, deletePhoto } from '@/services/family-storage'
+import { getAllPhotos, getPhotosByTag, groupByMonth, deletePhoto, deletePickedGooglePhoto, getPickedGooglePhotos } from '@/services/family-storage'
 import { deletePhotoFromR2, photoKey } from '@/services/family-r2'
 import { generatePhotoStory } from '@/services/family-ai'
 import { saveStory } from '@/services/family-storage'
@@ -26,16 +26,22 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ photos, total: photos.length })
 }
 
-// DELETE /api/family/photos?id=xxx
+// DELETE /api/family/photos?id=xxx&source=local|google_photos
 export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get('id')
+  const id     = req.nextUrl.searchParams.get('id')
+  const source = req.nextUrl.searchParams.get('source') ?? 'local'
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   try {
+    if (source === 'google_photos') {
+      await deletePickedGooglePhoto(id)
+      return NextResponse.json({ ok: true })
+    }
+
+    // local R2 photo
     const all = await getAllPhotos()
     const photo = all.find(p => p.id === id)
     if (photo) {
-      // Delete from R2
       const ext = photo.filename.split('.').pop() ?? 'jpg'
       await deletePhotoFromR2(`photos/${id}.${ext}`)
     }
