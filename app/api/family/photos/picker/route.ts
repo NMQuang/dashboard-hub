@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStoredGoogleRefreshToken, savePickedGooglePhotos } from '@/services/family-storage'
+import { getStoredGoogleRefreshToken, getPickedGooglePhotos, savePickedGooglePhotos } from '@/services/family-storage'
 import { createPickerSession, getPickerSession, getPickerMediaItems } from '@/services/googlePhotosPicker'
 import type { GoogleFamilyPhoto } from '@/types'
 
@@ -97,8 +97,13 @@ export async function PUT(req: NextRequest) {
       }
     })
 
-    await savePickedGooglePhotos(photos)
-    console.info('[picker] saved', photos.length, 'photos to KV')
+    // Merge with existing photos — new sync replaces same IDs (refreshes URLs), keeps the rest
+    const existing = await getPickedGooglePhotos()
+    const newIds = new Set(photos.map(p => p.id))
+    const merged = [...photos, ...existing.filter(p => !newIds.has(p.id))]
+
+    await savePickedGooglePhotos(merged)
+    console.info('[picker] saved', photos.length, 'new +', merged.length - photos.length, 'existing photos to KV')
     return NextResponse.json({ count: photos.length, photos })
   } catch (err) {
     console.error('[picker] PUT error:', err)
