@@ -26,10 +26,13 @@ export function familyPhotoToDisplay(p: FamilyPhoto): DisplayPhoto {
 }
 
 export function googlePhotoToDisplay(p: GoogleFamilyPhoto): DisplayPhoto {
+  const proxy = (size: 'thumb' | 'full') =>
+    `/api/family/photos/proxy?id=${encodeURIComponent(p.id)}&size=${size}`
+
   return {
     id:           p.id,
-    url:          p.url,
-    thumbnailUrl: p.thumbnailUrl,
+    url:          proxy('full'),
+    thumbnailUrl: proxy('thumb'),
     filename:     p.filename,
     description:  p.description,
     takenAt:      p.takenAt,
