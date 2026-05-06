@@ -26,10 +26,13 @@ async function inBatches<T, R>(
   return results
 }
 
+// Returns null when the photo cannot be stored durably.
+// Never stores ephemeral Google Picker CDN URLs — they expire with the session
+// and cannot be refreshed via OAuth.
 async function processPickerItem(
   item: PickerMediaItem,
   existingById: Map<string, GoogleFamilyPhoto>,
-): Promise<GoogleFamilyPhoto> {
+): Promise<GoogleFamilyPhoto | null> {
   const { id, createTime, mediaFile } = item
   const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
   const safeFilename = filename ?? `photo_${id}`
@@ -42,47 +45,44 @@ async function processPickerItem(
     return existing
   }
 
-  if (R2_CONFIGURED) {
+  if (!R2_CONFIGURED) {
+    console.warn(`[picker] R2 not configured — cannot persist photo ${id} durably; skipping`)
+    return null
+  }
+
+  const r2Key = `google-photos/${id}.${ext}`
+
+  // Two attempts: Google CDN can have transient failures
+  for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const r2Key = `google-photos/${id}.${ext}`
       const dlRes = await fetch(`${baseUrl}=d`, { cache: 'no-store' })
-      if (dlRes.ok) {
-        const buffer = await dlRes.arrayBuffer()
-        const r2Url = await serverUploadToR2(r2Key, buffer, safeMime)
-        return {
-          id,
-          url:          r2Url,
-          thumbnailUrl: r2Url,
-          filename:     safeFilename,
-          description:  undefined,
-          takenAt:      createTime,
-          createdAt:    createTime,
-          mimeType:     safeMime,
-          width:        mediaFileMetadata?.width  ?? 0,
-          height:       mediaFileMetadata?.height ?? 0,
-          source:       'google_photos' as const,
-        }
+      if (!dlRes.ok) {
+        console.warn(`[picker] Google download failed for ${id} (HTTP ${dlRes.status}), attempt ${attempt}`)
+        if (attempt === 2) return null
+        continue
       }
-      console.warn(`[picker] Google download failed for ${id} (${dlRes.status}), using CDN URL`)
+      const buffer = await dlRes.arrayBuffer()
+      const r2Url = await serverUploadToR2(r2Key, buffer, safeMime)
+      return {
+        id,
+        url:          r2Url,
+        thumbnailUrl: r2Url,
+        filename:     safeFilename,
+        description:  undefined,
+        takenAt:      createTime,
+        createdAt:    createTime,
+        mimeType:     safeMime,
+        width:        mediaFileMetadata?.width  ?? 0,
+        height:       mediaFileMetadata?.height ?? 0,
+        source:       'google_photos' as const,
+      }
     } catch (err) {
-      console.warn(`[picker] R2 upload failed for ${id}, falling back to CDN URL:`, err)
+      console.warn(`[picker] R2 upload failed for ${id}, attempt ${attempt}:`, err)
+      if (attempt === 2) return null
     }
   }
 
-  // Fallback — time-limited Google CDN URL (expires after session)
-  return {
-    id,
-    url:          `${baseUrl}=d`,
-    thumbnailUrl: `${baseUrl}=w400`,
-    filename:     safeFilename,
-    description:  undefined,
-    takenAt:      createTime,
-    createdAt:    createTime,
-    mimeType:     safeMime,
-    width:        mediaFileMetadata?.width  ?? 0,
-    height:       mediaFileMetadata?.height ?? 0,
-    source:       'google_photos' as const,
-  }
+  return null
 }
 
 const CLIENT_ID     = (process.env.GOOGLE_CLIENT_ID     ?? '').trim()
@@ -143,8 +143,8 @@ export async function GET(req: NextRequest) {
 }
 
 // PUT { sessionId } — fetch selected items, upload to R2 for permanent storage, save to KV.
-// R2 upload prevents Google CDN URL expiry (Picker baseUrls are session-scoped).
-// Falls back to CDN URL if R2 is not configured.
+// Picker baseUrls are session-scoped and expire — they are NEVER stored directly.
+// Photos that fail R2 upload are skipped; count of skipped photos is returned as `failed`.
 export async function PUT(req: NextRequest) {
   const body = await req.json() as { sessionId?: string }
   const { sessionId } = body
@@ -164,14 +164,17 @@ export async function PUT(req: NextRequest) {
 
     const processed = await inBatches(imageItems, 5, item => processPickerItem(item, existingById))
     const photos = processed.filter((p): p is GoogleFamilyPhoto => p !== null)
+    const failedCount = imageItems.length - photos.length
 
     // Merge — new/refreshed photos replace same IDs, keep others
     const newIds = new Set(photos.map(p => p.id))
     const merged = [...photos, ...existing.filter(p => !newIds.has(p.id))]
 
-    await savePickedGooglePhotos(merged)
-    console.info('[picker] saved', photos.length, 'photos to KV (R2:', photos.filter(p => R2_PUBLIC_BASE && p.url.startsWith(R2_PUBLIC_BASE)).length, 'permanent)')
-    return NextResponse.json({ count: photos.length, photos })
+    const kvPersisted = await savePickedGooglePhotos(merged)
+    const r2Count = photos.filter(p => R2_PUBLIC_BASE && p.url.startsWith(R2_PUBLIC_BASE)).length
+    console.info(`[picker] saved ${photos.length} photos (R2: ${r2Count} permanent, failed: ${failedCount}, kvPersisted: ${String(kvPersisted)})`)
+
+    return NextResponse.json({ count: photos.length, failed: failedCount, photos, kvPersisted })
   } catch (err) {
     console.error('[picker] PUT error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

@@ -126,7 +126,8 @@ async function kvSet(key: string, value: unknown): Promise<boolean> {
   memoryStore.set(key, value)
 
   if (!KV_ENABLED) {
-    return true
+    console.warn(logPrefix('kvSet'), `KV disabled — key "${key}" saved to memory only (will not survive cold start)`)
+    return false
   }
 
   const res = await kvFetch(`/set/${encodeURIComponent(key)}`, {
@@ -461,8 +462,8 @@ export async function getPickedPhotosSyncedAt(): Promise<string | null> {
   return result?.syncedAt ?? null
 }
 
-export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promise<void> {
-  await kvSet('family:google_picked_photos', {
+export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promise<boolean> {
+  return kvSet('family:google_picked_photos', {
     photos,
     syncedAt: new Date().toISOString(),
   } satisfies PickedPhotosStore)
