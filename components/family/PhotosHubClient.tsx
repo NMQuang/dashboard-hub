@@ -116,7 +116,12 @@ export default function PhotosHubClient({
             body: JSON.stringify({ sessionId }),
           })
           if (!sr.ok) throw new Error(`Save HTTP ${sr.status}`)
-          const { count, photos: newPhotos } = await sr.json() as { count: number; photos: GoogleFamilyPhoto[] }
+          const { count, failed, photos: newPhotos, kvPersisted } = await sr.json() as {
+            count: number
+            failed: number
+            photos: GoogleFamilyPhoto[]
+            kvPersisted: boolean
+          }
           if (newPhotos?.length) {
             const newDisplayPhotos = newPhotos.map(googlePhotoToDisplay)
             setPhotos(prev => {
@@ -125,7 +130,10 @@ export default function PhotosHubClient({
               return [...prev, ...fresh].sort((a, b) => b.takenAt.localeCompare(a.takenAt))
             })
           }
-          setSyncMsg(`✓ Đã sync ${count} ảnh`)
+          let msg = `✓ Đã sync ${count} ảnh`
+          if (failed > 0) msg += ` (${failed} ảnh lỗi tải về R2 — sẽ không hiển thị)`
+          if (!kvPersisted) msg += ` · ⚠ Lỗi lưu DB — ảnh có thể mất sau khi reload`
+          setSyncMsg(msg)
           setSyncStep('done')
           setTimeout(() => { setSyncStep('idle') }, 2500)
         } catch (e) {
