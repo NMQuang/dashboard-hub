@@ -158,3 +158,32 @@ export function photoKey(id: string, filename: string): string {
   const ext = filename.split('.').pop() ?? 'jpg'
   return `photos/${id}.${ext}`
 }
+
+// Whether all R2 env vars are present — used by server-side upload
+export const R2_CONFIGURED = Boolean(
+  process.env.R2_ACCOUNT_ID &&
+  process.env.R2_ACCESS_KEY_ID &&
+  process.env.R2_SECRET_ACCESS_KEY &&
+  process.env.R2_BUCKET_NAME &&
+  process.env.R2_PUBLIC_URL
+)
+
+// Upload a buffer directly to R2 from server-side code.
+// Uses the presigned PUT approach — generates a signed URL then performs the upload.
+export async function serverUploadToR2(
+  key: string,
+  body: ArrayBuffer,
+  contentType: string,
+): Promise<string> {
+  const { uploadUrl, publicUrl } = await getPresignedUploadUrl(key, contentType)
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    body,
+    headers: { 'Content-Type': contentType },
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`R2 upload failed (${res.status}): ${text.slice(0, 200)}`)
+  }
+  return publicUrl
+}

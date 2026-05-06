@@ -1,9 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStoredGoogleRefreshToken, getPickedGooglePhotos, savePickedGooglePhotos } from '@/services/family-storage'
 import { createPickerSession, getPickerSession, getPickerMediaItems } from '@/services/googlePhotosPicker'
+import type { PickerMediaItem } from '@/services/googlePhotosPicker'
+import { serverUploadToR2, R2_CONFIGURED } from '@/services/family-r2'
 import type { GoogleFamilyPhoto } from '@/types'
 
 export const maxDuration = 60
+
+const R2_PUBLIC_BASE = (process.env.R2_PUBLIC_URL ?? '').trim()
+
+// Process picker items in batches to avoid overwhelming Vercel/R2 limits
+async function inBatches<T, R>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<R>,
+): Promise<Array<R | null>> {
+  const results: Array<R | null> = []
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize)
+    const settled = await Promise.allSettled(batch.map(fn))
+    for (const s of settled) {
+      results.push(s.status === 'fulfilled' ? s.value : null)
+    }
+  }
+  return results
+}
+
+async function processPickerItem(
+  item: PickerMediaItem,
+  existingById: Map<string, GoogleFamilyPhoto>,
+): Promise<GoogleFamilyPhoto> {
+  const { id, createTime, mediaFile } = item
+  const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
+  const safeFilename = filename ?? `photo_${id}`
+  const ext = safeFilename.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const safeMime = mimeType || 'image/jpeg'
+
+  // Already stored in R2 — reuse permanent URL, skip re-download
+  const existing = existingById.get(id)
+  if (existing && R2_PUBLIC_BASE && existing.url.startsWith(R2_PUBLIC_BASE)) {
+    return existing
+  }
+
+  if (R2_CONFIGURED) {
+    try {
+      const r2Key = `google-photos/${id}.${ext}`
+      const dlRes = await fetch(`${baseUrl}=d`, { cache: 'no-store' })
+      if (dlRes.ok) {
+        const buffer = await dlRes.arrayBuffer()
+        const r2Url = await serverUploadToR2(r2Key, buffer, safeMime)
+        return {
+          id,
+          url:          r2Url,
+          thumbnailUrl: r2Url,
+          filename:     safeFilename,
+          description:  undefined,
+          takenAt:      createTime,
+          createdAt:    createTime,
+          mimeType:     safeMime,
+          width:        mediaFileMetadata?.width  ?? 0,
+          height:       mediaFileMetadata?.height ?? 0,
+          source:       'google_photos' as const,
+        }
+      }
+      console.warn(`[picker] Google download failed for ${id} (${dlRes.status}), using CDN URL`)
+    } catch (err) {
+      console.warn(`[picker] R2 upload failed for ${id}, falling back to CDN URL:`, err)
+    }
+  }
+
+  // Fallback — time-limited Google CDN URL (expires after session)
+  return {
+    id,
+    url:          `${baseUrl}=d`,
+    thumbnailUrl: `${baseUrl}=w400`,
+    filename:     safeFilename,
+    description:  undefined,
+    takenAt:      createTime,
+    createdAt:    createTime,
+    mimeType:     safeMime,
+    width:        mediaFileMetadata?.width  ?? 0,
+    height:       mediaFileMetadata?.height ?? 0,
+    source:       'google_photos' as const,
+  }
+}
 
 const CLIENT_ID     = (process.env.GOOGLE_CLIENT_ID     ?? '').trim()
 const CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET ?? '').trim()
@@ -62,9 +142,9 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PUT { sessionId } — fetch selected items and save Google CDN URLs to KV
-// No R2 download — photos are served directly from Google's CDN.
-// baseUrl from Picker API is a time-limited CDN URL; re-sync to refresh.
+// PUT { sessionId } — fetch selected items, upload to R2 for permanent storage, save to KV.
+// R2 upload prevents Google CDN URL expiry (Picker baseUrls are session-scoped).
+// Falls back to CDN URL if R2 is not configured.
 export async function PUT(req: NextRequest) {
   const body = await req.json() as { sessionId?: string }
   const { sessionId } = body
@@ -77,33 +157,20 @@ export async function PUT(req: NextRequest) {
     const items = await getPickerMediaItems(accessToken, sessionId)
     const imageItems = items.filter(item => item.mediaFile.mimeType.startsWith('image/'))
 
-    console.info('[picker] saving', imageItems.length, 'photos (Google CDN URLs) to KV...')
-
-    const photos: GoogleFamilyPhoto[] = imageItems.map(item => {
-      const { id, createTime, mediaFile } = item
-      const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
-      return {
-        id,
-        url:          `${baseUrl}=d`,
-        thumbnailUrl: `${baseUrl}=w400`,
-        filename:     filename ?? `photo_${id}`,
-        description:  undefined,
-        takenAt:      createTime,
-        createdAt:    createTime,
-        mimeType,
-        width:        mediaFileMetadata?.width  ?? 0,
-        height:       mediaFileMetadata?.height ?? 0,
-        source:       'google_photos' as const,
-      }
-    })
-
-    // Merge with existing photos — new sync replaces same IDs (refreshes URLs), keeps the rest
     const existing = await getPickedGooglePhotos()
+    const existingById = new Map(existing.map(p => [p.id, p]))
+
+    console.info('[picker] processing', imageItems.length, 'photos (R2 upload enabled:', R2_CONFIGURED, ')...')
+
+    const processed = await inBatches(imageItems, 5, item => processPickerItem(item, existingById))
+    const photos = processed.filter((p): p is GoogleFamilyPhoto => p !== null)
+
+    // Merge — new/refreshed photos replace same IDs, keep others
     const newIds = new Set(photos.map(p => p.id))
     const merged = [...photos, ...existing.filter(p => !newIds.has(p.id))]
 
     await savePickedGooglePhotos(merged)
-    console.info('[picker] saved', photos.length, 'new +', merged.length - photos.length, 'existing photos to KV')
+    console.info('[picker] saved', photos.length, 'photos to KV (R2:', photos.filter(p => R2_PUBLIC_BASE && p.url.startsWith(R2_PUBLIC_BASE)).length, 'permanent)')
     return NextResponse.json({ count: photos.length, photos })
   } catch (err) {
     console.error('[picker] PUT error:', err)
