@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { DisplayPhoto, FamilyPhoto, FamilyPhotoStory, StorySyncStatus, GooglePhotoAlbum } from '@/types/family'
+import type { DisplayPhoto, FamilyPhoto, FamilyPhotoStory, StorySyncStatus } from '@/types/family'
 import type { GooglePhotosStatus } from '@/services/googlePhotos'
 import type { GoogleFamilyPhoto } from '@/types'
 import { familyPhotoToDisplay, googlePhotoToDisplay } from '@/lib/familyPhotoUtils'
@@ -33,23 +33,30 @@ function fmtDate(iso: string): string {
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  initialPhotos:        DisplayPhoto[]
-  initialStories:       FamilyPhotoStory[]
+  initialPhotos:         DisplayPhoto[]
+  initialStories:        FamilyPhotoStory[]
   initialNextPageToken?: string
-  initialAlbums:        GooglePhotoAlbum[]
-  googleStatus:         GooglePhotosStatus
+  googleStatus:          GooglePhotosStatus
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type View = 'timeline' | 'upload' | 'stories' | 'albums'
+type View = 'timeline' | 'upload' | 'stories'
 type SourceFilter = 'all' | 'google_photos' | 'local'
+
+const TAG_LABELS: Record<string, string> = {
+  japan:     '🇯🇵 Japan',
+  family:    '👨‍👩‍👧 Gia đình',
+  baby:      '👶 Bé',
+  couple:    '💑 Couple',
+  travel:    '✈️ Du lịch',
+  milestone: '🎯 Milestone',
+}
 
 export default function PhotosHubClient({
   initialPhotos,
   initialStories,
   initialNextPageToken,
-  initialAlbums,
   googleStatus,
 }: Props) {
   const router = useRouter()
@@ -60,22 +67,12 @@ export default function PhotosHubClient({
   const [stories,       setStories]       = useState<FamilyPhotoStory[]>(initialStories)
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(initialNextPageToken)
 
-  // ── Albums state ───────────────────────────────────────────────────────────
-  const [albums,          setAlbums]          = useState<GooglePhotoAlbum[]>(initialAlbums)
-  const [albumsLoading,   setAlbumsLoading]   = useState(false)
-  const [albumsErr,       setAlbumsErr]       = useState('')
-  const [activeAlbum,     setActiveAlbum]     = useState<GooglePhotoAlbum | null>(null)
-  const [albumPhotos,     setAlbumPhotos]     = useState<DisplayPhoto[]>([])
-  const [albumLoading,    setAlbumLoading]    = useState(false)
-  const [albumErr,        setAlbumErr]        = useState('')
-  const [importingAlbum,  setImportingAlbum]  = useState<string | null>(null)
-  const [importMsg,       setImportMsg]       = useState('')
-
   // ── Filter state ───────────────────────────────────────────────────────────
   const [searchQ,      setSearchQ]      = useState('')
   const [yearFilter,   setYearFilter]   = useState('all')
   const [monthFilter,  setMonthFilter]  = useState('all')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
+  const [tagFilter,    setTagFilter]    = useState('all')
 
   // ── Selection + lightbox ───────────────────────────────────────────────────
   const [selected,    setSelected]    = useState<Set<string>>(new Set())
@@ -168,7 +165,7 @@ export default function PhotosHubClient({
   const [uploadMsg,  setUploadMsg]  = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Story form ─────────────────────────────────────────────────────────────
+  // ── Story form (create) ────────────────────────────────────────────────────
   const [showStoryForm,  setShowStoryForm]  = useState(false)
   const [storyTitle,     setStoryTitle]     = useState('')
   const [storyDesc,      setStoryDesc]      = useState('')
@@ -176,6 +173,21 @@ export default function PhotosHubClient({
   const [storyNotes,     setStoryNotes]     = useState('')
   const [savingStory,    setSavingStory]    = useState(false)
   const [storyErr,       setStoryErr]       = useState('')
+
+  // ── Story edit ─────────────────────────────────────────────────────────────
+  const [editingStory,   setEditingStory]   = useState<FamilyPhotoStory | null>(null)
+  const [editTitle,      setEditTitle]      = useState('')
+  const [editDesc,       setEditDesc]       = useState('')
+  const [editLocation,   setEditLocation]   = useState('')
+  const [editNotes,      setEditNotes]      = useState('')
+  const [savingEdit,     setSavingEdit]     = useState(false)
+  const [editErr,        setEditErr]        = useState('')
+
+  // ── Story share ────────────────────────────────────────────────────────────
+  const [shareStoryId,   setShareStoryId]   = useState<string | null>(null)
+  const [shareUrl,       setShareUrl]       = useState('')
+  const [generatingShare, setGeneratingShare] = useState(false)
+  const [deletingStoryId, setDeletingStoryId] = useState<string | null>(null)
 
   // ── Derived: available years + months ─────────────────────────────────────
 
@@ -201,6 +213,16 @@ export default function PhotosHubClient({
     setMonthFilter('all')
   }, [])
 
+  // ── Derived: available tags from local photos ─────────────────────────────
+
+  const availableTags = useMemo<string[]>(() => {
+    const set = new Set<string>()
+    for (const p of photos) {
+      if (p.source === 'local') p.tags.forEach(t => set.add(t))
+    }
+    return Array.from(set).sort()
+  }, [photos])
+
   // ── Derived: filtered + grouped photos ────────────────────────────────────
 
   const filtered = useMemo<DisplayPhoto[]>(() => {
@@ -208,6 +230,7 @@ export default function PhotosHubClient({
     if (yearFilter   !== 'all') list = list.filter(p => p.takenAt.startsWith(yearFilter))
     if (monthFilter  !== 'all') list = list.filter(p => p.takenAt.startsWith(monthFilter))
     if (sourceFilter !== 'all') list = list.filter(p => p.source === sourceFilter)
+    if (tagFilter    !== 'all') list = list.filter(p => p.tags.includes(tagFilter))
     if (searchQ.trim()) {
       const q = searchQ.trim().toLowerCase()
       list = list.filter(p =>
@@ -219,7 +242,7 @@ export default function PhotosHubClient({
       )
     }
     return list.slice().sort((a, b) => b.takenAt.localeCompare(a.takenAt))
-  }, [photos, yearFilter, monthFilter, sourceFilter, searchQ])
+  }, [photos, yearFilter, monthFilter, sourceFilter, tagFilter, searchQ])
 
   const monthGroups = useMemo<Array<{ key: string; items: DisplayPhoto[] }>>(() => {
     const map = new Map<string, DisplayPhoto[]>()
@@ -235,23 +258,19 @@ export default function PhotosHubClient({
   }, [filtered])
 
   // ── Lightbox ───────────────────────────────────────────────────────────────
-  // lightboxPool is filtered when in timeline, albumPhotos when in album detail
-
-  const lightboxPool = activeAlbum ? albumPhotos : filtered
 
   const openLightbox = useCallback((photo: DisplayPhoto) => {
-    const pool = activeAlbum ? albumPhotos : filtered
-    const idx = pool.findIndex(p => p.id === photo.id)
+    const idx = filtered.findIndex(p => p.id === photo.id)
     setLightboxIdx(idx >= 0 ? idx : 0)
     setLightbox(photo)
-  }, [filtered, albumPhotos, activeAlbum])
+  }, [filtered])
 
   const navigateLightbox = useCallback((dir: -1 | 1) => {
     const next = lightboxIdx + dir
-    if (next < 0 || next >= lightboxPool.length) return
+    if (next < 0 || next >= filtered.length) return
     setLightboxIdx(next)
-    setLightbox(lightboxPool[next] ?? null)
-  }, [lightboxIdx, lightboxPool])
+    setLightbox(filtered[next] ?? null)
+  }, [lightboxIdx, filtered])
 
   // ── Selection ──────────────────────────────────────────────────────────────
 
@@ -310,89 +329,6 @@ export default function PhotosHubClient({
     }
   }
 
-  // ── Album actions ──────────────────────────────────────────────────────────
-
-  async function refreshAlbums() {
-    setAlbumsLoading(true)
-    setAlbumsErr('')
-    try {
-      const res = await fetch('/api/family/photos/google-albums', { method: 'POST' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json() as { albums: GooglePhotoAlbum[] }
-      setAlbums(data.albums)
-    } catch (e) {
-      setAlbumsErr(`Không tải được albums: ${e instanceof Error ? e.message : String(e)}`)
-    } finally {
-      setAlbumsLoading(false)
-    }
-  }
-
-  async function openAlbum(album: GooglePhotoAlbum) {
-    setActiveAlbum(album)
-    setAlbumPhotos([])
-    setAlbumErr('')
-    setAlbumLoading(true)
-    try {
-      const res = await fetch(`/api/family/photos/google-photos?albumId=${encodeURIComponent(album.id)}&pageSize=100`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json() as { photos: DisplayPhoto[] }
-      setAlbumPhotos(data.photos.sort((a, b) => b.takenAt.localeCompare(a.takenAt)))
-    } catch (e) {
-      setAlbumErr(`Không tải được ảnh: ${e instanceof Error ? e.message : String(e)}`)
-    } finally {
-      setAlbumLoading(false)
-    }
-  }
-
-  async function importAlbumAsStory(album: GooglePhotoAlbum) {
-    setImportingAlbum(album.id)
-    setImportMsg('')
-    try {
-      // Fetch album photos if not already loaded for this album
-      let photosToImport = activeAlbum?.id === album.id ? albumPhotos : []
-      if (photosToImport.length === 0) {
-        const res = await fetch(`/api/family/photos/google-photos?albumId=${encodeURIComponent(album.id)}&pageSize=100`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json() as { photos: DisplayPhoto[] }
-        photosToImport = data.photos
-      }
-
-      if (photosToImport.length === 0) {
-        setImportMsg('Album trống, không có ảnh để import.')
-        return
-      }
-
-      const photoIds = photosToImport.map(p => p.id)
-      const dates = photosToImport.map(p => p.takenAt).sort()
-
-      const storyRes = await fetch('/api/family/stories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title:    album.title,
-          photoIds,
-          dateFrom: dates[0]?.slice(0, 10),
-          dateTo:   dates[dates.length - 1]?.slice(0, 10),
-        }),
-      })
-      if (!storyRes.ok) throw new Error(`HTTP ${storyRes.status}`)
-      const { story } = await storyRes.json() as { story: FamilyPhotoStory }
-
-      // Merge album photos into main photo state (dedup)
-      setPhotos(prev => {
-        const existingIds = new Set(prev.map(p => p.id))
-        const newItems = photosToImport.filter(p => !existingIds.has(p.id))
-        return [...prev, ...newItems].sort((a, b) => b.takenAt.localeCompare(a.takenAt))
-      })
-      setStories(prev => [story, ...prev])
-      setImportMsg(`✓ Đã import "${album.title}" thành story (${photoIds.length} ảnh)`)
-      setTimeout(() => { setImportMsg(''); setView('stories') }, 1800)
-    } catch (e) {
-      setImportMsg(`Lỗi: ${e instanceof Error ? e.message : String(e)}`)
-    } finally {
-      setImportingAlbum(null)
-    }
-  }
 
   // ── Upload ─────────────────────────────────────────────────────────────────
 
@@ -454,6 +390,91 @@ export default function PhotosHubClient({
     }
     e.target.value = ''
     router.refresh()
+  }
+
+  // ── Edit story ─────────────────────────────────────────────────────────────
+
+  function openEditStory(story: FamilyPhotoStory) {
+    setEditingStory(story)
+    setEditTitle(story.title)
+    setEditDesc(story.description ?? '')
+    setEditLocation(story.location ?? '')
+    setEditNotes(story.notes ?? '')
+    setEditErr('')
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingStory || !editTitle.trim()) return
+    setSavingEdit(true)
+    setEditErr('')
+    try {
+      const res = await fetch(`/api/family/stories?id=${encodeURIComponent(editingStory.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:       editTitle.trim(),
+          description: editDesc,
+          location:    editLocation,
+          notes:       editNotes,
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(body.error ?? `HTTP ${res.status}`)
+      }
+      const { story } = await res.json() as { story: FamilyPhotoStory }
+      setStories(prev => prev.map(s => s.id === story.id ? story : s))
+      setEditingStory(null)
+    } catch (err) {
+      setEditErr(`Lỗi: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  // ── Share story ────────────────────────────────────────────────────────────
+
+  async function handleShare(story: FamilyPhotoStory) {
+    if (story.shareToken) {
+      const url = `${window.location.origin}/story/${story.shareToken}`
+      setShareUrl(url)
+      setShareStoryId(story.id)
+      return
+    }
+    setGeneratingShare(true)
+    try {
+      const res = await fetch(`/api/family/stories?id=${encodeURIComponent(story.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generateShareToken: true }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const { story: updated } = await res.json() as { story: FamilyPhotoStory }
+      setStories(prev => prev.map(s => s.id === updated.id ? updated : s))
+      const url = `${window.location.origin}/story/${updated.shareToken!}`
+      setShareUrl(url)
+      setShareStoryId(updated.id)
+    } catch (err) {
+      console.error('[share]', err)
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  // ── Delete story ───────────────────────────────────────────────────────────
+
+  async function handleDeleteStory(id: string) {
+    setDeletingStoryId(id)
+    try {
+      const res = await fetch(`/api/family/stories?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setStories(prev => prev.filter(s => s.id !== id))
+    } catch (err) {
+      console.error('[delete-story]', err)
+    } finally {
+      setDeletingStoryId(null)
+    }
   }
 
   // ── Create story ───────────────────────────────────────────────────────────
@@ -596,8 +617,8 @@ export default function PhotosHubClient({
 
       {/* View tabs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
-        {(['timeline', 'albums', 'upload', 'stories'] as const).map(v => (
-          <button key={v} onClick={() => { setView(v); if (v !== 'albums') setActiveAlbum(null) }} style={{
+        {(['timeline', 'upload', 'stories'] as const).map(v => (
+          <button key={v} onClick={() => setView(v)} style={{
             padding: '6px 14px', borderRadius: 8, fontSize: 12.5, cursor: 'pointer',
             border: '1px solid var(--border)',
             background: view === v ? 'var(--surface2)' : 'transparent',
@@ -605,7 +626,6 @@ export default function PhotosHubClient({
             fontWeight: view === v ? 500 : 400,
           }}>
             {v === 'timeline' ? `📅 Timeline (${filtered.length})`
-              : v === 'albums'   ? `🗂 Albums (${albums.length})`
               : v === 'upload'   ? '+ Upload'
               : `✨ Stories (${stories.length})`}
           </button>
@@ -674,10 +694,25 @@ export default function PhotosHubClient({
 
           {/* Month chips (only when year selected) */}
           {yearFilter !== 'all' && months.length > 1 && (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
               <FilterChip label="Tất cả tháng" active={monthFilter === 'all'} onClick={() => setMonthFilter('all')} />
               {months.map(ym => (
                 <FilterChip key={ym} label={monthLabel(ym)} active={monthFilter === ym} onClick={() => setMonthFilter(ym)} />
+              ))}
+            </div>
+          )}
+
+          {/* Tag chips (only when local photos have tags) */}
+          {availableTags.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 16 }}>
+              <FilterChip label="🏷 Tất cả" active={tagFilter === 'all'} onClick={() => setTagFilter('all')} />
+              {availableTags.map(tag => (
+                <FilterChip
+                  key={tag}
+                  label={TAG_LABELS[tag] ?? `#${tag}`}
+                  active={tagFilter === tag}
+                  onClick={() => setTagFilter(tagFilter === tag ? 'all' : tag)}
+                />
               ))}
             </div>
           )}
@@ -747,114 +782,6 @@ export default function PhotosHubClient({
                 </div>
               )}
             </>
-          )}
-        </div>
-      )}
-
-      {/* ── Albums view ── */}
-      {view === 'albums' && (
-        <div>
-          {/* Album detail view */}
-          {activeAlbum ? (
-            <div>
-              {/* Breadcrumb */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <button
-                  onClick={() => { setActiveAlbum(null); setAlbumPhotos([]) }}
-                  style={{
-                    padding: '5px 12px', borderRadius: 8, fontSize: 12.5, cursor: 'pointer',
-                    border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--ink2)',
-                  }}
-                >
-                  ← Albums
-                </button>
-                <span style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>{activeAlbum.title}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)' }}>
-                  {activeAlbum.mediaItemsCount} ảnh
-                </span>
-              </div>
-
-              {albumErr && (
-                <div style={{ fontSize: 12.5, color: 'var(--red, #dc2626)', marginBottom: 12 }}>{albumErr}</div>
-              )}
-
-              {albumLoading ? (
-                <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--ink3)', fontSize: 13 }}>
-                  Đang tải ảnh từ album...
-                </div>
-              ) : albumPhotos.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--ink3)', fontSize: 13 }}>
-                  Album trống
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 5 }}>
-                  {albumPhotos.map(photo => (
-                    <PhotoCell
-                      key={photo.id}
-                      photo={photo}
-                      selected={selected.has(photo.id)}
-                      onSelect={() => toggleSelect(photo.id)}
-                      onClick={() => openLightbox(photo)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Album list */
-            <div>
-              {/* Toolbar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <span style={{ fontSize: 13, color: 'var(--ink2)' }}>
-                  Albums từ Google Photos
-                </span>
-                <button
-                  onClick={() => { void refreshAlbums() }}
-                  disabled={albumsLoading}
-                  style={{
-                    marginLeft: 'auto', padding: '5px 12px', borderRadius: 8, fontSize: 12, cursor: albumsLoading ? 'not-allowed' : 'pointer',
-                    border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--ink2)',
-                    opacity: albumsLoading ? 0.6 : 1,
-                  }}
-                >
-                  {albumsLoading ? 'Đang tải...' : '↺ Làm mới'}
-                </button>
-              </div>
-
-              {importMsg && (
-                <div style={{
-                  padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 14,
-                  background: importMsg.startsWith('✓') ? 'var(--green-bg, #f0fdf4)' : 'var(--red-bg, #fef2f2)',
-                  color:      importMsg.startsWith('✓') ? 'var(--green, #16a34a)' : 'var(--red, #dc2626)',
-                }}>
-                  {importMsg}
-                </div>
-              )}
-
-              {albumsErr && (
-                <div style={{ fontSize: 12.5, color: 'var(--red, #dc2626)', marginBottom: 12 }}>{albumsErr}</div>
-              )}
-
-              {albums.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '56px 24px', color: 'var(--ink3)' }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>🗂</div>
-                  <div style={{ fontSize: 14, color: 'var(--ink)', marginBottom: 6 }}>Chưa có album nào</div>
-                  <div style={{ fontSize: 12.5 }}>Bấm Làm mới để đồng bộ từ Google Photos</div>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-                  {albums.map(album => (
-                    <AlbumCard
-                      key={album.id}
-                      album={album}
-                      importing={importingAlbum === album.id}
-                      onView={() => { void openAlbum(album) }}
-                      onImport={() => { void importAlbumAsStory(album) }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
           )}
         </div>
       )}
@@ -940,7 +867,15 @@ export default function PhotosHubClient({
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
               {stories.map(story => (
-                <StoryCard key={story.id} story={story} photos={photos} />
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  photos={photos}
+                  deleting={deletingStoryId === story.id}
+                  onEdit={() => openEditStory(story)}
+                  onShare={() => { void handleShare(story) }}
+                  onDelete={() => { void handleDeleteStory(story.id) }}
+                />
               ))}
             </div>
           )}
@@ -1098,12 +1033,175 @@ export default function PhotosHubClient({
         </div>
       )}
 
+      {/* ── Story edit modal ── */}
+      {editingStory && (
+        <div
+          onClick={() => setEditingStory(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)', borderRadius: 16, padding: '24px 28px',
+              width: '100%', maxWidth: 480, boxShadow: '0 16px 60px rgba(0,0,0,0.35)',
+            }}
+          >
+            <h2 style={{ fontSize: 17, fontWeight: 500, marginBottom: 20 }}>Chỉnh sửa story</h2>
+
+            <form onSubmit={e => { void handleSaveEdit(e) }}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: 'var(--ink2)', display: 'block', marginBottom: 4 }}>Tiêu đề *</label>
+                <input
+                  required
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 12px', borderRadius: 8,
+                    border: '1px solid var(--border)', background: 'var(--surface)',
+                    color: 'var(--ink)', fontSize: 13, boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: 'var(--ink2)', display: 'block', marginBottom: 4 }}>Mô tả</label>
+                <textarea
+                  value={editDesc}
+                  onChange={e => setEditDesc(e.target.value)}
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '8px 12px', borderRadius: 8,
+                    border: '1px solid var(--border)', background: 'var(--surface)',
+                    color: 'var(--ink)', fontSize: 13, resize: 'vertical', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--ink2)', display: 'block', marginBottom: 4 }}>Địa điểm</label>
+                  <input
+                    value={editLocation}
+                    onChange={e => setEditLocation(e.target.value)}
+                    placeholder="Tokyo, Nhật Bản"
+                    style={{
+                      width: '100%', padding: '7px 10px', borderRadius: 8,
+                      border: '1px solid var(--border)', background: 'var(--surface)',
+                      color: 'var(--ink)', fontSize: 12.5, boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--ink2)', display: 'block', marginBottom: 4 }}>Ghi chú</label>
+                  <input
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    placeholder="Ghi chú thêm..."
+                    style={{
+                      width: '100%', padding: '7px 10px', borderRadius: 8,
+                      border: '1px solid var(--border)', background: 'var(--surface)',
+                      color: 'var(--ink)', fontSize: 12.5, boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {editErr && (
+                <div style={{ fontSize: 12.5, color: 'var(--red, #dc2626)', marginBottom: 12 }}>{editErr}</div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingStory(null)}
+                  style={{
+                    padding: '8px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                    border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink2)',
+                  }}
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit || !editTitle.trim()}
+                  style={{
+                    padding: '8px 18px', borderRadius: 8, fontSize: 13,
+                    cursor: savingEdit ? 'not-allowed' : 'pointer',
+                    background: '#3C3489', color: '#fff', border: 'none',
+                    fontWeight: 500, opacity: savingEdit ? 0.7 : 1,
+                  }}
+                >
+                  {savingEdit ? 'Đang lưu...' : 'Lưu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Story share modal ── */}
+      {shareStoryId && shareUrl && (
+        <div
+          onClick={() => { setShareStoryId(null); setShareUrl('') }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)', borderRadius: 16, padding: '24px 28px',
+              width: '100%', maxWidth: 460, boxShadow: '0 16px 60px rgba(0,0,0,0.35)',
+            }}
+          >
+            <h2 style={{ fontSize: 17, fontWeight: 500, marginBottom: 8 }}>Chia sẻ story</h2>
+            <p style={{ fontSize: 12.5, color: 'var(--ink3)', marginBottom: 16 }}>
+              Link này có thể xem mà không cần đăng nhập.
+            </p>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
+              <input
+                readOnly
+                value={shareUrl}
+                style={{
+                  flex: 1, padding: '8px 12px', borderRadius: 8, fontSize: 12.5,
+                  border: '1px solid var(--border)', background: 'var(--surface2)',
+                  color: 'var(--ink2)', boxSizing: 'border-box',
+                }}
+                onFocus={e => e.target.select()}
+              />
+              <button
+                onClick={() => { void navigator.clipboard.writeText(shareUrl) }}
+                style={{
+                  padding: '8px 14px', borderRadius: 8, fontSize: 12.5, cursor: 'pointer',
+                  background: '#3C3489', color: '#fff', border: 'none', fontWeight: 500, whiteSpace: 'nowrap',
+                }}
+              >
+                Copy
+              </button>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <button
+                onClick={() => { setShareStoryId(null); setShareUrl('') }}
+                style={{
+                  padding: '7px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                  border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink2)',
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Lightbox ── */}
       {lightbox !== null && (
         <Lightbox
           photo={lightbox}
           hasPrev={lightboxIdx > 0}
-          hasNext={lightboxIdx < lightboxPool.length - 1}
+          hasNext={lightboxIdx < filtered.length - 1}
           onPrev={() => navigateLightbox(-1)}
           onNext={() => navigateLightbox(1)}
           onClose={() => setLightbox(null)}
@@ -1225,8 +1323,18 @@ const SYNC_LABELS: Record<StorySyncStatus, string> = {
   failed:  '✗ Sync thất bại',
 }
 
-function StoryCard({ story, photos }: { story: FamilyPhotoStory; photos: DisplayPhoto[] }) {
+function StoryCard({
+  story, photos, deleting, onEdit, onShare, onDelete,
+}: {
+  story: FamilyPhotoStory
+  photos: DisplayPhoto[]
+  deleting?: boolean
+  onEdit: () => void
+  onShare: () => void
+  onDelete: () => void
+}) {
   const coverPhotos = story.photoIds.slice(0, 4).map(id => photos.find(p => p.id === id))
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
@@ -1234,12 +1342,7 @@ function StoryCard({ story, photos }: { story: FamilyPhotoStory; photos: Display
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, height: 120 }}>
         {coverPhotos.map((p, i) =>
           p ? (
-            <img
-              key={p.id}
-              src={p.thumbnailUrl}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            <img key={p.id} src={p.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div key={i} style={{ background: 'var(--surface2)' }} />
           )
@@ -1250,20 +1353,65 @@ function StoryCard({ story, photos }: { story: FamilyPhotoStory; photos: Display
       </div>
 
       {/* Info */}
-      <div style={{ padding: '12px 14px' }}>
+      <div style={{ padding: '12px 14px 10px' }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
           {story.title}
         </div>
         {story.description && (
           <div style={{ fontSize: 12.5, color: 'var(--ink2)', lineHeight: 1.6, marginBottom: 6 }}>
-            {story.description}
+            {story.description.length > 80 ? story.description.slice(0, 80) + '…' : story.description}
           </div>
         )}
         <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)', display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
           <span>{story.photoIds.length} ảnh</span>
           {story.location && <span>📍 {story.location}</span>}
+          {story.shareToken && <span style={{ color: 'var(--green, #16a34a)' }}>🔗 Shared</span>}
           <span style={{ marginLeft: 'auto' }}>{SYNC_LABELS[story.syncStatus]}</span>
         </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 6, padding: '0 10px 10px', borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 2 }}>
+        <button
+          onClick={onEdit}
+          style={{
+            flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+            border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--ink2)',
+          }}
+        >
+          ✏️ Sửa
+        </button>
+        <button
+          onClick={onShare}
+          style={{
+            flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+            background: '#EEEDFE', color: '#3C3489', border: '1px solid #AFA9EC', fontWeight: 500,
+          }}
+        >
+          🔗 Share
+        </button>
+        {confirmDelete ? (
+          <button
+            onClick={() => { setConfirmDelete(false); onDelete() }}
+            disabled={deleting}
+            style={{
+              padding: '5px 10px', borderRadius: 7, fontSize: 12, cursor: deleting ? 'not-allowed' : 'pointer',
+              background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5',
+            }}
+          >
+            {deleting ? '...' : 'Xoá?'}
+          </button>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            style={{
+              padding: '5px 8px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+              border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--ink3)',
+            }}
+          >
+            🗑
+          </button>
+        )}
       </div>
     </div>
   )
@@ -1348,75 +1496,6 @@ function navBtnStyle(side: 'left' | 'right'): React.CSSProperties {
     width: 48, height: 48, color: '#fff', fontSize: 30,
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 201,
   }
-}
-
-function AlbumCard({ album, importing, onView, onImport }: {
-  album: GooglePhotoAlbum
-  importing: boolean
-  onView: () => void
-  onImport: () => void
-}) {
-  return (
-    <div style={{
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 14, overflow: 'hidden',
-    }}>
-      {/* Cover */}
-      <div
-        onClick={onView}
-        style={{ height: 140, background: 'var(--surface2)', cursor: 'pointer', overflow: 'hidden', position: 'relative' }}
-      >
-        {album.coverPhotoBaseUrl ? (
-          <img
-            src={`${album.coverPhotoBaseUrl}=w440-h280-c`}
-            alt={album.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-            🗂
-          </div>
-        )}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: 'linear-gradient(transparent, rgba(0,0,0,0.55))',
-          padding: '24px 10px 8px',
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#fff' }}>{album.title}</div>
-          <div className="font-mono" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)' }}>
-            {album.mediaItemsCount} ảnh
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 6, padding: '10px 10px' }}>
-        <button
-          onClick={onView}
-          style={{
-            flex: 1, padding: '6px 0', borderRadius: 7, fontSize: 12, cursor: 'pointer',
-            border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--ink2)',
-          }}
-        >
-          👁 Xem
-        </button>
-        <button
-          onClick={onImport}
-          disabled={importing}
-          style={{
-            flex: 1, padding: '6px 0', borderRadius: 7, fontSize: 12,
-            cursor: importing ? 'not-allowed' : 'pointer', fontWeight: 500,
-            background: importing ? 'var(--surface2)' : '#EEEDFE',
-            color: importing ? 'var(--ink3)' : '#3C3489',
-            border: '1px solid ' + (importing ? 'var(--border)' : '#AFA9EC'),
-          }}
-        >
-          {importing ? '...' : '✨ Import'}
-        </button>
-      </div>
-    </div>
-  )
 }
 
 function EmptyState({ searchQ, hasPhotos }: { searchQ: string; hasPhotos: boolean }) {

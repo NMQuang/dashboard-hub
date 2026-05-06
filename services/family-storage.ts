@@ -403,6 +403,11 @@ export async function deleteFamilyPhotoStory(id: string): Promise<void> {
   await kvSet('family:photo_stories', all.filter((s) => s.id !== id))
 }
 
+export async function getStoryByToken(token: string): Promise<FamilyPhotoStory | null> {
+  const all = await getFamilyPhotoStories()
+  return all.find((s) => s.shareToken === token) ?? null
+}
+
 // ── Google OAuth token store ──────────────────────────────────────────────────
 // Allows storing the refresh_token in KV so the setup page can persist it
 // without requiring .env.local to be manually edited.

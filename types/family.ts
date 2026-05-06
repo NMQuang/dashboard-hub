@@ -200,6 +200,7 @@ export interface FamilyPhotoStory {
   notes?: string
   googleAlbumId?: string  // populated after Google Photos album sync
   syncStatus: StorySyncStatus
+  shareToken?: string     // random token for public share link
   createdAt: string
   updatedAt?: string
 }
