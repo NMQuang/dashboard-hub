@@ -41,7 +41,13 @@
       "Bash(claude mcp *)",
       "Bash(dir /s /b \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\*.tsx\")",
       "Bash(findstr -i photo)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(New-Item -ItemType Directory -Path \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\app\\\\api\\\\story\\\\[token]\" -Force)",
+      "Bash(Out-Null)",
+      "Bash(Write-Host \"done\")",
+      "PowerShell(netstat *)",
+      "Bash(gh pr create --title 'feat\\(family\\): photos hub v2 — story share + fix Google Photos URL expiry' --body ' *)",
+      "WebFetch(domain:dashboard-hub-wheat.vercel.app)"
     ]
   }
 }

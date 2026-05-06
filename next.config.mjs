@@ -12,6 +12,7 @@ const nextConfig = {
   // Proxy env vars to client selectively
   env: {
     NEXT_PUBLIC_APP_NAME: 'dashboard-hub.hq',
+    NEXT_PUBLIC_R2_PUBLIC_URL: process.env.R2_PUBLIC_URL ?? '',
   },
 }
 

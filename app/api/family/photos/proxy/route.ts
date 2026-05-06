@@ -38,6 +38,8 @@ async function getGoogleAccessToken(): Promise<string | null> {
   return data.access_token
 }
 
+export const maxDuration = 60
+
 // GET /api/family/photos/proxy?id={photoId}&size=thumb|full
 // Protected by middleware — requires family_auth cookie.
 export async function GET(req: NextRequest) {
@@ -51,10 +53,14 @@ export async function GET(req: NextRequest) {
 
   const targetUrl = size === 'full' ? photo.url : photo.thumbnailUrl
 
-  // R2 URLs are served from Cloudflare CDN — no Google OAuth needed.
-  // Google CDN Picker URLs require OAuth Bearer token.
+  // R2 URLs are served from Cloudflare CDN — redirect directly, no need to proxy.
   const isR2 = Boolean(R2_PUBLIC_BASE && targetUrl.startsWith(R2_PUBLIC_BASE))
-  const accessToken = isR2 ? null : await getGoogleAccessToken()
+  if (isR2) {
+    return NextResponse.redirect(targetUrl, { status: 302 })
+  }
+
+  // Google Picker CDN URLs require OAuth Bearer token — proxy with auth header.
+  const accessToken = await getGoogleAccessToken()
   const headers: HeadersInit = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
 
   const upstream = await fetch(targetUrl, { headers, cache: 'no-store' })
