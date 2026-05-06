@@ -84,6 +84,8 @@ export default function PhotosHubClient({
   const [syncStep,      setSyncStep]      = useState<SyncStep>('idle')
   const [syncSessionId, setSyncSessionId] = useState<string | null>(null)
   const [syncMsg,       setSyncMsg]       = useState('')
+  const [clearingAll,   setClearingAll]   = useState(false)
+  const [confirmClear,  setConfirmClear]  = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
@@ -154,6 +156,22 @@ export default function PhotosHubClient({
     setSyncSessionId(null)
     setSyncStep('idle')
     setSyncMsg('')
+  }
+
+  async function clearAllSyncedPhotos() {
+    setClearingAll(true)
+    setConfirmClear(false)
+    try {
+      const res = await fetch('/api/family/photos/picker', { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const { deleted } = await res.json() as { deleted: number }
+      setPhotos(prev => prev.filter(p => p.source !== 'google_photos'))
+      setSyncMsg(`✓ Đã xóa ${deleted} ảnh sync`)
+    } catch (e) {
+      setSyncMsg(e instanceof Error ? e.message : String(e))
+    } finally {
+      setClearingAll(false)
+    }
   }
 
   // ── Load-more ─────────────────────────────────────────────────────────────
@@ -592,15 +610,61 @@ export default function PhotosHubClient({
           <span style={{ color: 'var(--ink3)', flexShrink: 0 }}>Google Photos</span>
 
           {syncStep === 'idle' && (
-            <button
-              onClick={() => { void startPickerSync() }}
-              style={{
-                padding: '5px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer', fontWeight: 500,
-                background: '#4285F4', color: '#fff', border: 'none',
-              }}
-            >
-              🔄 Sync ảnh
-            </button>
+            <>
+              <button
+                onClick={() => { void startPickerSync() }}
+                style={{
+                  padding: '5px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer', fontWeight: 500,
+                  background: '#4285F4', color: '#fff', border: 'none',
+                }}
+              >
+                🔄 Sync ảnh
+              </button>
+
+              {photos.some(p => p.source === 'google_photos') && (
+                confirmClear ? (
+                  <>
+                    <span style={{ fontSize: 12, color: 'var(--ink2)' }}>Xóa hết ảnh sync?</span>
+                    <button
+                      onClick={() => { void clearAllSyncedPhotos() }}
+                      disabled={clearingAll}
+                      style={{
+                        padding: '4px 12px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                        background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5',
+                      }}
+                    >
+                      {clearingAll ? '...' : 'Xác nhận xóa'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmClear(false)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                        border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink3)',
+                      }}
+                    >
+                      Hủy
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setConfirmClear(true)}
+                    style={{
+                      padding: '4px 12px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                      border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink3)',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    🗑 Xóa tất cả ảnh sync
+                  </button>
+                )
+              )}
+
+              {syncMsg && !clearingAll && (
+                <span style={{ fontSize: 12, color: syncMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>
+                  {syncMsg}
+                </span>
+              )}
+            </>
           )}
 
           {syncStep === 'creating' && (

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStoredGoogleRefreshToken, getPickedGooglePhotos, savePickedGooglePhotos } from '@/services/family-storage'
 import { createPickerSession, getPickerSession, getPickerMediaItems } from '@/services/googlePhotosPicker'
 import type { PickerMediaItem } from '@/services/googlePhotosPicker'
-import { serverUploadToR2, R2_CONFIGURED } from '@/services/family-r2'
+import { serverUploadToR2, deletePhotoFromR2, R2_CONFIGURED } from '@/services/family-r2'
 import type { GoogleFamilyPhoto } from '@/types'
 
 export const maxDuration = 60
@@ -174,6 +174,29 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ count: photos.length, photos })
   } catch (err) {
     console.error('[picker] PUT error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}
+
+// DELETE — clear all synced Google Photos from KV and attempt R2 cleanup
+export async function DELETE() {
+  try {
+    const photos = await getPickedGooglePhotos()
+
+    if (R2_CONFIGURED && R2_PUBLIC_BASE) {
+      const r2Photos = photos.filter(p => p.url.startsWith(R2_PUBLIC_BASE))
+      await Promise.allSettled(
+        r2Photos.map(p => {
+          const key = p.url.slice(R2_PUBLIC_BASE.length + 1)
+          return deletePhotoFromR2(key)
+        })
+      )
+    }
+
+    await savePickedGooglePhotos([])
+    return NextResponse.json({ ok: true, deleted: photos.length })
+  } catch (err) {
+    console.error('[picker] DELETE error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
