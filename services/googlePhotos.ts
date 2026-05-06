@@ -164,7 +164,6 @@ export async function fetchGooglePhotosPage(
   _pageSize = 100,
   _pageToken?: string,
 ): Promise<GooglePhotosPage> {
-  if (!(await isConfigured())) return { photos: [] }
   try {
     const photos = await getPickedGooglePhotos()
     return { photos }
