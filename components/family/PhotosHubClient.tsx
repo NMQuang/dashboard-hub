@@ -303,6 +303,35 @@ export default function PhotosHubClient({
     }
   }, [])
 
+  // ── Bulk delete ────────────────────────────────────────────────────────────
+
+  const [deletingBulk,      setDeletingBulk]      = useState(false)
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+
+  async function handleBulkDelete() {
+    if (deletingBulk) return
+    setDeletingBulk(true)
+    setConfirmBulkDelete(false)
+    const toDelete = photos.filter(p => selected.has(p.id))
+    try {
+      await Promise.allSettled(
+        toDelete.map(p =>
+          fetch(
+            `/api/family/photos?id=${encodeURIComponent(p.id)}&source=${encodeURIComponent(p.source)}`,
+            { method: 'DELETE' },
+          )
+        )
+      )
+      const deletedIds = new Set(toDelete.map(p => p.id))
+      setPhotos(prev => prev.filter(p => !deletedIds.has(p.id)))
+      setSelected(new Set())
+    } catch (e) {
+      console.error('[bulk-delete]', e)
+    } finally {
+      setDeletingBulk(false)
+    }
+  }
+
   // ── Load more (Google Photos pagination) ───────────────────────────────────
 
   async function loadMore() {
@@ -891,6 +920,7 @@ export default function PhotosHubClient({
           boxShadow: '0 6px 24px rgba(0,0,0,0.25)', zIndex: 50, whiteSpace: 'nowrap',
         }}>
           <span style={{ fontSize: 13, opacity: 0.85 }}>{selected.size} ảnh đã chọn</span>
+
           <button
             onClick={() => setShowStoryForm(true)}
             style={{
@@ -900,8 +930,36 @@ export default function PhotosHubClient({
           >
             ✨ Tạo story
           </button>
+
+          {confirmBulkDelete ? (
+            <button
+              onClick={() => { void handleBulkDelete() }}
+              disabled={deletingBulk}
+              style={{
+                padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
+                cursor: deletingBulk ? 'not-allowed' : 'pointer',
+                background: '#dc2626', color: '#fff', border: 'none',
+                opacity: deletingBulk ? 0.7 : 1,
+              }}
+            >
+              {deletingBulk ? 'Đang xóa...' : `Xóa ${selected.size} ảnh?`}
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmBulkDelete(true)}
+              style={{
+                padding: '6px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                cursor: 'pointer',
+                background: 'rgba(220,38,38,0.18)', color: '#fca5a5',
+                border: '1px solid rgba(220,38,38,0.35)',
+              }}
+            >
+              🗑 Xóa
+            </button>
+          )}
+
           <button
-            onClick={() => setSelected(new Set())}
+            onClick={() => { setSelected(new Set()); setConfirmBulkDelete(false) }}
             style={{
               background: 'transparent', border: 'none',
               color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0,
