@@ -205,6 +205,98 @@ export interface FamilyPhotoStory {
   updatedAt?: string
 }
 
+// ── Finance v2 — multi-source income, enhanced expenses, investments ──────
+
+export type IncomeSource =
+  | 'wife_salary_vn'
+  | 'husband_vn'
+  | 'husband_jp'
+  | 'other'
+
+export const INCOME_SOURCE_LABELS: Record<IncomeSource, string> = {
+  wife_salary_vn: 'Vợ - Lương VN',
+  husband_vn: 'Chồng - Thu nhập VN',
+  husband_jp: 'Chồng - Lương Nhật',
+  other: 'Khác',
+}
+
+export const INCOME_SOURCE_ICONS: Record<IncomeSource, string> = {
+  wife_salary_vn: '🇻🇳',
+  husband_vn: '🇻🇳',
+  husband_jp: '🇯🇵',
+  other: '💼',
+}
+
+export interface FamilyIncome {
+  id: string
+  source: IncomeSource
+  country: 'VN' | 'JP'
+  currency: 'VND' | 'JPY' | 'USD'
+  amount: number
+  receivedDate: string   // YYYY-MM-DD
+  category?: string
+  note?: string
+  createdAt: string
+}
+
+export type ExpenseCategoryFinance =
+  | 'rent'
+  | 'food'
+  | 'transportation'
+  | 'utilities'
+  | 'family'
+  | 'shopping'
+  | 'travel'
+  | 'misc'
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategoryFinance, string> = {
+  rent: 'Nhà ở',
+  food: 'Ăn uống',
+  transportation: 'Đi lại',
+  utilities: 'Tiện ích',
+  family: 'Gia đình',
+  shopping: 'Mua sắm',
+  travel: 'Du lịch',
+  misc: 'Khác',
+}
+
+export const EXPENSE_CATEGORY_ICONS: Record<ExpenseCategoryFinance, string> = {
+  rent: '🏠',
+  food: '🍜',
+  transportation: '🚌',
+  utilities: '💡',
+  family: '👨‍👩‍👧',
+  shopping: '🛍️',
+  travel: '✈️',
+  misc: '📦',
+}
+
+export interface FamilyExpense {
+  id: string
+  country: 'VN' | 'JP'
+  category: ExpenseCategoryFinance
+  amount: number
+  currency: 'VND' | 'JPY'
+  spentDate: string      // YYYY-MM-DD
+  paymentMethod?: string
+  note?: string
+  createdAt: string
+}
+
+export type InvestmentType = 'gold' | 'crypto'
+
+export interface FamilyInvestment {
+  id: string
+  type: InvestmentType
+  assetName: string
+  quantity: number
+  averageBuyPrice?: number
+  currentPrice?: number
+  currency: string
+  note?: string
+  updatedAt: string
+}
+
 // ── Upload ────────────────────────────────────────────────────────────────
 
 export interface PresignedUploadUrl {
