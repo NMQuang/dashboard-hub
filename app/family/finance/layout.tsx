@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import FinanceSubNav from '@/components/family/finance/FinanceSubNav'
 
 export const metadata: Metadata = { title: 'Family Finance' }
@@ -19,7 +20,9 @@ export default function FinanceLayout({ children }: { children: React.ReactNode 
         </p>
       </div>
 
-      <FinanceSubNav />
+      <Suspense fallback={null}>
+        <FinanceSubNav />
+      </Suspense>
 
       <div style={{ marginTop: 24 }}>{children}</div>
     </div>

@@ -59,6 +59,11 @@ export function formatJPY(value: number): string {
   return `¥${new Intl.NumberFormat('ja-JP').format(Math.round(value))}`
 }
 
+function firstDayOfNextMonth(yearMonth: string): string {
+  const [y, m] = yearMonth.split('-').map(Number)
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+}
+
 // ── Row types (snake_case from Supabase) ─────────────────────────────────
 
 type IncomeRow = {
@@ -152,7 +157,7 @@ export async function getIncomeByMonth(yearMonth: string): Promise<FamilyIncome[
         .from('family_income')
         .select('*')
         .gte('received_date', `${yearMonth}-01`)
-        .lte('received_date', `${yearMonth}-31`)
+        .lt('received_date', firstDayOfNextMonth(yearMonth))
         .order('received_date', { ascending: false })
       if (error) throw error
       return (data as IncomeRow[]).map(rowToIncome)
@@ -220,7 +225,7 @@ export async function getExpensesByMonth(yearMonth: string): Promise<FamilyExpen
         .from('family_expenses')
         .select('*')
         .gte('spent_date', `${yearMonth}-01`)
-        .lte('spent_date', `${yearMonth}-31`)
+        .lt('spent_date', firstDayOfNextMonth(yearMonth))
         .order('spent_date', { ascending: false })
       if (error) throw error
       return (data as ExpenseRow[]).map(rowToExpense)

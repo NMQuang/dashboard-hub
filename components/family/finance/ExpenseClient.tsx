@@ -24,23 +24,29 @@ interface ExpenseClientProps {
 
 export default function ExpenseClient({ initialExpenses, month, rates }: ExpenseClientProps) {
   const [expenses, setExpenses] = useState(initialExpenses)
+
+  // Form fields
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [country, setCountry] = useState<'VN' | 'JP'>('VN')
   const [category, setCategory] = useState<ExpenseCategoryFinance>('food')
   const [currency, setCurrency] = useState<Currency>('VND')
   const [amount, setAmount] = useState('')
   const [spentDate, setSpentDate] = useState(new Date().toISOString().slice(0, 10))
   const [note, setNote] = useState('')
+
+  // UI state
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filterCountry, setFilterCountry] = useState<'all' | 'VN' | 'JP'>('all')
   const [filterCategory, setFilterCategory] = useState<ExpenseCategoryFinance | 'all'>('all')
 
-  const totalVND = expenses.reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
-  const vnVND = expenses.filter(e => e.country === 'VN').reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
-  const jpVND = expenses.filter(e => e.country === 'JP').reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
+  const isEditing = editingId !== null
 
-  // Category breakdown
+  const totalConvertedVND = expenses.reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
+  const totalExpVND = expenses.filter(e => e.currency === 'VND').reduce((s, e) => s + e.amount, 0)
+  const totalExpJPY = expenses.filter(e => e.currency === 'JPY').reduce((s, e) => s + e.amount, 0)
+
   const catBreakdown: Partial<Record<ExpenseCategoryFinance, number>> = {}
   for (const e of expenses) {
     catBreakdown[e.category] = (catBreakdown[e.category] ?? 0) + toVND(e.amount, e.currency, rates)
@@ -52,22 +58,45 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
     return true
   })
 
-  async function handleAdd(evt: React.FormEvent) {
+  function startEdit(item: FamilyExpense) {
+    setEditingId(item.id)
+    setCountry(item.country)
+    setCategory(item.category)
+    setCurrency(item.currency)
+    setAmount(String(item.amount))
+    setSpentDate(item.spentDate)
+    setNote(item.note ?? '')
+    setError(null)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setCountry('VN')
+    setCategory('food')
+    setCurrency('VND')
+    setAmount('')
+    setSpentDate(new Date().toISOString().slice(0, 10))
+    setNote('')
+    setError(null)
+  }
+
+  async function handleSubmit(evt: React.FormEvent) {
     evt.preventDefault()
     const amountNum = parseFloat(amount.replace(/,/g, ''))
     if (!amountNum || amountNum <= 0) return
     setSaving(true)
     setError(null)
 
+    const existing = isEditing ? expenses.find(e => e.id === editingId) : undefined
     const entry: FamilyExpense = {
-      id: genId(),
+      id: editingId ?? genId(),
       country,
       category,
       amount: amountNum,
       currency,
       spentDate,
       note: note.trim() || undefined,
-      createdAt: new Date().toISOString(),
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
     }
 
     try {
@@ -78,9 +107,15 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const { expense: saved } = (await res.json()) as { expense: FamilyExpense }
-      setExpenses(prev => [saved, ...prev])
-      setAmount('')
-      setNote('')
+
+      if (isEditing) {
+        setExpenses(prev => prev.map(e => e.id === saved.id ? saved : e))
+        cancelEdit()
+      } else {
+        setExpenses(prev => [saved, ...prev])
+        setAmount('')
+        setNote('')
+      }
     } catch (err) {
       setError('Lưu thất bại, thử lại.')
       console.error(err)
@@ -90,6 +125,7 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
   }
 
   async function handleDelete(id: string) {
+    if (editingId === id) cancelEdit()
     setDeletingId(id)
     try {
       await fetch(`/api/family/finance/expenses?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
@@ -104,14 +140,29 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 16 }}>
 
-      {/* Add form */}
+      {/* Form */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 14 }}>
-            + Thêm khoản chi
+        <div style={{
+          background: isEditing ? '#FFFBEB' : 'var(--surface)',
+          border: `1px solid ${isEditing ? '#F59E0B' : 'var(--border)'}`,
+          borderRadius: 14, padding: '18px 20px',
+          transition: 'background 0.15s, border-color 0.15s',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: isEditing ? '#B45309' : 'var(--ink)' }}>
+              {isEditing ? '✎ Sửa khoản chi' : '+ Thêm khoản chi'}
+            </div>
+            {isEditing && (
+              <button
+                onClick={cancelEdit}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--ink3)', padding: '2px 6px' }}
+              >
+                Hủy
+              </button>
+            )}
           </div>
 
-          <form onSubmit={handleAdd}>
+          <form onSubmit={handleSubmit}>
             {/* Country + Currency */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
               {(['VN', 'JP'] as const).map(c => (
@@ -224,12 +275,12 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
               disabled={saving || !amount}
               style={{
                 width: '100%', padding: '9px', borderRadius: 8,
-                background: 'var(--ink)', color: '#fff', border: 'none',
+                background: isEditing ? '#D97706' : 'var(--ink)', color: '#fff', border: 'none',
                 fontSize: 13, fontWeight: 500, cursor: 'pointer',
                 opacity: saving || !amount ? 0.4 : 1,
               }}
             >
-              {saving ? 'Đang lưu…' : '+ Thêm khoản chi'}
+              {saving ? 'Đang lưu…' : isEditing ? '✓ Cập nhật' : '+ Thêm khoản chi'}
             </button>
           </form>
         </div>
@@ -244,7 +295,7 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
               {Object.entries(catBreakdown)
                 .sort((a, b) => b[1] - a[1])
                 .map(([cat, vnd]) => {
-                  const pct = totalVND > 0 ? Math.round(vnd / totalVND * 100) : 0
+                  const pct = totalConvertedVND > 0 ? Math.round(vnd / totalConvertedVND * 100) : 0
                   const catKey = cat as ExpenseCategoryFinance
                   return (
                     <div key={cat} style={{ marginBottom: 8 }}>
@@ -262,17 +313,19 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
                     </div>
                   )
                 })}
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 4 }}>
-                <span style={{ fontSize: 12, color: 'var(--ink2)' }}>Tổng</span>
-                <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{formatVND(totalVND)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                <span style={{ fontSize: 11.5, color: 'var(--ink3)' }}>🇻🇳 VN</span>
-                <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink3)' }}>{formatVND(vnVND)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 11.5, color: 'var(--ink3)' }}>🇯🇵 JP</span>
-                <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink3)' }}>{formatVND(jpVND)}</span>
+              <div style={{ paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {totalExpVND > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{formatVND(totalExpVND)}</span>
+                  </div>
+                )}
+                {totalExpJPY > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>¥{totalExpJPY.toLocaleString('ja-JP')}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -327,10 +380,18 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
           ) : (
             filtered.map(e => {
               const vnd = toVND(e.amount, e.currency, rates)
+              const isBeingEdited = editingId === e.id
               return (
                 <div
                   key={e.id}
-                  style={{ display: 'flex', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}
+                  style={{
+                    display: 'flex', gap: 10, padding: '9px 0',
+                    borderBottom: '1px solid var(--border)', alignItems: 'center',
+                    background: isBeingEdited ? '#FFFBEB' : 'transparent',
+                    marginInline: isBeingEdited ? -16 : 0,
+                    paddingInline: isBeingEdited ? 16 : 0,
+                    borderRadius: isBeingEdited ? 8 : 0,
+                  }}
                 >
                   <span style={{ fontSize: 18, flexShrink: 0 }}>{EXPENSE_CATEGORY_ICONS[e.category]}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -356,6 +417,22 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
                       </div>
                     )}
                   </div>
+
+                  {/* Edit button */}
+                  <button
+                    onClick={() => isBeingEdited ? cancelEdit() : startEdit(e)}
+                    style={{
+                      background: isBeingEdited ? '#FEF3C7' : 'none',
+                      border: isBeingEdited ? '1px solid #F59E0B' : 'none',
+                      cursor: 'pointer', color: '#D97706',
+                      fontSize: 13, padding: '2px 6px', borderRadius: 6, flexShrink: 0,
+                    }}
+                    title={isBeingEdited ? 'Hủy sửa' : 'Sửa'}
+                  >
+                    {isBeingEdited ? '✕' : '✎'}
+                  </button>
+
+                  {/* Delete button */}
                   <button
                     onClick={() => handleDelete(e.id)}
                     disabled={deletingId === e.id}

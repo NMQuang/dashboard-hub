@@ -46,6 +46,13 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       .filter(e => e.country === 'JP')
       .reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
 
+    const incomeRawVND = monthIncome.filter(i => i.currency === 'VND').reduce((s, i) => s + i.amount, 0)
+    const incomeRawJPY = monthIncome.filter(i => i.currency === 'JPY').reduce((s, i) => s + i.amount, 0)
+    const expRawVND = monthExpenses.filter(e => e.currency === 'VND').reduce((s, e) => s + e.amount, 0)
+    const expRawJPY = monthExpenses.filter(e => e.currency === 'JPY').reduce((s, e) => s + e.amount, 0)
+    const vnExpRawVND = monthExpenses.filter(e => e.country === 'VN').reduce((s, e) => s + e.amount, 0)
+    const jpExpRawJPY = monthExpenses.filter(e => e.country === 'JP').reduce((s, e) => s + e.amount, 0)
+
     return {
       month: monthKey,
       label: MONTH_LABELS[idx],
@@ -54,6 +61,14 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       savingsVND: incomeVND - expensesVND,
       vnExpensesVND,
       jpExpensesVND,
+      incomeRawVND,
+      incomeRawJPY,
+      expRawVND,
+      expRawJPY,
+      savingsRawVND: incomeRawVND - expRawVND,
+      savingsRawJPY: incomeRawJPY - expRawJPY,
+      vnExpRawVND,
+      jpExpRawJPY,
     }
   })
 

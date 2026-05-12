@@ -12,11 +12,21 @@ import { formatVND } from '@/services/familyFinance'
 export interface MonthlyReport {
   month: string        // YYYY-MM
   label: string        // e.g. "T01"
+  // Converted VND (used for charts / savings-rate only)
   incomeVND: number
   expensesVND: number
   savingsVND: number
   vnExpensesVND: number
   jpExpensesVND: number
+  // Raw per-currency (used for display cards & table)
+  incomeRawVND: number
+  incomeRawJPY: number
+  expRawVND: number
+  expRawJPY: number
+  savingsRawVND: number
+  savingsRawJPY: number
+  vnExpRawVND: number
+  jpExpRawJPY: number
 }
 
 interface ReportsClientProps {
@@ -29,11 +39,21 @@ interface ReportsClientProps {
 const MONTH_COLORS = { income: '#10b981', expenses: '#ef4444', savings: '#6366f1' }
 
 export default function ReportsClient({ year, months, categoryBreakdown, rates }: ReportsClientProps) {
-  const totalIncome = months.reduce((s, m) => s + m.incomeVND, 0)
+  // Converted totals — used only for charts and savings rate
+  const totalIncome   = months.reduce((s, m) => s + m.incomeVND,   0)
   const totalExpenses = months.reduce((s, m) => s + m.expensesVND, 0)
-  const totalSavings = totalIncome - totalExpenses
-  const totalVNExpenses = months.reduce((s, m) => s + m.vnExpensesVND, 0)
-  const totalJPExpenses = months.reduce((s, m) => s + m.jpExpensesVND, 0)
+  const totalSavings  = totalIncome - totalExpenses
+  const savingsRate   = totalIncome > 0 ? Math.round(totalSavings / totalIncome * 100) : 0
+
+  // Raw per-currency year totals
+  const totalIncomeRawVND  = months.reduce((s, m) => s + m.incomeRawVND,  0)
+  const totalIncomeRawJPY  = months.reduce((s, m) => s + m.incomeRawJPY,  0)
+  const totalExpRawVND     = months.reduce((s, m) => s + m.expRawVND,     0)
+  const totalExpRawJPY     = months.reduce((s, m) => s + m.expRawJPY,     0)
+  const totalSavingsRawVND = totalIncomeRawVND - totalExpRawVND
+  const totalSavingsRawJPY = totalIncomeRawJPY - totalExpRawJPY
+  const totalVNExpRawVND   = months.reduce((s, m) => s + m.vnExpRawVND,  0)
+  const totalJPExpRawJPY   = months.reduce((s, m) => s + m.jpExpRawJPY,  0)
 
   const chartData = months.map(m => ({
     name: m.label,
@@ -48,26 +68,49 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
     'Nhật Bản': Math.round(m.jpExpensesVND / 1_000_000),
   }))
 
-  const savingsRate = totalIncome > 0 ? Math.round(totalSavings / totalIncome * 100) : 0
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Year summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-        <YearCard label={`Tổng thu nhập ${year}`} value={formatVND(totalIncome)} accent="#10b981" />
-        <YearCard label={`Tổng chi tiêu ${year}`} value={formatVND(totalExpenses)} accent="#ef4444" />
-        <YearCard label="Tiết kiệm cả năm" value={formatVND(Math.abs(totalSavings))} accent={totalSavings >= 0 ? '#6366f1' : '#ef4444'} />
-        <YearCard label="Tỷ lệ tiết kiệm" value={`${savingsRate}%`} accent={savingsRate >= 20 ? '#10b981' : savingsRate >= 10 ? '#f59e0b' : '#ef4444'} />
-        <YearCard label="Chi VN năm nay" value={formatVND(totalVNExpenses)} accent="#d97706" />
-        <YearCard label="Chi JP năm nay" value={formatVND(totalJPExpenses)} accent="#3b82f6" />
+        <CurrencyYearCard
+          label={`Tổng thu nhập ${year}`}
+          vnd={totalIncomeRawVND}
+          jpy={totalIncomeRawJPY}
+          accent="#10b981"
+        />
+        <CurrencyYearCard
+          label={`Tổng chi tiêu ${year}`}
+          vnd={totalExpRawVND}
+          jpy={totalExpRawJPY}
+          accent="#ef4444"
+        />
+        <SavingsYearCard
+          label="Tiết kiệm cả năm"
+          vnd={totalSavingsRawVND}
+          jpy={totalSavingsRawJPY}
+          hasVND={totalIncomeRawVND > 0 || totalExpRawVND > 0}
+          hasJPY={totalIncomeRawJPY > 0 || totalExpRawJPY > 0}
+        />
+        <YearCard
+          label="Tỷ lệ tiết kiệm"
+          value={`${savingsRate}%`}
+          accent={savingsRate >= 20 ? '#10b981' : savingsRate >= 10 ? '#f59e0b' : '#ef4444'}
+        />
+        <YearCard label="Chi VN năm nay" value={totalVNExpRawVND > 0 ? formatVND(totalVNExpRawVND) : '—'} accent="#d97706" />
+        <YearCard
+          label="Chi JP năm nay"
+          value={totalJPExpRawJPY > 0 ? `¥${totalJPExpRawJPY.toLocaleString('ja-JP')}` : '—'}
+          accent="#3b82f6"
+        />
       </div>
 
       {/* Monthly income vs expenses bar chart */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
           Thu chi theo tháng {year} (triệu ₫)
         </div>
+        <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 12 }}>Đã quy đổi sang VND để so sánh</div>
         {chartData.some(d => d['Thu nhập'] > 0 || d['Chi tiêu'] > 0) ? (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} barGap={2}>
@@ -90,9 +133,10 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
 
       {/* Savings trend line chart */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
           Xu hướng tiết kiệm {year} (triệu ₫)
         </div>
+        <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 12 }}>Đã quy đổi sang VND để so sánh</div>
         {chartData.some(d => d['Tiết kiệm'] !== 0) ? (
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={chartData}>
@@ -119,9 +163,10 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
 
       {/* VN vs JP spending */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
           Chi tiêu VN vs JP theo tháng (triệu ₫)
         </div>
+        <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 12 }}>Đã quy đổi sang VND để so sánh</div>
         {locationData.some(d => d['Việt Nam'] > 0 || d['Nhật Bản'] > 0) ? (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={locationData} barGap={2}>
@@ -184,7 +229,7 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
           Chi tiết từng tháng {year}
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: 'var(--surface2)' }}>
                 {['Tháng', 'Thu nhập', 'Chi tiêu', 'Tiết kiệm', 'Chi VN', 'Chi JP'].map(h => (
@@ -195,26 +240,30 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
               </tr>
             </thead>
             <tbody>
-              {months.map((m, idx) => (
-                <tr key={m.month} style={{ borderTop: idx > 0 ? '1px solid var(--border)' : undefined }}>
-                  <td className="font-mono" style={{ padding: '9px 14px', color: 'var(--ink)', fontWeight: 500 }}>{m.label}</td>
-                  <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: '#10b981' }}>
-                    {m.incomeVND > 0 ? formatVND(m.incomeVND) : '—'}
-                  </td>
-                  <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: '#ef4444' }}>
-                    {m.expensesVND > 0 ? formatVND(m.expensesVND) : '—'}
-                  </td>
-                  <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: m.savingsVND >= 0 ? '#6366f1' : '#ef4444' }}>
-                    {m.incomeVND > 0 || m.expensesVND > 0 ? (m.savingsVND >= 0 ? '+' : '') + formatVND(m.savingsVND) : '—'}
-                  </td>
-                  <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>
-                    {m.vnExpensesVND > 0 ? formatVND(m.vnExpensesVND) : '—'}
-                  </td>
-                  <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>
-                    {m.jpExpensesVND > 0 ? formatVND(m.jpExpensesVND) : '—'}
-                  </td>
-                </tr>
-              ))}
+              {months.map((m, idx) => {
+                const hasIncome = m.incomeRawVND > 0 || m.incomeRawJPY > 0
+                const hasExp = m.expRawVND > 0 || m.expRawJPY > 0
+                return (
+                  <tr key={m.month} style={{ borderTop: idx > 0 ? '1px solid var(--border)' : undefined }}>
+                    <td className="font-mono" style={{ padding: '9px 14px', color: 'var(--ink)', fontWeight: 500, textAlign: 'right' }}>
+                      {m.label}
+                    </td>
+                    <DualCell vnd={m.incomeRawVND} jpy={m.incomeRawJPY} color="#10b981" empty={!hasIncome} />
+                    <DualCell vnd={m.expRawVND} jpy={m.expRawJPY} color="#ef4444" empty={!hasExp} />
+                    <SavingsDualCell
+                      vnd={m.savingsRawVND} jpy={m.savingsRawJPY}
+                      hasVND={m.incomeRawVND > 0 || m.expRawVND > 0}
+                      hasJPY={m.incomeRawJPY > 0 || m.expRawJPY > 0}
+                    />
+                    <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>
+                      {m.vnExpRawVND > 0 ? formatVND(m.vnExpRawVND) : '—'}
+                    </td>
+                    <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>
+                      {m.jpExpRawJPY > 0 ? `¥${m.jpExpRawJPY.toLocaleString('ja-JP')}` : '—'}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -223,12 +272,107 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
   )
 }
 
+// ── Sub-components ────────────────────────────────────────────────────────────
+
 function YearCard({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
       <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 6 }}>{label}</div>
       <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: accent }}>{value}</div>
     </div>
+  )
+}
+
+function CurrencyYearCard({ label, vnd, jpy, accent }: {
+  label: string; vnd: number; jpy: number; accent: string
+}) {
+  const hasAny = vnd > 0 || jpy > 0
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 6 }}>{label}</div>
+      {!hasAny && <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink3)' }}>—</div>}
+      {vnd > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+          <span className="font-mono" style={{ fontSize: 16, fontWeight: 600, color: accent }}>{formatVND(vnd)}</span>
+        </div>
+      )}
+      {jpy > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+          <span className="font-mono" style={{ fontSize: 16, fontWeight: 600, color: accent }}>¥{jpy.toLocaleString('ja-JP')}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SavingsYearCard({ label, vnd, jpy, hasVND, hasJPY }: {
+  label: string; vnd: number; jpy: number; hasVND: boolean; hasJPY: boolean
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 6 }}>{label}</div>
+      {!hasVND && !hasJPY && (
+        <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink3)' }}>—</div>
+      )}
+      {hasVND && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+          <span className="font-mono" style={{ fontSize: 16, fontWeight: 600, color: vnd >= 0 ? '#6366f1' : '#ef4444' }}>
+            {vnd >= 0 ? '+' : ''}{formatVND(Math.abs(vnd))}
+          </span>
+        </div>
+      )}
+      {hasJPY && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+          <span className="font-mono" style={{ fontSize: 16, fontWeight: 600, color: jpy >= 0 ? '#6366f1' : '#ef4444' }}>
+            {jpy >= 0 ? '+' : ''}¥{Math.abs(jpy).toLocaleString('ja-JP')}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DualCell({ vnd, jpy, color, empty }: {
+  vnd: number; jpy: number; color: string; empty: boolean
+}) {
+  if (empty) {
+    return <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>—</td>
+  }
+  return (
+    <td style={{ padding: '9px 14px', textAlign: 'right' }}>
+      {vnd > 0 && (
+        <div className="font-mono" style={{ fontSize: 12, color }}>{formatVND(vnd)}</div>
+      )}
+      {jpy > 0 && (
+        <div className="font-mono" style={{ fontSize: 12, color }}>¥{jpy.toLocaleString('ja-JP')}</div>
+      )}
+    </td>
+  )
+}
+
+function SavingsDualCell({ vnd, jpy, hasVND, hasJPY }: {
+  vnd: number; jpy: number; hasVND: boolean; hasJPY: boolean
+}) {
+  if (!hasVND && !hasJPY) {
+    return <td className="font-mono" style={{ padding: '9px 14px', textAlign: 'right', color: 'var(--ink3)' }}>—</td>
+  }
+  return (
+    <td style={{ padding: '9px 14px', textAlign: 'right' }}>
+      {hasVND && (
+        <div className="font-mono" style={{ fontSize: 12, color: vnd >= 0 ? '#6366f1' : '#ef4444' }}>
+          {vnd >= 0 ? '+' : ''}{formatVND(Math.abs(vnd))}
+        </div>
+      )}
+      {hasJPY && (
+        <div className="font-mono" style={{ fontSize: 12, color: jpy >= 0 ? '#6366f1' : '#ef4444' }}>
+          {jpy >= 0 ? '+' : ''}¥{Math.abs(jpy).toLocaleString('ja-JP')}
+        </div>
+      )}
+    </td>
   )
 }
 

@@ -24,5 +24,5 @@ export default async function IncomePage({ searchParams }: PageProps) {
     vnd: forex.find(r => r.symbol === 'VND')?.price ?? 25000,
   }
 
-  return <IncomeClient initialIncome={income} month={month} rates={rates} />
+  return <IncomeClient key={month} initialIncome={income} month={month} rates={rates} />
 }

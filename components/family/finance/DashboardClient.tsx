@@ -34,7 +34,7 @@ export default function DashboardClient({
   monthLabel,
   recentMonths,
 }: DashboardClientProps) {
-  // ── Totals ──────────────────────────────────────────────────────────────
+  // ── Totals (converted for savings / chart) ──────────────────────────────
   const totalIncomeVND = incomeThisMonth.reduce(
     (sum, i) => sum + toVND(i.amount, i.currency, rates), 0,
   )
@@ -43,12 +43,18 @@ export default function DashboardClient({
   )
   const savingsVND = totalIncomeVND - totalExpensesVND
 
-  const vnExpensesVND = expensesThisMonth
-    .filter(e => e.country === 'VN')
-    .reduce((sum, e) => sum + toVND(e.amount, e.currency, rates), 0)
-  const jpExpensesVND = expensesThisMonth
-    .filter(e => e.country === 'JP')
-    .reduce((sum, e) => sum + toVND(e.amount, e.currency, rates), 0)
+  // ── Raw totals by currency (no conversion) ───────────────────────────────
+  const incomeRawVND = incomeThisMonth.filter(i => i.currency === 'VND').reduce((s, i) => s + i.amount, 0)
+  const incomeRawJPY = incomeThisMonth.filter(i => i.currency === 'JPY').reduce((s, i) => s + i.amount, 0)
+  const expRawVND = expensesThisMonth.filter(e => e.currency === 'VND').reduce((s, e) => s + e.amount, 0)
+  const expRawJPY = expensesThisMonth.filter(e => e.currency === 'JPY').reduce((s, e) => s + e.amount, 0)
+  const savingsRawVND = incomeRawVND - expRawVND
+  const savingsRawJPY = incomeRawJPY - expRawJPY
+
+  const vnExpensesRawVND = expensesThisMonth.filter(e => e.country === 'VN').reduce((s, e) => s + e.amount, 0)
+  const jpExpensesRawJPY = expensesThisMonth.filter(e => e.country === 'JP').reduce((s, e) => s + e.amount, 0)
+  const vnExpensesVND = expensesThisMonth.filter(e => e.country === 'VN').reduce((sum, e) => sum + toVND(e.amount, e.currency, rates), 0)
+  const jpExpensesVND = expensesThisMonth.filter(e => e.country === 'JP').reduce((sum, e) => sum + toVND(e.amount, e.currency, rates), 0)
 
   // ── Expense breakdown by category ────────────────────────────────────────
   const categoryMap: Partial<Record<FamilyExpense['category'], number>> = {}
@@ -63,22 +69,35 @@ export default function DashboardClient({
     }))
     .sort((a, b) => b.value - a.value)
 
-  // ── Income by source ────────────────────────────────────────────────────
-  const sourceMap: Partial<Record<FamilyIncome['source'], number>> = {}
+  // ── Income by source (native amounts) ───────────────────────────────────
+  const sourceMap: Partial<Record<FamilyIncome['source'], { vnd: number; jpy: number }>> = {}
   for (const i of incomeThisMonth) {
-    const vnd = toVND(i.amount, i.currency, rates)
-    sourceMap[i.source] = (sourceMap[i.source] ?? 0) + vnd
+    const entry = sourceMap[i.source] ?? { vnd: 0, jpy: 0 }
+    if (i.currency === 'JPY') entry.jpy += i.amount
+    else entry.vnd += i.amount
+    sourceMap[i.source] = entry
   }
 
   // ── Investment portfolio ─────────────────────────────────────────────────
-  const goldHoldings = investments.filter(i => i.type === 'gold')
-  const cryptoHoldings = investments.filter(i => i.type === 'crypto')
+  const goldHoldings    = investments.filter(i => i.type === 'gold')
+  const cryptoHoldings  = investments.filter(i => i.type === 'crypto')
+  const savingsHoldings = investments.filter(i => i.type === 'savings')
 
-  const portfolioValue = investments.reduce((sum, inv) => {
+  function invValueVND(inv: FamilyInvestment): number {
+    if (inv.type === 'savings') return toVND(inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
     const price = inv.currentPrice ?? inv.averageBuyPrice ?? 0
-    const valueVND = toVND(price * inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
-    return sum + valueVND
-  }, 0)
+    return toVND(price * inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
+  }
+
+  function rawInvAmount(inv: FamilyInvestment): number {
+    if (inv.type === 'savings') return inv.quantity
+    const price = inv.currentPrice ?? inv.averageBuyPrice ?? 0
+    return price * inv.quantity
+  }
+
+  const portRawVND = investments.filter(i => i.currency === 'VND').reduce((s, i) => s + rawInvAmount(i), 0)
+  const portRawJPY = investments.filter(i => i.currency === 'JPY').reduce((s, i) => s + rawInvAmount(i), 0)
+  const portRawUSD = investments.filter(i => i.currency === 'USD').reduce((s, i) => s + rawInvAmount(i), 0)
 
   // ── Monthly trend chart data ─────────────────────────────────────────────
   const chartData = recentMonths.map(m => ({
@@ -92,29 +111,32 @@ export default function DashboardClient({
 
       {/* Summary cards row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-        <SummaryCard
+        <CurrencyCard
           label={`Thu nhập ${monthLabel}`}
-          value={formatVND(totalIncomeVND)}
+          rawVND={incomeRawVND}
+          rawJPY={incomeRawJPY}
           sub={`${incomeThisMonth.length} nguồn thu`}
           accent="#10b981"
         />
-        <SummaryCard
+        <CurrencyCard
           label={`Chi tiêu ${monthLabel}`}
-          value={formatVND(totalExpensesVND)}
+          rawVND={expRawVND}
+          rawJPY={expRawJPY}
           sub={`${expensesThisMonth.length} khoản`}
           accent="#ef4444"
         />
-        <SummaryCard
+        <SavingsCard
           label="Tiết kiệm tháng này"
-          value={formatVND(Math.abs(savingsVND))}
-          sub={savingsVND >= 0 ? 'dương ↑' : 'âm ↓'}
-          accent={savingsVND >= 0 ? '#10b981' : '#ef4444'}
+          savingsVND={savingsRawVND}
+          savingsJPY={savingsRawJPY}
+          hasVND={incomeRawVND > 0 || expRawVND > 0}
+          hasJPY={incomeRawJPY > 0 || expRawJPY > 0}
         />
-        <SummaryCard
-          label="Danh mục đầu tư"
-          value={formatVND(portfolioValue)}
-          sub={`${investments.length} tài sản`}
-          accent="#6366f1"
+        <InvestmentSummaryCard
+          vnd={portRawVND}
+          jpy={portRawJPY}
+          usd={portRawUSD}
+          count={investments.length}
         />
       </div>
 
@@ -122,8 +144,8 @@ export default function DashboardClient({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
           <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 12 }}>Chi tiêu theo nơi</div>
-          <CountryBar label="🇻🇳 Việt Nam" valueVND={vnExpensesVND} totalVND={totalExpensesVND} />
-          <CountryBar label="🇯🇵 Nhật Bản" valueVND={jpExpensesVND} totalVND={totalExpensesVND} />
+          <CountryBar label="🇻🇳 Việt Nam" displayAmount={formatVND(vnExpensesRawVND)} valueVND={vnExpensesVND} totalVND={totalExpensesVND} />
+          <CountryBar label="🇯🇵 Nhật Bản" displayAmount={`¥${jpExpensesRawJPY.toLocaleString('ja-JP')}`} valueVND={jpExpensesVND} totalVND={totalExpensesVND} />
         </div>
 
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
@@ -131,14 +153,23 @@ export default function DashboardClient({
           {Object.entries(sourceMap).length === 0 ? (
             <EmptyNote text="Chưa có thu nhập tháng này" />
           ) : (
-            Object.entries(sourceMap).map(([src, vnd]) => (
+            Object.entries(sourceMap).map(([src, amounts]) => (
               <div key={src} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: 'var(--ink2)' }}>
                   {INCOME_SOURCE_LABELS[src as FamilyIncome['source']] ?? src}
                 </span>
-                <span className="font-mono" style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
-                  {formatVND(vnd)}
-                </span>
+                <div style={{ textAlign: 'right' }}>
+                  {amounts.vnd > 0 && (
+                    <div className="font-mono" style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
+                      {formatVND(amounts.vnd)}
+                    </div>
+                  )}
+                  {amounts.jpy > 0 && (
+                    <div className="font-mono" style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
+                      ¥{amounts.jpy.toLocaleString('ja-JP')}
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -215,31 +246,44 @@ export default function DashboardClient({
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
             {investments.map(inv => {
-              const price = inv.currentPrice ?? inv.averageBuyPrice ?? 0
-              const valueVND = toVND(price * inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
-              const costVND = inv.averageBuyPrice
+              const valueVND = invValueVND(inv)
+              const isSavings = inv.type === 'savings'
+              const costVND = !isSavings && inv.averageBuyPrice
                 ? toVND(inv.averageBuyPrice * inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
                 : null
               const pnl = costVND != null ? valueVND - costVND : null
+              const typeBadge = inv.type === 'gold' ? { bg: '#FEF9C3', text: '🥇 Vàng' }
+                : inv.type === 'crypto' ? { bg: '#EFF6FF', text: '🪙 Crypto' }
+                : { bg: '#e0f2fe', text: '🏦 Tiết kiệm' }
               return (
                 <div key={inv.id} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{inv.assetName}</span>
-                    <span style={{ fontSize: 11, color: 'var(--ink3)', background: inv.type === 'gold' ? '#FEF9C3' : '#EFF6FF', padding: '2px 7px', borderRadius: 99 }}>
-                      {inv.type === 'gold' ? '🥇 Vàng' : '🪙 Crypto'}
+                    <span style={{ fontSize: 11, color: 'var(--ink3)', background: typeBadge.bg, padding: '2px 7px', borderRadius: 99 }}>
+                      {typeBadge.text}
                     </span>
                   </div>
-                  <div className="font-mono" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>
-                    {formatVND(valueVND)}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 2 }}>
-                    {inv.quantity} {inv.currency === 'VND' ? 'lượng' : inv.currency === 'JPY' ? 'JPY' : inv.assetName}
-                    {pnl != null && (
-                      <span style={{ marginLeft: 8, color: pnl >= 0 ? '#10b981' : '#ef4444' }}>
-                        {pnl >= 0 ? '+' : ''}{formatVND(pnl)}
-                      </span>
-                    )}
-                  </div>
+                  {isSavings ? (
+                    <div className="font-mono" style={{ fontSize: 15, fontWeight: 600, color: '#0ea5e9' }}>
+                      {inv.currency === 'JPY'
+                        ? `¥${inv.quantity.toLocaleString('ja-JP')}`
+                        : formatVND(inv.quantity)}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="font-mono" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>
+                        {formatVND(valueVND)}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 2 }}>
+                        {inv.quantity} {inv.currency === 'VND' ? 'lượng' : inv.currency === 'JPY' ? 'JPY' : inv.assetName}
+                        {pnl != null && (
+                          <span style={{ marginLeft: 8, color: pnl >= 0 ? '#10b981' : '#ef4444' }}>
+                            {pnl >= 0 ? '+' : ''}{formatVND(pnl)}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )
             })}
@@ -247,11 +291,12 @@ export default function DashboardClient({
         )}
       </div>
 
-      {/* Gold/Crypto breakdown */}
+      {/* Gold / Crypto / Savings breakdown */}
       {investments.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
           <InvestmentGroup title="🥇 Vàng" items={goldHoldings} rates={rates} />
           <InvestmentGroup title="🪙 Crypto" items={cryptoHoldings} rates={rates} />
+          <SavingsGroup items={savingsHoldings} />
         </div>
       )}
 
@@ -277,26 +322,113 @@ export default function DashboardClient({
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function SummaryCard({ label, value, sub, accent }: {
-  label: string; value: string; sub: string; accent: string
+
+function SavingsCard({ label, savingsVND, savingsJPY, hasVND, hasJPY }: {
+  label: string; savingsVND: number; savingsJPY: number; hasVND: boolean; hasJPY: boolean
 }) {
+  const vndColor = savingsVND >= 0 ? '#10b981' : '#ef4444'
+  const jpyColor = savingsJPY >= 0 ? '#10b981' : '#ef4444'
+  const vndSign = savingsVND >= 0 ? '+' : ''
+  const jpySign = savingsJPY >= 0 ? '+' : ''
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
       <div style={{ fontSize: 11.5, color: 'var(--ink3)', marginBottom: 8 }}>{label}</div>
-      <div className="font-mono" style={{ fontSize: 22, fontWeight: 600, color: accent }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4 }}>{sub}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {hasVND && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: vndColor }}>
+              {vndSign}{formatVND(Math.abs(savingsVND))}
+            </span>
+          </div>
+        )}
+        {hasJPY && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: jpyColor }}>
+              {jpySign}¥{Math.abs(savingsJPY).toLocaleString('ja-JP')}
+            </span>
+          </div>
+        )}
+        {!hasVND && !hasJPY && (
+          <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink3)' }}>—</span>
+        )}
+      </div>
     </div>
   )
 }
 
-function CountryBar({ label, valueVND, totalVND }: { label: string; valueVND: number; totalVND: number }) {
+function InvestmentSummaryCard({ vnd, jpy, usd, count }: {
+  vnd: number; jpy: number; usd: number; count: number
+}) {
+  const hasAny = vnd > 0 || jpy > 0 || usd > 0
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
+      <div style={{ fontSize: 11.5, color: 'var(--ink3)', marginBottom: 8 }}>Danh mục đầu tư</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {!hasAny && <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink3)' }}>—</span>}
+        {vnd > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: '#6366f1' }}>{formatVND(vnd)}</span>
+          </div>
+        )}
+        {jpy > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: '#6366f1' }}>¥{jpy.toLocaleString('ja-JP')}</span>
+          </div>
+        )}
+        {usd > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>USD</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: '#6366f1' }}>${usd.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 6 }}>{count} tài sản</div>
+    </div>
+  )
+}
+
+function CurrencyCard({ label, rawVND, rawJPY, sub, accent }: {
+  label: string; rawVND: number; rawJPY: number; sub: string; accent: string
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 18px' }}>
+      <div style={{ fontSize: 11.5, color: 'var(--ink3)', marginBottom: 8 }}>{label}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {rawVND > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: accent }}>{formatVND(rawVND)}</span>
+          </div>
+        )}
+        {rawJPY > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 10.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+            <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: accent }}>¥{rawJPY.toLocaleString('ja-JP')}</span>
+          </div>
+        )}
+        {rawVND === 0 && rawJPY === 0 && (
+          <span className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: accent }}>—</span>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 6 }}>{sub}</div>
+    </div>
+  )
+}
+
+function CountryBar({ label, displayAmount, valueVND, totalVND }: {
+  label: string; displayAmount: string; valueVND: number; totalVND: number
+}) {
   const pct = totalVND > 0 ? Math.round(valueVND / totalVND * 100) : 0
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontSize: 13, color: 'var(--ink2)' }}>{label}</span>
         <span className="font-mono" style={{ fontSize: 12, color: 'var(--ink3)' }}>
-          {formatVND(valueVND)} · {pct}%
+          {displayAmount} · {pct}%
         </span>
       </div>
       <div style={{ height: 5, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
@@ -330,6 +462,41 @@ function InvestmentGroup({ title, items, rates }: {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function SavingsGroup({ items }: { items: FamilyInvestment[] }) {
+  if (items.length === 0) return null
+  const totalVND = items.filter(i => i.currency === 'VND').reduce((s, i) => s + i.quantity, 0)
+  const totalJPY = items.filter(i => i.currency === 'JPY').reduce((s, i) => s + i.quantity, 0)
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 10 }}>🏦 Tiết kiệm</div>
+      {items.map(inv => (
+        <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 13, color: 'var(--ink)' }}>{inv.assetName}</div>
+          <div className="font-mono" style={{ fontSize: 13, fontWeight: 500, color: '#0ea5e9' }}>
+            {inv.currency === 'JPY'
+              ? `¥${inv.quantity.toLocaleString('ja-JP')}`
+              : formatVND(inv.quantity)}
+          </div>
+        </div>
+      ))}
+      <div style={{ paddingTop: 8, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {totalVND > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+            <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#0ea5e9' }}>{formatVND(totalVND)}</span>
+          </div>
+        )}
+        {totalJPY > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+            <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#0ea5e9' }}>¥{totalJPY.toLocaleString('ja-JP')}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

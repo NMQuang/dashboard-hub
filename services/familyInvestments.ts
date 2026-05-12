@@ -35,7 +35,7 @@ type InvestmentRow = {
 function rowToInvestment(row: InvestmentRow): FamilyInvestment {
   return {
     id: row.id,
-    type: row.type as 'gold' | 'crypto',
+    type: row.type as 'gold' | 'crypto' | 'savings',
     assetName: row.asset_name,
     quantity: Number(row.quantity),
     averageBuyPrice: row.average_buy_price != null ? Number(row.average_buy_price) : undefined,

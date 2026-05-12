@@ -24,5 +24,5 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
     vnd: forex.find(r => r.symbol === 'VND')?.price ?? 25000,
   }
 
-  return <ExpenseClient initialExpenses={expenses} month={month} rates={rates} />
+  return <ExpenseClient key={month} initialExpenses={expenses} month={month} rates={rates} />
 }
