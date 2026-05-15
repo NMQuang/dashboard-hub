@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPresignedUploadUrl, photoKey, thumbnailKey } from '@/services/family-r2'
+import { getPresignedUploadUrl, photoKey } from '@/services/family-r2'
 import { savePhoto } from '@/services/family-storage'
 import { generatePhotoCaption, detectFacesInPhoto, inferTagsFromPhoto } from '@/services/family-ai'
 import type { FamilyPhoto } from '@/types/family'
@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
 
     const id = generateId()
     const key = photoKey(id, body.filename)
-    const thumbKey = thumbnailKey(key)
 
     // Get presigned URL for direct client upload
     const { uploadUrl, publicUrl } = await getPresignedUploadUrl(key, body.contentType)
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
       id,
       filename: body.filename,
       url: publicUrl,
-      thumbnailUrl: process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/${thumbKey}` : publicUrl,
+      thumbnailUrl: publicUrl,  // No server-side thumbnail generation — use full image URL
       takenAt: body.takenAt,
       uploadedAt: new Date().toISOString(),
       uploadedBy: body.uploadedBy,

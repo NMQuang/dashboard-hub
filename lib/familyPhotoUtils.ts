@@ -25,7 +25,13 @@ export function familyPhotoToDisplay(p: FamilyPhoto): DisplayPhoto {
   }
 }
 
-const R2_BASE = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? '').trim()
+// NEXT_PUBLIC_ is available on both client and server; R2_PUBLIC_URL is server-only fallback.
+// Both must resolve to the same CDN base URL for the isR2 check to work correctly.
+const R2_BASE = (
+  process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
+  process.env.R2_PUBLIC_URL ||
+  ''
+).trim()
 
 export function googlePhotoToDisplay(p: GoogleFamilyPhoto): DisplayPhoto {
   // R2-stored photos have permanent public CDN URLs — serve directly, no proxy needed.
