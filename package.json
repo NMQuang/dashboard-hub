@@ -12,6 +12,7 @@
     "workflow:dev": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task dev",
     "workflow:deploy": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task deploy",
     "workflow:migrate": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task migrate",
+    "workflow:push": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task push",
     "workflow:all": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task all"
   },
   "dependencies": {
