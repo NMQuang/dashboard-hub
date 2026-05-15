@@ -283,7 +283,7 @@ export interface FamilyExpense {
   createdAt: string
 }
 
-export type InvestmentType = 'gold' | 'crypto' | 'savings'
+export type InvestmentType = 'gold' | 'crypto' | 'savings' | 'stock'
 
 export interface FamilyInvestment {
   id: string

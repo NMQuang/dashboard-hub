@@ -47,7 +47,25 @@
       "Bash(Write-Host \"done\")",
       "PowerShell(netstat *)",
       "Bash(gh pr create --title 'feat\\(family\\): photos hub v2 — story share + fix Google Photos URL expiry' --body ' *)",
-      "WebFetch(domain:dashboard-hub-wheat.vercel.app)"
+      "WebFetch(domain:dashboard-hub-wheat.vercel.app)",
+      "Bash(Get-ChildItem -Path \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\" -Recurse -Filter \"*family*\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "mcp__claude_ai_Supabase__get_publishable_keys",
+      "mcp__claude_ai_Supabase__get_logs",
+      "Bash(gh pr create --title 'feat\\(family-finance\\): split income/expenses/investments/reports by VND and JPY' --body ' *)",
+      "Bash(Get-ChildItem -Recurse -Path \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\src\" -Filter \"*.ts\")",
+      "Bash(Select-Object -First 20 FullName)",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "PowerShell(npx vercel env ls 2>&1 | Select-Object -First 40)",
+      "mcp__claude_ai_Supabase__get_project_url",
+      "PowerShell(npm install *)",
+      "PowerShell(node \"C:\\\\Users\\\\Admin\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\vercel\\\\dist\\\\index.js\" project ls 2>&1 | Select-Object -First 30)",
+      "PowerShell(Get-ChildItem \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\app\" -Directory | Where-Object { $_.Name -match \"family\" } | Select-Object FullName)",
+      "PowerShell(Select-String -Path \"D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub\\\\.env.local\" -Pattern \"SUPABASE\" | Select-Object -ExpandProperty Line | ForEach-Object { $_.Split\\('='\\)[0] })",
+      "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"Set-Location 'D:\\\\OTHER\\\\Dashboard\\\\dashboard-hub'; npm run dev -- --port 3000\" -WindowStyle Normal)"
     ]
   }
 }

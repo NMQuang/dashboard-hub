@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "npx vercel --prod",
+    "db:migrate": "node --env-file=.env.local scripts/db-migrate.mjs",
+    "workflow:dev": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task dev",
+    "workflow:deploy": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task deploy",
+    "workflow:migrate": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task migrate",
+    "workflow:all": "powershell -ExecutionPolicy Bypass -File scripts/workflow.ps1 -Task all"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",

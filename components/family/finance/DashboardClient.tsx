@@ -8,6 +8,8 @@ import type { FamilyIncome, FamilyExpense, FamilyInvestment } from '@/types/fami
 import { INCOME_SOURCE_LABELS, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types/family'
 import type { ForexRates } from '@/services/familyFinance'
 import { toVND, formatVND, formatJPY } from '@/services/familyFinance'
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface MonthlySummary {
   month: string
@@ -82,6 +84,7 @@ export default function DashboardClient({
   const goldHoldings    = investments.filter(i => i.type === 'gold')
   const cryptoHoldings  = investments.filter(i => i.type === 'crypto')
   const savingsHoldings = investments.filter(i => i.type === 'savings')
+  const stockHoldings   = investments.filter(i => i.type === 'stock')
 
   function invValueVND(inv: FamilyInvestment): number {
     if (inv.type === 'savings') return toVND(inv.quantity, inv.currency as 'VND' | 'JPY' | 'USD', rates)
@@ -99,6 +102,13 @@ export default function DashboardClient({
   const portRawJPY = investments.filter(i => i.currency === 'JPY').reduce((s, i) => s + rawInvAmount(i), 0)
   const portRawUSD = investments.filter(i => i.currency === 'USD').reduce((s, i) => s + rawInvAmount(i), 0)
 
+  const searchParams = useSearchParams()
+  const currentMonth = searchParams.get('month') ?? new Date().toISOString().slice(0, 7)
+
+  const goldValue   = goldHoldings.reduce((s, i) => s + invValueVND(i), 0)
+  const cryptoValue = cryptoHoldings.reduce((s, i) => s + invValueVND(i), 0)
+  const stockValue  = stockHoldings.reduce((s, i) => s + invValueVND(i), 0)
+
   // ── Monthly trend chart data ─────────────────────────────────────────────
   const chartData = recentMonths.map(m => ({
     name: m.month.slice(5), // MM
@@ -111,33 +121,139 @@ export default function DashboardClient({
 
       {/* Summary cards row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-        <CurrencyCard
-          label={`Thu nhập ${monthLabel}`}
-          rawVND={incomeRawVND}
-          rawJPY={incomeRawJPY}
-          sub={`${incomeThisMonth.length} nguồn thu`}
-          accent="#10b981"
-        />
-        <CurrencyCard
-          label={`Chi tiêu ${monthLabel}`}
-          rawVND={expRawVND}
-          rawJPY={expRawJPY}
-          sub={`${expensesThisMonth.length} khoản`}
-          accent="#ef4444"
-        />
-        <SavingsCard
-          label="Tiết kiệm tháng này"
-          savingsVND={savingsRawVND}
-          savingsJPY={savingsRawJPY}
-          hasVND={incomeRawVND > 0 || expRawVND > 0}
-          hasJPY={incomeRawJPY > 0 || expRawJPY > 0}
-        />
-        <InvestmentSummaryCard
-          vnd={portRawVND}
-          jpy={portRawJPY}
-          usd={portRawUSD}
-          count={investments.length}
-        />
+        <CardLink
+          href="/family/finance/income"
+          month={currentMonth}
+          detail={
+            <div>
+              {Object.entries(sourceMap).length === 0
+                ? <div style={{ fontSize: 12, color: 'var(--ink3)' }}>Chưa có thu nhập</div>
+                : Object.entries(sourceMap).map(([src, amounts]) => (
+                  <div key={src} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{INCOME_SOURCE_LABELS[src as FamilyIncome['source']] ?? src}</span>
+                    <div style={{ textAlign: 'right' }}>
+                      {amounts.vnd > 0 && <div className="font-mono" style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>{formatVND(amounts.vnd)}</div>}
+                      {amounts.jpy > 0 && <div className="font-mono" style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>¥{amounts.jpy.toLocaleString('ja-JP')}</div>}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          }
+        >
+          <CurrencyCard
+            label={`Thu nhập ${monthLabel}`}
+            rawVND={incomeRawVND}
+            rawJPY={incomeRawJPY}
+            sub={`${incomeThisMonth.length} nguồn thu`}
+            accent="#10b981"
+          />
+        </CardLink>
+        <CardLink
+          href="/family/finance/expenses"
+          month={currentMonth}
+          detail={
+            <div>
+              {pieData.length === 0
+                ? <div style={{ fontSize: 12, color: 'var(--ink3)' }}>Chưa có chi tiêu</div>
+                : pieData.slice(0, 4).map(item => (
+                  <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{item.name}</span>
+                    <span className="font-mono" style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{formatVND(item.value)}</span>
+                  </div>
+                ))
+              }
+              {pieData.length > 4 && <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4 }}>+{pieData.length - 4} danh mục khác</div>}
+            </div>
+          }
+        >
+          <CurrencyCard
+            label={`Chi tiêu ${monthLabel}`}
+            rawVND={expRawVND}
+            rawJPY={expRawJPY}
+            sub={`${expensesThisMonth.length} khoản`}
+            accent="#ef4444"
+          />
+        </CardLink>
+        <CardLink
+          href="/family/finance/reports"
+          month={currentMonth}
+          detail={
+            <div>
+              {(() => {
+                const rate = totalIncomeVND > 0 ? Math.round(savingsVND / totalIncomeVND * 100) : 0
+                const rateColor = rate >= 20 ? '#10b981' : rate >= 10 ? '#f59e0b' : '#ef4444'
+                return (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink2)' }}>Tỷ lệ tiết kiệm</span>
+                      <span className="font-mono" style={{ fontSize: 12, color: rateColor, fontWeight: 600 }}>{rate}%</span>
+                    </div>
+                    {(incomeRawVND > 0 || expRawVND > 0) && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11.5, color: 'var(--ink3)' }}>VND</span>
+                        <span className="font-mono" style={{ fontSize: 12, color: savingsRawVND >= 0 ? '#10b981' : '#ef4444' }}>
+                          {savingsRawVND >= 0 ? '+' : ''}{formatVND(Math.abs(savingsRawVND))}
+                        </span>
+                      </div>
+                    )}
+                    {(incomeRawJPY > 0 || expRawJPY > 0) && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 11.5, color: 'var(--ink3)' }}>JPY</span>
+                        <span className="font-mono" style={{ fontSize: 12, color: savingsRawJPY >= 0 ? '#10b981' : '#ef4444' }}>
+                          {savingsRawJPY >= 0 ? '+' : ''}¥{Math.abs(savingsRawJPY).toLocaleString('ja-JP')}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+          }
+        >
+          <SavingsCard
+            label="Tiết kiệm tháng này"
+            savingsVND={savingsRawVND}
+            savingsJPY={savingsRawJPY}
+            hasVND={incomeRawVND > 0 || expRawVND > 0}
+            hasJPY={incomeRawJPY > 0 || expRawJPY > 0}
+          />
+        </CardLink>
+        <CardLink
+          href="/family/finance/investments"
+          month={currentMonth}
+          detail={
+            <div>
+              {goldValue > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ink2)' }}>🥇 Vàng</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: '#d97706', fontWeight: 600 }}>{formatVND(goldValue)}</span>
+                </div>
+              )}
+              {cryptoValue > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ink2)' }}>🪙 Crypto</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: '#3b82f6', fontWeight: 600 }}>{formatVND(cryptoValue)}</span>
+                </div>
+              )}
+              {stockValue > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ink2)' }}>📈 Cổ phiếu</span>
+                  <span className="font-mono" style={{ fontSize: 12, color: '#6366f1', fontWeight: 600 }}>{formatVND(stockValue)}</span>
+                </div>
+              )}
+              {investments.length === 0 && <div style={{ fontSize: 12, color: 'var(--ink3)' }}>Chưa có tài sản</div>}
+              <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4 }}>{investments.length} tài sản</div>
+            </div>
+          }
+        >
+          <InvestmentSummaryCard
+            vnd={portRawVND}
+            jpy={portRawJPY}
+            usd={portRawUSD}
+            count={investments.length}
+          />
+        </CardLink>
       </div>
 
       {/* VN vs JP */}
@@ -296,6 +412,7 @@ export default function DashboardClient({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
           <InvestmentGroup title="🥇 Vàng" items={goldHoldings} rates={rates} />
           <InvestmentGroup title="🪙 Crypto" items={cryptoHoldings} rates={rates} />
+          <InvestmentGroup title="📈 Cổ phiếu" items={stockHoldings} rates={rates} />
           <SavingsGroup items={savingsHoldings} />
         </div>
       )}
@@ -322,6 +439,41 @@ export default function DashboardClient({
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
+function CardLink({ href, month, detail, children }: {
+  href: string
+  month: string
+  detail: React.ReactNode
+  children: React.ReactNode
+}) {
+  const [hovered, setHovered] = useState(false)
+  const router = useRouter()
+  return (
+    <div
+      style={{ position: 'relative', cursor: 'pointer' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => router.push(`${href}?month=${month}`)}
+    >
+      <div style={{ borderRadius: 14, boxShadow: hovered ? '0 0 0 2px var(--ink)' : 'none', transition: 'box-shadow 0.12s' }}>
+        {children}
+      </div>
+      {hovered && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, zIndex: 50,
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '12px 14px', minWidth: 220,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 6,
+          pointerEvents: 'none',
+        }}>
+          <div style={{ fontSize: 10, color: 'var(--ink3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Chi tiết — click để xem →
+          </div>
+          {detail}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function SavingsCard({ label, savingsVND, savingsJPY, hasVND, hasJPY }: {
   label: string; savingsVND: number; savingsJPY: number; hasVND: boolean; hasJPY: boolean

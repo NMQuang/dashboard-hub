@@ -68,8 +68,55 @@ export default function ReportsClient({ year, months, categoryBreakdown, rates }
     'Nhật Bản': Math.round(m.jpExpensesVND / 1_000_000),
   }))
 
+  function handleExportCSV() {
+    const header = ['Tháng', 'Thu nhập (VND)', 'Thu nhập (JPY)', 'Chi tiêu (VND)', 'Chi tiêu (JPY)', 'Tiết kiệm (VND)', 'Tiết kiệm (JPY)', 'Chi VN (VND)', 'Chi JP (JPY)']
+    const rows = months.map(m => [
+      m.label,
+      m.incomeRawVND, m.incomeRawJPY,
+      m.expRawVND, m.expRawJPY,
+      m.savingsRawVND, m.savingsRawJPY,
+      m.vnExpRawVND, m.jpExpRawJPY,
+    ])
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `finance-report-${year}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleExportPDF() {
+    window.print()
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Export buttons */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button
+          onClick={handleExportCSV}
+          style={{
+            padding: '7px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+            border: '1px solid var(--border)', background: 'var(--surface)',
+            color: 'var(--ink)', fontWeight: 500,
+          }}
+        >
+          ↓ Xuất CSV
+        </button>
+        <button
+          onClick={handleExportPDF}
+          style={{
+            padding: '7px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+            border: '1px solid var(--ink)', background: 'var(--ink)',
+            color: '#fff', fontWeight: 500,
+          }}
+        >
+          ↓ Xuất PDF
+        </button>
+      </div>
 
       {/* Year summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>

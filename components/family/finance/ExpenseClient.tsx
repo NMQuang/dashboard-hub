@@ -40,6 +40,8 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
   const [error, setError] = useState<string | null>(null)
   const [filterCountry, setFilterCountry] = useState<'all' | 'VN' | 'JP'>('all')
   const [filterCategory, setFilterCategory] = useState<ExpenseCategoryFinance | 'all'>('all')
+  const [sortKey, setSortKey] = useState<'date' | 'amount' | 'category' | 'country'>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   const isEditing = editingId !== null
 
@@ -56,6 +58,20 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
     if (filterCountry !== 'all' && e.country !== filterCountry) return false
     if (filterCategory !== 'all' && e.category !== filterCategory) return false
     return true
+  })
+
+  function toggleSort(key: 'date' | 'amount' | 'category' | 'country') {
+    if (sortKey === key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('desc') }
+  }
+
+  const sorted = filtered.slice().sort((a, b) => {
+    let cmp = 0
+    if (sortKey === 'date') cmp = a.spentDate.localeCompare(b.spentDate)
+    else if (sortKey === 'amount') cmp = toVND(a.amount, a.currency, rates) - toVND(b.amount, b.currency, rates)
+    else if (sortKey === 'category') cmp = a.category.localeCompare(b.category)
+    else if (sortKey === 'country') cmp = a.country.localeCompare(b.country)
+    return sortDir === 'asc' ? cmp : -cmp
   })
 
   function startEdit(item: FamilyExpense) {
@@ -138,10 +154,11 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
   }
 
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
     <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 16 }}>
 
       {/* Form */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ alignSelf: 'start' }}>
         <div style={{
           background: isEditing ? '#FFFBEB' : 'var(--surface)',
           border: `1px solid ${isEditing ? '#F59E0B' : 'var(--border)'}`,
@@ -284,58 +301,57 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
             </button>
           </form>
         </div>
-
-        {/* Category breakdown */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
-          <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 10 }}>Phân loại tháng {month}</div>
-          {Object.entries(catBreakdown).length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--ink3)', fontStyle: 'italic' }}>Chưa có khoản chi</p>
-          ) : (
-            <>
-              {Object.entries(catBreakdown)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, vnd]) => {
-                  const pct = totalConvertedVND > 0 ? Math.round(vnd / totalConvertedVND * 100) : 0
-                  const catKey = cat as ExpenseCategoryFinance
-                  return (
-                    <div key={cat} style={{ marginBottom: 8 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                        <span style={{ fontSize: 12.5, color: 'var(--ink2)' }}>
-                          {EXPENSE_CATEGORY_ICONS[catKey]} {EXPENSE_CATEGORY_LABELS[catKey]}
-                        </span>
-                        <span className="font-mono" style={{ fontSize: 11.5, color: 'var(--ink3)' }}>
-                          {formatVND(vnd)} · {pct}%
-                        </span>
-                      </div>
-                      <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: 'var(--ink)', borderRadius: 99, width: `${pct}%`, opacity: 0.65 }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              <div style={{ paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {totalExpVND > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
-                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{formatVND(totalExpVND)}</span>
-                  </div>
-                )}
-                {totalExpJPY > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
-                    <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>¥{totalExpJPY.toLocaleString('ja-JP')}</span>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
       </div>
 
-      {/* Right: filter + list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Category breakdown */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', alignSelf: 'start' }}>
+        <div style={{ fontSize: 12, color: 'var(--ink3)', marginBottom: 10 }}>Phân loại tháng {month}</div>
+        {Object.entries(catBreakdown).length === 0 ? (
+          <p style={{ fontSize: 12, color: 'var(--ink3)', fontStyle: 'italic' }}>Chưa có khoản chi</p>
+        ) : (
+          <>
+            {Object.entries(catBreakdown)
+              .sort((a, b) => b[1] - a[1])
+              .map(([cat, vnd]) => {
+                const pct = totalConvertedVND > 0 ? Math.round(vnd / totalConvertedVND * 100) : 0
+                const catKey = cat as ExpenseCategoryFinance
+                return (
+                  <div key={cat} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 12.5, color: 'var(--ink2)' }}>
+                        {EXPENSE_CATEGORY_ICONS[catKey]} {EXPENSE_CATEGORY_LABELS[catKey]}
+                      </span>
+                      <span className="font-mono" style={{ fontSize: 11.5, color: 'var(--ink3)' }}>
+                        {formatVND(vnd)} · {pct}%
+                      </span>
+                    </div>
+                    <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: 'var(--ink)', borderRadius: 99, width: `${pct}%`, opacity: 0.65 }} />
+                    </div>
+                  </div>
+                )
+              })}
+            <div style={{ paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {totalExpVND > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
+                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{formatVND(totalExpVND)}</span>
+                </div>
+              )}
+              {totalExpJPY > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
+                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>¥{totalExpJPY.toLocaleString('ja-JP')}</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
 
-        {/* Filters */}
+      {/* Filters + Expense table */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {(['all', 'VN', 'JP'] as const).map(c => (
             <button
@@ -370,87 +386,125 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
           ))}
         </div>
 
-        {/* Expense list */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 10 }}>
-            {filtered.length} khoản chi
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+            {sorted.length}{sorted.length !== expenses.length ? ` / ${expenses.length}` : ''} khoản chi
           </div>
-          {filtered.length === 0 ? (
-            <p style={{ fontSize: 12.5, color: 'var(--ink3)', fontStyle: 'italic' }}>Không có khoản chi nào.</p>
+          {sorted.length === 0 ? (
+            <p style={{ padding: '16px', fontSize: 12.5, color: 'var(--ink3)', fontStyle: 'italic' }}>
+              {expenses.length === 0 ? 'Chưa có khoản chi nào.' : 'Không có kết quả phù hợp.'}
+            </p>
           ) : (
-            filtered.map(e => {
-              const vnd = toVND(e.amount, e.currency, rates)
-              const isBeingEdited = editingId === e.id
-              return (
-                <div
-                  key={e.id}
-                  style={{
-                    display: 'flex', gap: 10, padding: '9px 0',
-                    borderBottom: '1px solid var(--border)', alignItems: 'center',
-                    background: isBeingEdited ? '#FFFBEB' : 'transparent',
-                    marginInline: isBeingEdited ? -16 : 0,
-                    paddingInline: isBeingEdited ? 16 : 0,
-                    borderRadius: isBeingEdited ? 8 : 0,
-                  }}
-                >
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>{EXPENSE_CATEGORY_ICONS[e.category]}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 500 }}>
-                      {EXPENSE_CATEGORY_LABELS[e.category]}
-                      <span style={{ fontWeight: 400, color: 'var(--ink3)', fontSize: 11.5, marginLeft: 6 }}>
-                        {e.country === 'JP' ? '🇯🇵' : '🇻🇳'}
-                      </span>
-                    </div>
-                    <div className="font-mono" style={{ fontSize: 11, color: 'var(--ink3)' }}>
-                      {e.spentDate}{e.note ? ` · ${e.note}` : ''}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: '#ef4444' }}>
-                      {e.currency === 'JPY'
-                        ? `¥${e.amount.toLocaleString('ja-JP')}`
-                        : formatVND(e.amount)}
-                    </div>
-                    {e.currency !== 'VND' && (
-                      <div className="font-mono" style={{ fontSize: 10.5, color: 'var(--ink3)' }}>
-                        ≈ {formatVND(vnd)}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Edit button */}
-                  <button
-                    onClick={() => isBeingEdited ? cancelEdit() : startEdit(e)}
-                    style={{
-                      background: isBeingEdited ? '#FEF3C7' : 'none',
-                      border: isBeingEdited ? '1px solid #F59E0B' : 'none',
-                      cursor: 'pointer', color: '#D97706',
-                      fontSize: 13, padding: '2px 6px', borderRadius: 6, flexShrink: 0,
-                    }}
-                    title={isBeingEdited ? 'Hủy sửa' : 'Sửa'}
-                  >
-                    {isBeingEdited ? '✕' : '✎'}
-                  </button>
-
-                  {/* Delete button */}
-                  <button
-                    onClick={() => handleDelete(e.id)}
-                    disabled={deletingId === e.id}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--ink3)', fontSize: 16, padding: '0 4px',
-                      opacity: deletingId === e.id ? 0.3 : 0.5, flexShrink: 0,
-                    }}
-                    title="Xóa"
-                  >
-                    ×
-                  </button>
-                </div>
-              )
-            })
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface2)' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>#</th>
+                    <SortTh label="Danh mục" sortKey="category" current={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortTh label="Nơi" sortKey="country" current={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortTh label="Ngày" sortKey="date" current={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>Tiền tệ</th>
+                    <SortTh label="Số tiền" sortKey="amount" current={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>≈ VND</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>Ghi chú</th>
+                    <th style={{ padding: '8px 12px', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((e, idx) => {
+                    const vnd = toVND(e.amount, e.currency, rates)
+                    const isBeingEdited = editingId === e.id
+                    return (
+                      <tr key={e.id} style={{ borderTop: '1px solid var(--border)', background: isBeingEdited ? '#FFFBEB' : 'transparent' }}>
+                        <td style={{ padding: '10px 12px', color: 'var(--ink3)', fontSize: 11 }}>{idx + 1}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 500, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+                          {EXPENSE_CATEGORY_ICONS[e.category]} {EXPENSE_CATEGORY_LABELS[e.category]}
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 16 }}>
+                          {e.country === 'JP' ? '🇯🇵' : '🇻🇳'}
+                        </td>
+                        <td className="font-mono" style={{ padding: '10px 12px', color: 'var(--ink3)', fontSize: 12, whiteSpace: 'nowrap' }}>{e.spentDate}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{
+                            fontFamily: 'monospace', fontSize: 11, fontWeight: 600,
+                            color: e.currency === 'VND' ? '#16a34a' : '#0ea5e9',
+                            background: e.currency === 'VND' ? '#f0fdf4' : '#e0f2fe',
+                            padding: '2px 7px', borderRadius: 99,
+                          }}>
+                            {e.currency}
+                          </span>
+                        </td>
+                        <td className="font-mono" style={{ padding: '10px 12px', fontWeight: 600, color: '#ef4444', fontSize: 14, whiteSpace: 'nowrap' }}>
+                          {e.currency === 'JPY'
+                            ? `¥${e.amount.toLocaleString('ja-JP')}`
+                            : formatVND(e.amount)}
+                        </td>
+                        <td className="font-mono" style={{ padding: '10px 12px', color: 'var(--ink3)', fontSize: 12 }}>
+                          {e.currency !== 'VND' ? `≈ ${formatVND(vnd)}` : '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--ink3)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {e.note ?? '—'}
+                        </td>
+                        <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
+                          <button
+                            onClick={() => isBeingEdited ? cancelEdit() : startEdit(e)}
+                            style={{
+                              background: isBeingEdited ? '#FEF3C7' : 'none',
+                              border: isBeingEdited ? '1px solid #F59E0B' : 'none',
+                              cursor: 'pointer', color: '#D97706',
+                              fontSize: 13, padding: '2px 6px', borderRadius: 6, marginRight: 4,
+                            }}
+                            title={isBeingEdited ? 'Hủy sửa' : 'Sửa'}
+                          >
+                            {isBeingEdited ? '✕' : '✎'}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(e.id)}
+                            disabled={deletingId === e.id}
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              color: 'var(--ink3)', fontSize: 16, padding: '0 4px',
+                              opacity: deletingId === e.id ? 0.3 : 0.5,
+                            }}
+                            title="Xóa"
+                          >
+                            ×
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+function SortTh({ label, sortKey: key, current, dir, onSort }: {
+  label: string
+  sortKey: string
+  current: string
+  dir: 'asc' | 'desc'
+  onSort: (key: any) => void
+}) {
+  const active = current === key
+  return (
+    <th
+      onClick={() => onSort(key)}
+      style={{
+        padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 500,
+        whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
+        color: active ? 'var(--ink)' : 'var(--ink3)',
+      }}
+    >
+      {label}{' '}
+      <span style={{ opacity: active ? 1 : 0.3, fontSize: 10 }}>
+        {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+      </span>
+    </th>
   )
 }

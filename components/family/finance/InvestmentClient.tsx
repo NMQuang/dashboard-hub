@@ -17,15 +17,17 @@ interface InvestmentClientProps {
 type InvCurrency = 'VND' | 'JPY' | 'USD'
 
 const TYPE_META: Record<InvestmentType, { label: string; icon: string }> = {
-  gold:    { label: 'Vàng',      icon: '🥇' },
-  crypto:  { label: 'Crypto',    icon: '🪙' },
-  savings: { label: 'Tiết kiệm', icon: '🏦' },
+  gold:    { label: 'Vàng',        icon: '🥇' },
+  crypto:  { label: 'Crypto',      icon: '🪙' },
+  savings: { label: 'Tiết kiệm',   icon: '🏦' },
+  stock:   { label: 'Chứng khoán', icon: '📈' },
 }
 
 const ASSET_SUGGESTIONS: Record<InvestmentType, string[]> = {
   gold:    ['SJC', 'PNJ', 'Bảo Tín Minh Châu', 'Nhẫn tròn'],
   crypto:  ['BTC', 'ETH', 'SOL', 'BNB', 'USDT', 'TON'],
   savings: ['VCB', 'MB Bank', 'Techcombank', 'BIDV', 'Tiết kiệm JPY'],
+  stock:   ['VIC', 'VHM', 'VNM', 'FPT', 'HPG', 'TCB', 'VCB', '7203.T', '9984.T'],
 }
 
 function invValue(inv: FamilyInvestment, rates: ForexRates): number {
@@ -57,6 +59,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   const goldInvestments    = investments.filter(i => i.type === 'gold')
   const cryptoInvestments  = investments.filter(i => i.type === 'crypto')
   const savingsInvestments = investments.filter(i => i.type === 'savings')
+  const stockInvestments   = investments.filter(i => i.type === 'stock')
 
   const portfolioValue = investments.reduce((s, i) => s + invValue(i, rates), 0)
   const portfolioCost  = investments.filter(i => i.type !== 'savings').reduce((s, inv) => {
@@ -82,7 +85,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   function handleTypeChange(t: InvestmentType) {
     setType(t)
     setAssetName('')
-    setCurrency(t === 'savings' ? 'VND' : t === 'gold' ? 'VND' : 'USD')
+    setCurrency(t === 'savings' ? 'VND' : t === 'gold' ? 'VND' : t === 'stock' ? 'VND' : 'USD')
   }
 
   async function handleAdd(evt: React.FormEvent) {
@@ -155,8 +158,9 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
           value={(portfolioPnL >= 0 ? '+' : '') + formatVND(portfolioPnL)}
           accent={portfolioPnL >= 0 ? '#10b981' : '#ef4444'}
         />
-        <PortfolioCard label="🥇 Vàng"  value={formatVND(goldInvestments.reduce((s, i)   => s + invValue(i, rates), 0))} accent="#d97706" />
-        <PortfolioCard label="🪙 Crypto" value={formatVND(cryptoInvestments.reduce((s, i)  => s + invValue(i, rates), 0))} accent="#3b82f6" />
+        <PortfolioCard label="🥇 Vàng"        value={formatVND(goldInvestments.reduce((s, i)   => s + invValue(i, rates), 0))} accent="#d97706" />
+        <PortfolioCard label="🪙 Crypto"       value={formatVND(cryptoInvestments.reduce((s, i)  => s + invValue(i, rates), 0))} accent="#3b82f6" />
+        <PortfolioCard label="📈 Chứng khoán"  value={formatVND(stockInvestments.reduce((s, i)   => s + invValue(i, rates), 0))} accent="#6366f1" />
         <SavingsCard savingsVND={savingsVND} savingsJPY={savingsJPY} />
       </div>
 
@@ -179,8 +183,8 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', maxWidth: 600 }}>
           <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Type */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(['gold', 'crypto', 'savings'] as InvestmentType[]).map(t => (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(['gold', 'crypto', 'savings', 'stock'] as InvestmentType[]).map(t => (
                 <button
                   key={t}
                   type="button"
@@ -223,6 +227,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
               placeholder={
                 type === 'gold'    ? 'Tên vàng (SJC, PNJ...)' :
                 type === 'crypto'  ? 'Symbol (BTC, ETH...)' :
+                type === 'stock'   ? 'Mã cổ phiếu (VIC, FPT, 7203.T...)' :
                 'Tên tài khoản / ngân hàng'
               }
               required
@@ -340,6 +345,15 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       <InvestmentSection
         title="🪙 Crypto"
         items={cryptoInvestments}
+        rates={rates}
+        onDelete={handleDelete}
+        deletingId={deletingId}
+      />
+
+      {/* Stock portfolio */}
+      <InvestmentSection
+        title="📈 Chứng khoán"
+        items={stockInvestments}
         rates={rates}
         onDelete={handleDelete}
         deletingId={deletingId}
