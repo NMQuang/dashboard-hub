@@ -1,140 +1,740 @@
 // app/learn/japanese/data/tips-data.ts
 
 export const TIPS: Record<string, string> = {
-  // T5
-  t1: `📌 Mở sách BJT quyển 聴解, đọc lời giới thiệu và xem 3 câu mẫu đầu. Mục tiêu hôm nay: hiểu format, không cần làm đúng.`,
-  t2: `📌 Mở sách BJT quyển 読解, đọc phần hướng dẫn. Chú ý: đề BJT Reading toàn email, báo cáo, thông báo nội bộ — không có văn học.`,
-  t3: `📌 Cách tổ chức Anki: tạo 3 deck riêng: (1) Tango/Hyougen, (2) Keigo/Bunshou, (3) Từ mới từ sách BJT. Học deck 1 trước.`,
-  t4: `📌 Tango/Hyougen: bắt đầu từ mục 1. Mỗi thẻ Anki nên có: mặt trước = 日本語, mặt sau = nghĩa + ví dụ câu ngắn. Đừng học quá 15 thẻ mới/ngày.`,
-  t5: `📌 Bite Size Japanese: tập 1–2 là self-intro, bắt đầu từ tập ~50 trở đi để có nội dung phong phú hơn. Nghe 1 lần không hiểu là bình thường.`,
-  t6: `📌 Quy trình nghe Bite Size: (1) Nghe toàn tập không dừng, (2) Ghi những gì nghe được, (3) Nghe lại, dừng chỗ không hiểu, (4) Shadowing 1 đoạn 30 giây.`,
-  t7: `📌 Tango/Hyougen: ưu tiên học nhóm từ về họp trước: 議題、議事録、確認事項、宿題、持ち帰る — những từ này xuất hiện nhiều nhất trong BJT.`,
-  t8: `📌 Keigo/Bunshou: học theo bảng 3 cột — 普通形 / 丁寧語 / 尊敬語または謙譲語. Ví dụ: 言う → おっしゃる / 申す. Học theo cặp, không học đơn lẻ.`,
-  t9: `📌 Sau khi nghe Bite Size, ghi lại 3 từ/cụm mới vào Anki deck "Từ mới từ podcast". Đây là nguồn từ vựng tự nhiên nhất, hơn học từ list thuần túy.`,
-  t10: `📌 Tango/Hyougen: nhóm từ email quan trọng: お世話になっております、ご確認のほど、取り急ぎ、ご対応よろしくお願いします. Ghi vào Anki với ví dụ email thật.`,
-  t11: `📌 Dictation technique: nghe 1 câu → dừng → ghi lại tiếng Nhật → nghe lại → sửa. Chỉ cần 5 câu/ngày. Tập trung vào số liệu: 3月15日、来週の火曜日、3割増し.`,
-  t12: `📌 Tango/Hyougen: nhóm từ báo cáo: 進捗、完了、遅延、原因、対策、挽回策、納期. Những từ này chiếm ~20% điểm BJT listening phần báo cáo tiến độ.`,
-  t13: `📌 Bite Size: tập chủ đề công việc/xã hội Nhật (仕事、会社、生活) đặc biệt hữu ích cho BrSE. Ghi chú cách người Nhật nói về deadlines, expectations.`,
-  t14: `📌 Sách BJT quyển 聴解: làm thử bài số 1, không tính giờ. Mục tiêu: quen với tốc độ nói và format câu hỏi, không phải điểm số.`,
-  t15: `📌 Bite Size shadowing tip: chọn đoạn 30–45 giây, nghe 3 lần trước khi shadowing. Khi shadowing, focus vào rhythm và intonation, không cần hiểu từng từ.`,
-  // T6
-  u1: `📌 Tango/Hyougen: nhóm từ schedule/negotiation: 調整する、折り合い、譲歩、合意、条件、締め切り、期限. Học kèm ví dụ: 納期を調整していただけますか.`,
-  u2: `📌 Sách BJT 聴解: làm bài 2–3. Chú ý: câu hỏi dạng "次に何をしますか" — đáp án thường nằm ở câu cuối cùng của hội thoại, không phải đầu.`,
-  u3: `📌 Dictation nâng cao: nghe và ghi lại tên người + chức vụ. Người Nhật hay nói: 田中部長、鈴木課長、山田さん — dễ nhầm trong phòng thi.`,
-  u4: `📌 Khi đọc tài liệu spec IT, áp dụng kỹ thuật scanning: đọc tiêu đề → đọc câu đầu mỗi đoạn → tìm số liệu/ngày tháng → mới đọc chi tiết.`,
-  u5: `📌 Keigo/Bunshou: 承知しました (cấp dưới → cấp trên, formal) vs わかりました (neutral) vs かしこまりました (rất formal, dùng với khách hàng). BJT hay test sự khác biệt này.`,
-  u6: `📌 Tango/Hyougen: nhóm IT quan trọng nhất cho BJT: 不具合、バグ、修正、対応、リリース、本番環境、テスト、仕様、要件定義、レビュー依頼.`,
-  u7: `📌 Bite Size: tập nghe thuyết trình monologue — ghi bullet points sau khi nghe, không trong lúc nghe. BJT test khả năng tóm tắt ý chính, không phải ghi chép từng từ.`,
-  u8: `📌 Sách BJT 読解: làm bài đọc email đầu tiên. Kỹ thuật: đọc câu hỏi TRƯỚC → scan tìm keyword trong bài → đọc đoạn chứa keyword → chọn đáp án.`,
-  u9: `📌 BJT Listening tip: 3 dạng câu hỏi hay ra nhất: (1) 次は何をしますか, (2) 問題は何ですか, (3) 話し手の意図は何ですか. Học cách nhận dạng từng dạng.`,
-  u10: `📌 Âm nối (連濁) trong Bite Size: ví dụ 手紙 = てがみ (không phải てかみ), 組み合わせ = くみあわせ. Nghe thấy âm nối = nghe được như người Nhật thật sự.`,
-  u11: `📌 Tango/Hyougen: nhóm nhân sự & tổ chức: 部長、課長、係長、担当者、上司、部下、同僚、取引先、顧客. BJT thường hỏi về relationship giữa các nhân vật.`,
-  u12: `📌 Nghe cuộc họp 10 phút: ghi theo format 議事録 thật: (1) 日時・参加者, (2) 議題, (3) 決定事項, (4) 宿題（誰が・何を・いつまでに）. Tập này quyết định điểm BJT.`,
-  u13: `📌 BJT Reading: 3 loại email hay ra: (1) Yêu cầu hành động (〜していただけますか), (2) Thông báo thay đổi, (3) Báo cáo vấn đề. Nhận dạng loại → biết tìm gì.`,
-  u14: `📌 Keigo/Bunshou: もし〜なら/たら (điều kiện giả định), 〜にもかかわらず (mặc dù), 〜をふまえて (dựa trên). Những mẫu này xuất hiện nhiều trong email business.`,
-  u15: `📌 Dictation số liệu tài chính: 売上高、前年比、増減率、目標達成率. Người Nhật nói số rất nhanh trong meeting — luyện ghi: 3割2分増 = tăng 32%.`,
-  u16: `📌 Mock Test 1 checklist: bút chì + tẩy, nước uống, đồng hồ. Listening: đọc câu hỏi trong 30 giây intro. Reading: skip câu khó, làm câu dễ trước.`,
-  u17: `📌 Sau Mock 1: đừng xem điểm trước — phân tích từng câu sai trước. Phân loại: (A) không biết từ, (B) nghe không kịp, (C) hiểu nhầm context. Mỗi loại có cách fix khác nhau.`,
-  // T7
-  v1: `📌 Bite Size: từ tháng 7 tăng lên 1.1x speed. Nếu kênh YouTube không có speed control tốt, dùng Spotify hoặc podcast app để điều chỉnh.`,
-  v2: `📌 BJT 聴解 tip: dạng "次は何をすべきか" — nghe đặc biệt câu cuối của hội thoại. 80% trường hợp đáp án nằm ở đây. Đừng chọn đáp án sớm.`,
-  v3: `📌 Tango/Hyougen: nhóm hợp đồng: 契約、条項、締結、解約、違約金、納品、検収、支払い条件. Đây là từ BJT hay ra trong phần Reading dài.`,
-  v4: `📌 Khi đọc hợp đồng IT: chú ý 3 phần quan trọng nhất: (1) 納期と条件, (2) 支払い方法, (3) 解約条件. BJT Reading thường hỏi về 3 phần này.`,
-  v5: `📌 Attitude words trong Bite Size — cần nhận ra: でも/ただ (nhưng/tuy nhiên → có vấn đề), まあ (miễn cưỡng → không thực sự đồng ý), 一応 (tạm thời → chưa chắc chắn).`,
-  v6: `📌 BJT 聴解: dạng hỏi thái độ — không nghe nội dung, nghe TONE. Nếu nói 確認します nhưng giọng do dự → có vấn đề. Bite Size giúp luyện nhận dạng tone tự nhiên.`,
-  v7: `📌 Dictation số liệu nâng cao: nghe và ghi: 先月比15%増、3月末納期、午後3時締め切り. Lỗi phổ biến: nhầm 来週 (tuần sau) với 先週 (tuần trước).`,
-  v8: `📌 Sách BJT 読解: làm bài báo cáo tháng. Kỹ thuật đọc bảng số liệu: (1) Đọc tiêu đề bảng, (2) Đọc cột/hàng header, (3) Tìm số câu hỏi hỏi đến.`,
-  v9: `📌 Tango/Hyougen: nhóm phân tích & báo cáo: 分析、傾向、要因、課題、改善策、施策、検討、提案. Xuất hiện nhiều trong phần Reading dài của BJT.`,
-  v10: `📌 Email báo cáo trễ hạn — mẫu chuẩn: 納期遅延のご連絡 → お詫び → 原因説明 → 対策・新しい納期 → 今後の対応. Học mẫu này = tăng điểm Writing thật + hiểu BJT Reading.`,
-  v11: `📌 Ghi 議事録: dùng template: 日時、出席者、議題、決定事項、保留事項、次回までのアクション（担当者・期日）. Luyện viết nhanh, không cần hoàn hảo.`,
-  v12: `📌 BJT 読解: dạng email + thông báo — đọc Subject line và câu đầu tiên → 80% đã biết mục đích. Câu hỏi thường hỏi: このメールの目的は何ですか.`,
-  v13: `📌 Tango/Hyougen: nhóm sự cố & khiếu nại: クレーム、苦情、対応、謝罪、補償、再発防止、品質管理. BrSE hay gặp tình huống này với khách hàng Nhật.`,
-  v14: `📌 Shadowing 1.15x: nếu thấy khó, không phải do tai yếu — do input chưa đủ. Tăng số lần nghe trước khi shadowing (5 lần thay vì 3 lần).`,
-  v15: `📌 ていただく vs てもらう: ていただく = nhận ơn từ người trên/ngoài (謙譲語). てもらう = nhận ơn từ người ngang/dưới. BJT test cái này trong keigo section.`,
-  v16: `📌 Làm đề Listening timed: đặt timer đúng 50 phút. Nếu 1 câu không nghe kịp → đoán ngay, không nghe lại, chuyển câu tiếp. Đây là kỹ năng quan trọng nhất trong phòng thi.`,
-  v17: `📌 Review lỗi Listening: nghe lại câu sai không xem script, ghi những gì nghe được. Sau đó mới xem script. So sánh = biết mình miss ở đâu.`,
-  v18: `📌 Làm đề Reading timed: phân bổ thời gian: câu ngắn (email, thông báo) = 2–3 phút/câu. Câu dài (bài báo, báo cáo) = 5–6 phút/câu. Tổng 70 phút = 40 câu.`,
-  // T8
-  w1: `📌 Dạng hỏi thông tin cụ thể — 3 loại: (1) Số liệu/ngày tháng, (2) Tên người/chức vụ, (3) Địa điểm/phòng họp. Ghi ngay khi nghe, không đợi câu hỏi.`,
-  w2: `📌 Tango/Hyougen: nhóm offshore/outsourcing: オフショア、委託、外注、協力会社、SES、常駐、プロパー、請負. BrSE hay gặp context này.`,
-  w3: `📌 Bảng kế hoạch vs thực tế (計画対実績): chú ý từ: 予定、実績、差異、乖離、達成率、未達. BJT Reading hay dùng bảng này.`,
-  w4: `📌 Keigo/Bunshou: bài tập chuyển đổi — cho câu thường, viết lại bằng 尊敬語 và 謙譲語. Ví dụ: 見る → ご覧になる / 拝見する. Làm 10 câu/ngày.`,
-  w5: `📌 Shadowing 1.2x: nếu Bite Size bắt đầu cảm thấy "dễ" ở tốc độ này → bạn đang tiến bộ. Thử chuyển sang nghe không xem script lần đầu.`,
-  w6: `📌 Điện thoại business — cụm từ quan trọng: ただいま席を外しております、折り返しお電話いたします、〜の件でお電話しました. BJT hay ra scenario điện thoại.`,
-  w7: `📌 Dictation 5 phút: mục tiêu cuối tháng 8 — ghi được 60–70% nội dung. Nếu chỉ 30–40% → cần tăng tốc nghe Bite Size và giảm bớt tốc độ dictation về 0.9x.`,
-  w8: `📌 Đọc bài báo kinh doanh: câu hỏi hay ra là "筆者が最も言いたいこと" — đáp án thường ở đoạn cuối bài, không phải đầu. Đây là trap phổ biến nhất.`,
-  w9: `📌 Tango/Hyougen: nhóm quản lý rủi ro: リスク、懸念事項、影響範囲、対応策、エスカレーション、優先度. BrSE cần biết để báo cáo rủi ro cho khách hàng.`,
-  w10: `📌 Sách BJT: làm 15 câu tổng hợp không phân loại. Mục tiêu: luyện khả năng chuyển đổi nhanh giữa các dạng câu hỏi — kỹ năng quan trọng khi thi thật.`,
-  w11: `📌 Lỗi phổ biến cần tránh: (1) Đọc lại câu hỏi trong lúc nghe → miss nội dung. (2) Dùng kiến thức ngoài đời để đoán → sai. Chỉ dùng thông tin nghe được.`,
-  w12: `📌 Q&A trong thuyết trình: phần này khó nhất vì không có script sẵn. Chú ý câu mở đầu Q: ご質問はありますか / ちょっとよろしいですか. Câu trả lời thường có đáp án.`,
-  w13: `📌 Reading speed drill: đặt timer 3 phút → đọc 1 email dài → trả lời câu hỏi. Không đọc lại. Mục tiêu: tăng tốc độ xử lý thông tin, không phải hiểu 100%.`,
-  w14: `📌 Từ hay quên nhất trong Tango/Hyougen: 検討する (đang xem xét — chưa quyết), 対応する (xử lý — chưa nói cách nào), 確認する (xác nhận — chưa xong). Biết sắc thái này = không hiểu lầm khách Nhật.`,
-  w15: `📌 議事録 thật: sau cuộc họp với khách hàng, thử viết lại bằng tiếng Nhật trong 10 phút. Gửi cho teammate check không? Nếu được, đây là luyện tập tốt nhất.`,
-  w16: `📌 Sprint 3 ngày trước Mock 2: đừng học mới. Chỉ ôn: (1) Anki deck toàn bộ, (2) Đọc lại ghi chú lỗi từ Mock 1, (3) Nghe lại 3–5 bài Bite Size quen thuộc.`,
-  w17: `📌 Mock 2 strategy: Listening — không được nghe lại băng. Nếu miss → đoán ngay. Reading — skip câu dài trước, làm câu ngắn trước, quay lại câu dài sau.`,
-  // T9
-  x1: `📌 Phân tích lỗi Mock 1 & 2: nếu Listening sai nhiều dạng "số liệu/ngày" → tăng dictation. Nếu sai nhiều dạng "ý kiến/thái độ" → tăng nghe Bite Size và chú ý attitude words.`,
-  x2: `📌 Tango/Hyougen: đến T9 nên review lại toàn bộ 1000 từ bằng Anki. Set "due: overdue" trong Anki để xem những thẻ lâu không ôn.`,
-  x3: `📌 Scan reading drill: đọc câu hỏi → gạch chân keyword → scan tìm keyword trong bài → chỉ đọc đoạn đó. Luyện kỹ năng này giúp tiết kiệm 30% thời gian làm bài.`,
-  x4: `📌 Shadowing native speed: nếu Bite Size ở 1x bắt đầu nghe rõ hầu hết → thử các podcast khó hơn: ゆる言語学ラジオ hoặc NHKラジオニュース (thật sự native speed).`,
-  x5: `📌 Keigo/Bunshou: 300 từ — đến T9 nên thuộc hết. Nếu còn thiếu: ưu tiên nhóm 謙譲語 vì BJT test cái này nhiều hơn 尊敬語.`,
-  x6: `📌 So sánh điểm Listening: nếu điểm không tăng dù đã luyện nhiều → vấn đề thường là "nghe được nhưng xử lý không kịp". Fix: tăng tốc độ nghe lên 1.3x thường xuyên hơn.`,
-  x7: `📌 Nghe cuộc họp thật (recording hoặc recall): ghi lại theo format 議事録. Đây là tài liệu luyện thi tốt nhất vì 100% relevant với BJT business context.`,
-  x8: `📌 Sách BJT 読解: bài báo dài (200–300 chữ) — phân bổ thời gian: 1 phút đọc câu hỏi, 4 phút scan + đọc đoạn liên quan, 1 phút chọn đáp án.`,
-  x9: `📌 Tango/Hyougen: nhóm ngân sách & tài chính: 予算、決算、収支、黒字、赤字、コスト削減、費用対効果. Nhóm này hay xuất hiện trong BJT Reading phần bài báo.`,
-  x10: `📌 Time management trong phòng thi: Listening 50 phút (45 câu = ~67 giây/câu). Reading 70 phút (40 câu = ~105 giây/câu). Nếu 1 câu quá 2 phút → đoán và đi tiếp.`,
-  x11: `📌 Mock 3 — mục tiêu 430–460: nếu đạt → đúng track. Nếu dưới 400 → cần thêm 1 tháng ôn từ vựng và giảm số mock. Nếu trên 460 → đẩy mạnh mock T10–T11.`,
-  x12: `📌 Phân tích Mock 3: vẽ bảng: dạng câu | số câu | số sai | tỷ lệ. Tìm dạng có tỷ lệ sai cao nhất → đó là điểm cần ôn nhất T10.`,
-  x13: `📌 Nghe lại Listening sai: quy trình: (1) Nghe không script, (2) Ghi đáp án mới, (3) Nghe lại với script, (4) Highlight từ/câu không nhận ra được. Đây là nguồn từ vựng quý.`,
-  x14: `📌 Anki 500 từ review: set Anki về "review only" mode. Mục tiêu: 0 thẻ overdue trước khi thi. Mỗi ngày 30–40 phút review là đủ.`,
-  x15: `📌 Sách BJT: chọn 20 câu Reading từ các bài đã làm sai → làm lại không xem đáp án → so sánh. Nếu làm đúng lần 2 = đã hiểu. Nếu vẫn sai = cần ôn thêm dạng này.`,
-  // T10
-  y1: `📌 Mock 4: bắt đầu mô phỏng điều kiện thi thật hoàn toàn — tắt điện thoại, không pause, không tra từ. Sau đó mới phân tích.`,
-  y2: `📌 Kỹ thuật review Listening: nghe lại câu sai ở tốc độ 0.85x → ghi lại được chưa? Nếu được = vấn đề là tốc độ xử lý. Nếu vẫn không → vấn đề là từ vựng/âm thanh.`,
-  y3: `📌 Vocabulary gap filler: dùng Anki "leech" (thẻ sai nhiều nhất) → đây là danh sách ưu tiên ôn. Xóa thẻ quá khó, thêm ví dụ mới dễ nhớ hơn.`,
-  y4: `📌 Reading scan drill: đặt timer 90 giây/câu. Nếu không xong → đoán và đi. Không được phép ở lại 1 câu quá 2 phút trong phòng thi.`,
-  y5: `📌 Bite Size ở T10: mục tiêu đã chuyển — nghe để maintain fluency, không phải để học mới. 15 phút/ngày, không cần ghi chú nhiều.`,
-  y6: `📌 Mock 5: dùng đề từ quyển sách BJT còn lại (quyển 2 nếu có). Nếu hết đề → tìm đề cũ BJT trên mạng (search: ビジネス日本語能力テスト 過去問).`,
-  y7: `📌 Pattern sai lặp lại: nếu vẫn sai dạng "次にすること" → trước khi nghe, đọc câu hỏi và nhủ bản thân "tôi cần nghe hành động ở CUỐI hội thoại".`,
-  y8: `📌 Business vocabulary nâng cao: 的確な判断、迅速な対応、適切な措置、合理的な提案. Những cụm này xuất hiện trong BJT Reading phần bình luận/đánh giá.`,
-  y9: `📌 議事録 nâng cao: thêm phần "保留事項" (vấn đề chưa quyết) và "リスク" vào format. Khách hàng Nhật đánh giá cao khi BrSE viết đủ các mục này.`,
-  y10: `📌 Câu khó trong Listening: nếu không nghe kịp câu đầu → không hoảng, tiếp tục nghe. Thường câu đầu là context, câu hỏi hỏi về nội dung câu sau.`,
-  y11: `📌 Listening ôn tổng hợp: làm lại tất cả câu sai từ Mock 1–5. Nếu làm đúng lần này = đã hiểu pattern. Nếu vẫn sai = cần nghe thêm loại hội thoại đó.`,
-  y12: `📌 Reading 40 câu không xem câu hỏi trước: luyện khả năng đọc chủ động. Sau khi đọc xong mới xem câu hỏi → trả lời. Kỹ năng này giúp đọc hiểu thật sự, không chỉ scan.`,
-  y13: `📌 Anki 600 từ review: nếu retention rate dưới 80% → giảm số thẻ mới, tăng review. Mục tiêu tháng 10: không có thẻ nào sai quá 3 lần.`,
-  y14: `📌 Dictation 8 phút: đây là mức độ cần thiết cho BJT Listening section dài nhất. Nếu tay viết không kịp → thử gõ bàn phím (nếu thi trên máy).`,
-  y15: `📌 Danh sách lỗi cá nhân: mỗi người có pattern sai khác nhau. Viết ra 5 lỗi hay mắc nhất → dán lên màn hình → nhìn mỗi ngày trước khi học.`,
-  // T11
-  z1: `📌 Mock 7: nếu điểm >= 460 → đúng track cho mục tiêu 480+. Nếu dưới 450 → tăng mock lên 2 lần/tuần, giảm học mới.`,
-  z2: `📌 Dictation T11: thử dictation câu dài (複文) — ví dụ: "先月の売上が目標比20%増加したため、今月の予算を見直す必要があります". Đây là level câu hỏi thi thật.`,
-  z3: `📌 Bite Size T11: chỉ nghe các tập về chủ đề xã hội/công việc để maintain business sense. Các tập về ẩm thực hay travel ít liên quan đến BJT.`,
-  z4: `📌 Đọc câu hỏi trước khi nghe: trong phòng thi có ~30 giây intro + instruction. Dùng thời gian này đọc câu hỏi, gạch chân keyword cần nghe.`,
-  z5: `📌 Câu khó Listening — chiến lược không hoảng: nếu hoàn toàn không hiểu → nhìn đáp án, loại trừ 1–2 đáp án sai rõ ràng → đoán trong số còn lại. Không bỏ trống.`,
-  z6: `📌 Mock 8: so sánh điểm với Mock đầu tiên (Mock 1 tháng 6). Nếu tăng 80–120 điểm → tiến độ tốt. Nếu tăng dưới 60 điểm → cần tập trung ôn điểm yếu chủ đạo.`,
-  z7: `📌 Phân tích tổng: vẽ biểu đồ điểm Mock 1→8. Nếu đường thẳng đi lên đều → tốt. Nếu plateau → thường do từ vựng không đủ hoặc listening speed chưa bắt kịp.`,
-  z8: `📌 3 dạng Listening hay sai nhất: nhìn lại toàn bộ phân tích lỗi. Fix dạng sai nhiều nhất trong 2 tuần cuối T11 — đừng ôn đều, ôn tập trung.`,
-  z9: `📌 Reading 60 phút timed: nếu hoàn thành đúng giờ với > 70% đúng → sẵn sàng cho thi thật. Nếu chưa → luyện thêm speed, không cần học thêm nội dung mới.`,
-  z10: `📌 Anki 700 từ: lúc này nên có ~1300 từ học + ~từ mới từ sách BJT. Mục tiêu: retention 85%+ trước khi thi.`,
-  z11: `📌 Mock 9: làm trong điều kiện thi thật nhất có thể — cùng giờ sáng, ngồi bàn, không điện thoại. Tập làm quen với tâm lý thi.`,
-  z12: `📌 Sprint ôn không học mới: nguyên tắc: não cần thời gian consolidate. Học mới trong tuần cuối → dễ confuse với kiến thức cũ. Chỉ ôn và củng cố.`,
-  z13: `📌 NHK Web Easy: thay thế Bite Size 1–2 ngày để nghe giọng khác (news style vs casual). BJT listening có cả 2 style này.`,
-  z14: `📌 Đọc câu hỏi trước drill: chỉ có 30 giây. Luyện: nhìn 4 đáp án trong 10 giây → đoán câu hỏi hỏi gì → chuẩn bị nghe đúng nội dung đó.`,
-  z15: `📌 Keigo review cuối: bảng 5 động từ quan trọng nhất — いる→いらっしゃる/おる, する→なさる/いたす, 言う→おっしゃる/申す, 食べる→召し上がる/いただく, もらう→いただく/頂戴する.`,
-  z16: `📌 Mock 10 target > 460: nếu đạt → T12 chỉ cần maintain và polish. Nếu 440–459 → vẫn kịp, tăng tốc T12. Nếu dưới 440 → cần đánh giá lại strategy.`,
-  // T12
-  a1: `📌 Mock 11 T12: dùng đề chưa làm (nếu còn). Nếu hết đề sách → tìm đề mẫu online hoặc làm lại đề cũ nhưng không xem đáp án cũ.`,
-  a2: `📌 Nguyên tắc cuối khóa: không học từ mới, không ôn nội dung lạ. Chỉ củng cố những gì đã biết. Não cần ổn định trước thi.`,
-  a3: `📌 Nghe cuộc họp thật T12: lần này không ghi chú — chỉ nghe và kiểm tra xem mình hiểu bao nhiêu % so với T5. Đây là thước đo progress thực tế nhất.`,
-  a4: `📌 Anki T12: giảm còn 15 thẻ/ngày. Chỉ review, không thêm mới. Tập trung vào thẻ "leech" còn lại.`,
-  a5: `📌 Mock 12: đây là mock cuối cùng. Nếu đạt 470+ → tự tin vào phòng thi. Nếu 450–469 → vẫn trong range đạt J2 với một chút may mắn về đề. Đừng panic.`,
-  a6: `📌 Tuần trước thi: nghe nhẹ nhàng = maintain, không phải study. Bite Size 1 tập/ngày, không ghi chú, chỉ nghe để tai không "nguội".`,
-  a7: `📌 Anki tuần cuối: 15 thẻ/ngày là đủ. Không cần ôn hết — não không thể xử lý hết 1300 từ trong 1 tuần. Tin vào quá trình 8 tháng đã học.`,
-  a8: `📌 Chiến lược làm bài — đọc lại lần cuối: Listening: đọc câu hỏi 30 giây đầu, ghi số liệu ngay khi nghe, không bỏ trống. Reading: scan câu hỏi → locate → đọc đoạn đó.`,
-  a9: `📌 Ngủ đủ > ôn thêm 1 tiếng. Nghiên cứu về memory consolidation cho thấy: ngủ đủ giấc 2 đêm trước thi quan trọng hơn ôn thêm. Tin cơ thể của bạn.`,
-  a10: `📌 Ngày trước thi: nếu thấy lo → đọc lại danh sách điểm đã tiến bộ (Mock 1 vs Mock cuối). Bạn đã học 8 tháng, không phải vào thi tay không.`,
-  a11: `📌 Buổi sáng ngày thi: ăn sáng đủ chất (không bỏ bữa), mang nước, đến sớm 20 phút để quen không gian phòng thi. Không ôn bài trong phòng chờ.`,
-  a12: `📌 Listening ngày thi: 30 giây đầu mỗi bài = đọc câu hỏi. Khi băng chạy = chỉ nghe, đừng đọc lại câu hỏi. Ghi số liệu/tên bằng ký hiệu tắt nếu cần.`,
-  a13: `📌 Reading ngày thi: làm câu ngắn trước (email, thông báo = 2–3 phút). Để câu dài (bài báo = 5–6 phút) về sau. Không bao giờ để trống — đoán nếu hết giờ.`,
-  a14: `📌 Câu không biết = đoán ngay, không bỏ. Xác suất đoán đúng 1/4 = 25%. Điểm bỏ trống = 0%. Luôn đoán tốt hơn bỏ trống.`,
-  a15: `📌 Sau thi: ghi lại những câu nhớ được đã làm (nếu muốn). Kết quả thường có sau 1–2 tháng. Dù kết quả thế nào, 8 tháng học đã nâng trình độ thực tế của bạn rõ rệt.`,
+
+  // ── T5 · Tuần 1 (16–22/5) ─────────────────────────────────────────────────
+  t1: `📌 BJT 聴解 có 3 dạng câu hỏi chính — hãy ghi rõ từng dạng:
+① 次は何をしますか / 次にすべきことは → hỏi hành động tiếp theo (đáp án thường ở câu cuối hội thoại)
+② ～はどれですか / 内容と合っているのは → hỏi thông tin cụ thể (số liệu, ngày, tên người)
+③ 話し手はどう思っていますか → hỏi thái độ/ý kiến (nghe tone, không chỉ nội dung)
+Nhận ra dạng câu = biết mình cần nghe cái gì.`,
+
+  t2: `📌 Dạng hành động (次は何をしますか) — mẹo quan trọng nhất:
+• Đáp án hầu như luôn nằm ở câu CUỐI cùng của hội thoại, không phải đầu
+• Nghe từ khóa quyết định: じゃあ、それでは、では → câu sau là hành động cần làm
+• Bẫy thường gặp: hội thoại nhắc đến nhiều hành động nhưng chỉ 1 cái là "tiếp theo"
+• Cách luyện: sau khi nghe, tự nhắc lại câu cuối trước khi chọn đáp án`,
+
+  t3: `📌 Quy trình review câu sai — đây là bước quan trọng nhất, đừng bỏ qua:
+① Nghe lại câu sai KHÔNG xem script → ghi lại đáp án mới
+② So sánh với đáp án đúng — tại sao sai?
+③ Nghe lần 2 CÓ script — highlight những từ/cụm không nhận ra được
+④ Đọc to đoạn đó 2 lần → tai sẽ nhận ra lần sau
+Không làm bước này = luyện mà không cải thiện.`,
+
+  t4: `📌 Làm mini mock 15 câu hỗn hợp — cách phân tích sau khi làm:
+• Không chỉ xem điểm — vẽ bảng: Dạng câu | Số câu | Số sai
+• Dạng nào sai nhiều nhất = dạng cần drill tuần sau
+• Nếu sai dạng ① (hành động) → chú ý câu cuối hội thoại hơn
+• Nếu sai dạng ② (thông tin) → luyện ghi số liệu nhanh hơn
+• Nếu sai dạng ③ (thái độ) → nghe attitude words nhiều hơn`,
+
+  // ── T5 · Tuần 2 (23–31/5) ────────────────────────────────────────────────
+  t5: `📌 Dạng thái độ (話し手の気持ち/意図) — attitude words cần nhận ra ngay:
+• でも / ただ / けど → "nhưng mà" → có vấn đề, không hoàn toàn đồng ý
+• まあ / 一応 → "tạm thì" → miễn cưỡng, chưa chắc chắn
+• そうですね… (kéo dài) → do dự, không thoải mái
+• そうですね！(nhanh và chắc) → đồng ý thật sự
+Nghe TONE trước, nội dung sau — đây là kỹ năng khác biệt N2 và N3.`,
+
+  t6: `📌 Dạng thông tin cụ thể — kỹ thuật ghi nhanh khi nghe:
+• Tạo ký hiệu tắt: 3/15 = 3月15日, ↑20% = 20%増, ¥500万 = 500万円
+• Ghi ngay khi nghe, không đợi câu hỏi — số liệu đến 1 lần không lặp lại
+• Cặp số hay bị nhầm: 来週(tuần sau) ↔ 先週(tuần trước), 先月 ↔ 来月
+• Tập trung khi nghe: 日付、数字、人名、場所 → đây là 4 loại thông tin BJT hay hỏi`,
+
+  t7: `📌 Cuối tuần 2 T5 — tổng kết nhanh:
+• So sánh tỷ lệ đúng từng dạng giữa 2 tuần → dạng nào cải thiện?
+• Đọc lại toàn bộ câu sai đã note — có pattern lặp lại không?
+• Ghi 1 điều học được quan trọng nhất vào notebook → T6 sẽ ôn lại điều này`,
+
+  t8: `📌 Làm 1 bộ đề Listening timed 50 phút — quy trình chuẩn:
+① Đặt timer đúng 50 phút, tắt điện thoại, không pause
+② Trong lúc làm: nếu miss 1 câu → đoán ngay, không nghe lại, đi câu tiếp
+③ Sau khi làm xong mới phân tích — đừng xem đáp án trong lúc làm
+④ Ghi điểm vào notebook — đây là baseline score thật sự của tháng 5`,
+
+  // ── T6 · Tuần 1 (1–7/6) ──────────────────────────────────────────────────
+  u1: `📌 Drill dạng hành động nâng cao — 2 kỹ thuật thực chiến:
+① Đọc câu hỏi TRƯỚC khi nghe (dùng 30 giây intro/instruction): biết mình cần nghe gì
+② Khi nghe: tập trung câu cuối hội thoại — đặc biệt sau じゃあ / それでは / では
+• Bẫy hay gặp: nhân vật A đề xuất hành động nhưng B bác bỏ → đáp án là hành động B đồng ý sau cùng`,
+
+  u2: `📌 Điện thoại business — 5 cụm cần nhận ra tự động:
+① ただいま席を外しております → người đó không có mặt
+② 折り返しお電話いたします → sẽ gọi lại
+③ ～の件でお電話しました → lý do gọi điện (đây thường là keyword câu hỏi)
+④ 伝言をお願いできますか → nhờ nhắn lại
+⑤ 確認してご連絡いたします → cần xác nhận rồi mới trả lời
+BJT hay ra scenario: ai gọi / vì sao / ai cần làm gì tiếp theo.`,
+
+  u3: `📌 Review câu sai tuần này — chú ý pattern, không chỉ từng câu:
+• Nếu sai nhiều câu điện thoại → vấn đề thường là không nhận ra ai đang nói với ai
+• Ghi lại: câu này sai vì lý do gì (A: không biết từ / B: nghe không kịp / C: hiểu nhầm context)?
+• Lý do B (nghe không kịp) = cần luyện tốc độ xử lý, không phải học thêm từ`,
+
+  u4: `📌 Mini mock 20 câu — lần này tăng thêm 1 bước phân tích:
+• Sau khi xem đáp án, với mỗi câu sai: viết lại đúng 1 câu giải thích lý do sai
+• Ví dụ: "Câu 7 — sai vì chọn hành động A nhưng B đã bác bỏ A ở câu cuối"
+• Đây là cách biến lỗi thành học → không lặp lại lỗi cũ`,
+
+  // ── T6 · Tuần 2 (8–14/6) ─────────────────────────────────────────────────
+  u5: `📌 Dạng thái độ nâng cao — nghe TONE là chìa khóa:
+• Cùng nội dung nhưng giọng khác nhau = ý nghĩa hoàn toàn khác
+• そうですね… (ngập ngừng) → không thoải mái, đang né tránh
+• まあ、いいんじゃないですか (thiếu nhiệt tình) → miễn cưỡng đồng ý
+• ぜひ！/ もちろんです！(nhanh, chắc) → thực sự muốn
+• Luyện: sau mỗi câu nghe, tự hỏi "người này THỰC SỰ cảm thấy thế nào?"`,
+
+  u6: `📌 Làm câu hỗn hợp không phân loại — đây là cách luyện thực chiến nhất:
+• Trong phòng thi không ai nói trước "câu này là dạng gì" — phải tự nhận dạng
+• Quy trình: đọc câu hỏi 30s → nhận dạng dạng → chuẩn bị nghe thông tin tương ứng
+• Nếu đọc câu hỏi mà không nhận ra dạng → đây là điểm cần luyện thêm`,
+
+  u7: `📌 Sau khi nghe lại câu sai — ghi pattern, không chỉ ghi từ:
+• Ví dụ pattern: "Tôi hay miss số liệu khi câu trước đó có nhiều người nói chêm vào"
+• Pattern = chìa khóa để fix — biết pattern → biết cách chuẩn bị trước
+• Mục tiêu cuối T6: có danh sách 3–5 pattern sai cá nhân của mình`,
+
+  u8: `📌 Drill lại câu sai T6W1+W2 — đây là cách học hiệu quả nhất:
+• Không phải học từ mới — mà là học từ lỗi cũ
+• Nghe lại câu đã sai mà KHÔNG nhìn đáp án → thử làm lại
+• Nếu làm đúng lần 2 = đã hiểu pattern. Nếu vẫn sai = cần thêm input loại hội thoại này`,
+
+  // ── T6 · Tuần 3 (15–21/6) ────────────────────────────────────────────────
+  u9: `📌 Kỹ thuật ghi thông tin cụ thể trong phòng thi — thực hành từ bây giờ:
+• Tạo hệ thống ký hiệu cá nhân: "T" = 田中さん, "K" = 課長, "→" = gọi cho, "✓" = đã xong
+• Ghi trên góc giấy nháp (nếu BJT cho nháp) khi nghe
+• Quan trọng: ghi NGAY KHI NGHE, không đợi câu hỏi đọc xong — số liệu xuất hiện 1 lần`,
+
+  u10: `📌 Hội thoại cuộc họp vs điện thoại — điểm khác biệt cần chú ý:
+• Điện thoại: thường có 2 người, 1 nhiệm vụ rõ ràng → câu hỏi đơn giản hơn
+• Cuộc họp: nhiều người, nhiều ý kiến → câu hỏi thường hỏi về kết luận cuối cùng
+• Trong cuộc họp: nghe kỹ lúc chair nói "では、～ということで" → đây là kết luận`,
+
+  u11: `📌 Tổng hợp pattern sai T6 trước Mock — bước chuẩn bị quan trọng:
+• Đọc lại toàn bộ câu sai đã ghi trong T6 → nhóm theo lý do (A/B/C)
+• Lý do nào chiếm nhiều nhất? Đó là điểm yếu cần chú ý khi làm Mock
+• Nhắc bản thân 1 điều duy nhất trước khi làm Mock — đừng cố nhớ nhiều thứ`,
+
+  u12: `📌 Làm bộ đề timed 50 phút — ghi điểm này làm baseline:
+• Đây là lần đầu làm đủ thời gian → điểm có thể thấp, hoàn toàn bình thường
+• Quan trọng hơn điểm: bạn có bị mất tập trung không? Có miss nhiều câu đầu không?
+• Nếu bị mất tập trung → cần luyện nghe liên tục không nghỉ (concentration training)`,
+
+  // ── T6 · Tuần 4 (22–30/6) ────────────────────────────────────────────────
+  u13: `📌 MOCK LISTENING SECTION #1 — chiến lược làm bài 50 phút:
+• 30 giây đầu mỗi phần = đọc câu hỏi, gạch keyword cần nghe
+• Khi băng chạy = CHỈ NGHE, không nhìn lại câu hỏi
+• Miss 1 câu → đoán ngay, KHÔNG nghe lại, chuyển câu tiếp — thời gian không chờ
+• Ghi số liệu/tên bằng ký hiệu tắt trên nháp nếu có`,
+
+  u14: `📌 Phân tích lỗi Mock Listening — phân loại 3 nhóm:
+A) Không biết từ → fix bằng vocab (học thêm từ loại đó)
+B) Nghe không kịp → fix bằng tốc độ xử lý (nghe nhanh hơn, luyện thêm)
+C) Hiểu nhầm context → fix bằng chiến lược nghe (đọc câu hỏi kỹ hơn trước)
+Mỗi nhóm có cách fix khác nhau — đừng trộn lẫn.`,
+
+  u15: `📌 Nghe lại câu sai Mock — quy trình cụ thể:
+① Nghe lại không xem script → cố ghi lại được bao nhiêu
+② Xem script → highlight từ/cụm không nhận ra
+③ Đọc to đoạn đó 3 lần → tai sẽ nhận ra lần sau
+④ Ghi từ highlight vào danh sách "từ cần chú ý" (khác với Anki — đây là từ đã nghe thật)`,
+
+  u16: `📌 Drill lại dạng câu sai nhiều nhất từ Mock #1:
+• Chọn đúng 20 câu cùng dạng với câu sai nhiều nhất
+• Làm timed, không lookup, không dừng giữa chừng
+• Mục tiêu: tỷ lệ đúng dạng này tăng ít nhất 20% so với Mock
+• Đây là cách cải thiện điểm nhanh nhất — không phải học thêm nội dung mới`,
+
+  // ── T7 · Tuần 1 (1–7/7) ──────────────────────────────────────────────────
+  v1: `📌 Phân tích kết quả Mock T6 Listening — làm ngay đầu T7:
+• Vẽ bảng: Dạng câu | Số câu trong đề | Số câu sai | Tỷ lệ sai (%)
+• Dạng có tỷ lệ sai cao nhất = ưu tiên drill tuần 1–2 T7
+• Ghi 1 câu quyết định: "T7 tôi sẽ cải thiện dạng _____ vì tỷ lệ sai là _____%"`,
+
+  v2: `📌 BJT 聴解 dạng 次は何をしますか — nâng cao:
+• Đọc 4 đáp án trong 10 giây intro → đoán câu hỏi hỏi gì (ai làm gì)
+• Khi nghe: bookmark câu nào có hành động (động từ + 〜します/〜てください)
+• Đáp án đúng: hành động được XÁC NHẬN sau cùng, không phải được đề xuất đầu tiên
+• Luyện 15 câu liên tiếp = bắt đầu tạo phản xạ tự động`,
+
+  v3: `📌 Tango/Hyougen nhóm hợp đồng — quan trọng cho cả Listening lẫn Reading T7+:
+契約 (hợp đồng) · 条項 (điều khoản) · 締結する (ký kết) · 納品 (giao hàng)
+検収 (kiểm nhận hàng) · 発注 (đặt hàng) · 受注 (nhận đơn hàng)
+Học kèm ví dụ: 契約を締結する、納品後に検収を行う`,
+
+  v4: `📌 Shadowing Bite Size ở 1.15x — technique để không bị lạc:
+• Nghe 5 lần trước khi shadow nếu tốc độ 1.15x còn khó
+• Khi shadow: không dịch — chỉ bắt chước âm thanh, nhịp, intonation
+• Cảm giác đúng: miệng nói theo nhưng não không kịp hiểu từng từ — điều đó bình thường
+• Tác dụng: tăng tốc độ xử lý âm thanh nhanh hơn bất kỳ bài tập nào khác`,
+
+  v5: `📌 BJT 読解 lần đầu tiên — đừng stress, chỉ cần làm quen format:
+• Đề Reading BJT gồm: email công việc, thông báo nội bộ, báo cáo, bài báo kinh doanh
+• Kỹ thuật scan cơ bản: đọc câu hỏi TRƯỚC → tìm keyword trong bài → đọc đoạn đó
+• Hôm nay không cần làm đúng — chỉ cần hiểu format và kiểu câu hỏi là gì`,
+
+  // ── T7 · Tuần 2 (8–14/7) ─────────────────────────────────────────────────
+  v6: `📌 Dạng thái độ nâng cao — kết hợp context + tone:
+• Không phải chỉ nhận ra attitude words (でも/まあ) — còn phải hiểu VÌ SAO người đó nói vậy
+• Ví dụ: "まあ、やってみます" sau khi nghe nhiều vấn đề = miễn cưỡng đồng ý
+• Cùng cụm từ nhưng context khác → thái độ khác → đây là lý do dạng này khó nhất`,
+
+  v7: `📌 Viết 議事録 sau khi nghe Bite Size — format chuẩn 4 mục:
+① 日時・参加者 (ngày giờ, người tham gia)
+② 議題 (chủ đề thảo luận)
+③ 決定事項 (những gì đã quyết định)
+④ 次のアクション — 担当者・期日 (ai làm gì, deadline)
+Không cần hoàn hảo — luyện ghi nhanh và đúng trọng tâm quan trọng hơn.`,
+
+  v8: `📌 Tango/Hyougen nhóm báo cáo/phân tích — xuất hiện nhiều trong BJT Reading:
+分析 (phân tích) · 傾向 (xu hướng) · 要因 (yếu tố nguyên nhân) · 課題 (vấn đề cần giải quyết)
+改善策 (giải pháp cải thiện) · 施策 (chính sách/biện pháp) · 検討 (đang xem xét)
+Nhóm từ này hay xuất hiện trong câu hỏi "このレポートの目的は何ですか"`,
+
+  v9: `📌 Dictation 4–5 câu liên tiếp không dừng — kỹ thuật ghi nhanh:
+• Không cần viết đúng kanji — viết hiragana + ký hiệu tắt nếu không kịp
+• Ghi được 70%+ nội dung là tốt ở giai đoạn này
+• Sau khi ghi xong, nghe lại có script — đo % chính xác → theo dõi tiến bộ qua tuần`,
+
+  v10: `📌 BJT 読解 kỹ thuật scan — áp dụng ngay từ tuần đầu đọc:
+① Đọc câu hỏi trước → gạch chân keyword cần tìm
+② Scan bài: chỉ đọc tiêu đề + câu đầu mỗi đoạn → tìm đoạn chứa keyword
+③ Chỉ đọc KỸ đoạn đó → chọn đáp án
+④ Không đọc toàn bài từ đầu đến cuối — sẽ không đủ thời gian trong phòng thi`,
+
+  // ── T7 · Tuần 3 (15–21/7) ────────────────────────────────────────────────
+  v11: `📌 Keigo/Bunshou — bắt đầu bằng bảng 3 cột, không học rời rạc:
+普通形 → 丁寧語 → 尊敬語/謙譲語
+言う → おっしゃる / 申す
+する → なさる / いたす
+いる → いらっしゃる / おる
+食べる → 召し上がる / いただく
+Học theo CẶP (尊敬語 + 謙譲語) — BJT test cả 2 chiều.`,
+
+  v12: `📌 Nghe 5 tập Bite Size liên tiếp không dừng — luyện concentration:
+• Đây là kỹ năng riêng biệt: tập trung dài hơn 10 phút mà không mất focus
+• Trong phòng thi, Listening kéo dài 50 phút — não cần quen với việc "không tắt"
+• Không cần hiểu 100% — mục tiêu là không để não "drift" sang chuyện khác`,
+
+  v13: `📌 Tango/Hyougen nhóm sự cố & khiếu nại:
+クレーム (khiếu nại) · 謝罪 (xin lỗi) · 補償 (bồi thường) · 再発防止 (ngăn tái phát)
+エスカレーション (leo thang vấn đề lên cấp trên) · 品質管理 (quản lý chất lượng)
+BrSE hay gặp tình huống này với khách Nhật — học vừa để thi vừa dùng thật.`,
+
+  v14: `📌 Drill đọc câu hỏi 30 giây — luyện thành phản xạ:
+• Chỉ có 30 giây giữa các câu trong BJT Listening — phải đọc và hiểu câu hỏi đủ nhanh
+• Luyện: nhìn 4 đáp án → đoán câu hỏi hỏi gì → chuẩn bị nghe đúng thông tin đó
+• Mục tiêu: sau 2 tuần, việc đọc câu hỏi 30s phải trở thành tự động, không tốn năng lượng`,
+
+  v15: `📌 BJT 読解 timed + ôn Keigo cuối tuần:
+• Reading: mục tiêu đầu tiên là KHÔNG quá 3 phút/câu ngắn (email, thông báo)
+• Keigo: sau khi học bảng 3 cột, làm bài tập chuyển đổi — cho câu thường, viết lại dạng kính ngữ
+• Kết hợp 2 kỹ năng này = tăng cả Reading score lẫn hiểu sắc thái email business`,
+
+  // ── T7 · Tuần 4 (22–31/7) · MOCK #1 ─────────────────────────────────────
+  v16: `📌 Sprint 3 ngày trước FULL MOCK TEST #1 — chỉ làm 3 việc:
+① Anki: review toàn bộ vocab đã học — không thêm thẻ mới
+② Đọc lại ghi chú câu sai từ Mock Listening T6
+③ Nghe lại 2–3 tập Bite Size quen thuộc → giữ tai "warm"
+Đừng học mới — não cần ổn định, không cần thêm input lạ.`,
+
+  v17: `📌 FULL MOCK TEST #1 — làm nghiêm túc như thi thật:
+• Tắt điện thoại, không pause, không tra từ trong lúc làm
+• Listening 50 phút → nghỉ 10 phút → Reading 70 phút
+• Miss câu nào → đoán ngay và đi tiếp, không nghe lại
+• Đây là điểm baseline đầu tiên của toàn bộ plan — ghi lại cẩn thận`,
+
+  v18: `📌 Phân tích lỗi FULL MOCK #1 — quan trọng hơn bản thân bài mock:
+A) Không biết từ → ghi vào Anki deck BJT
+B) Nghe không kịp → tập trung luyện tốc độ T8
+C) Hiểu nhầm context → luyện đọc câu hỏi kỹ hơn trước khi nghe
+D) Reading: sai vì hết giờ → luyện speed. Sai vì hiểu nhầm → luyện scan technique`,
+
+  v19: `📌 Review Listening sai Mock #1:
+① Nghe câu sai không script → ghi lại bao nhiêu % nghe được
+② Xem script → highlight từ miss
+③ Đọc to 3 lần → nghe lại không script lần nữa
+Mục tiêu: sau bước này, nếu nghe lại câu đó → phải hiểu được.`,
+
+  v20: `📌 Cuối tuần sau Mock #1 — cập nhật Anki + lập kế hoạch T8:
+• Ghi từ mới từ đề mock vào Anki deck BJT — đây là từ "real exam level"
+• So sánh điểm Listening vs Reading: cái nào thấp hơn → T8 tập trung cái đó hơn
+• Lập list 3 điểm yếu cụ thể cần ôn T8 → dán lên màn hình`,
+
+  // ── T8 ───────────────────────────────────────────────────────────────────
+  w1: `📌 Dạng hỏi thông tin cụ thể — 3 loại phổ biến nhất trong BJT:
+① Số liệu/tỷ lệ: 売上20%増、目標達成率85% → ghi ngay bằng ký hiệu tắt
+② Ngày tháng/deadline: 3月末、来週月曜日 → ghi ký hiệu: 3末, 来月
+③ Tên người + chức vụ: 田中部長、鈴木課長 → ghi: 田T部, 鈴K課
+Ghi ngay khi nghe — không đợi câu hỏi.`,
+
+  w2: `📌 BJT 読解 email ngắn — kỹ thuật scan cơ bản:
+① Đọc câu hỏi trước — gạch keyword (ví dụ: 目的、誰が、いつまでに)
+② Nhìn Subject line + câu đầu email → biết loại email (yêu cầu / thông báo / báo cáo vấn đề)
+③ Scan tìm đoạn chứa keyword câu hỏi → chỉ đọc kỹ đoạn đó
+Không đọc toàn email từ đầu đến cuối.`,
+
+  w3: `📌 Tango/Hyougen nhóm outsourcing/IT:
+オフショア (offshore) · 委託 (ủy thác) · 外注 (thuê ngoài) · SES (cung cấp kỹ sư)
+常駐 (làm việc tại khách hàng) · プロパー (nhân viên chính thức) · 請負 (hợp đồng khoán)
+BrSE dùng những từ này hàng ngày — học 1 lần, dùng mãi.`,
+
+  w4: `📌 Keigo: 承知/かしこまり/了解 — phân biệt dùng đúng:
+• 了解しました → dùng với đồng nghiệp ngang cấp hoặc cấp dưới (KHÔNG dùng với khách hàng/cấp trên)
+• 承知しました → formal, dùng với cấp trên trong công ty
+• かしこまりました → rất formal, dùng với khách hàng, đối tác
+BJT test cái này vì đây là lỗi người nước ngoài hay mắc nhất.`,
+
+  w5: `📌 Cuối tuần ôn tổng T8W1 — kết hợp Listening + Reading:
+• BJT Listening 15 câu timed → so sánh với Mock #1: dạng nào cải thiện rồi?
+• 2 bài Reading timed 3 phút/bài → đã quen scan technique chưa?
+• Ghi nhận: T8 là tháng đầu học SONG SONG cả 2 kỹ năng — sẽ cảm thấy mệt hơn, bình thường`,
+
+  w6: `📌 Keigo grammar pattern:
+• もし〜なら/たら → giả định điều kiện (nếu như)
+• 〜にもかかわらず → mặc dù (dùng khi thực tế trái với kỳ vọng)
+• 〜をふまえて → dựa trên, căn cứ vào
+• 〜に際して → vào dịp, nhân dịp
+Những pattern này xuất hiện nhiều trong email business và BJT Reading.`,
+
+  w7: `📌 Đọc bài báo kinh doanh dài — cách tìm ý chính (筆者が言いたいこと):
+• Đáp án thường ở ĐOẠN CUỐI bài, không phải đầu — đây là trap phổ biến nhất
+• Câu hỏi "筆者の主張は" → tìm câu có 〜べきだ / 〜必要がある / 〜ではないか
+• Không đọc toàn bài — scan tiêu đề + đoạn cuối → tìm luận điểm chính`,
+
+  w8: `📌 Dictation hoàn chỉnh 1 đoạn 4–5 câu — đây là milestone quan trọng:
+• Ghi được 60–70% = đang đúng tiến độ
+• Ghi được dưới 40% → tăng thêm input nghe (nghe nhiều hơn trước khi dictation)
+• So sánh với T5 khi mới bắt đầu → tiến bộ bao nhiêu %?`,
+
+  w9: `📌 Bite Size ở tốc độ 1.2x — đây là tốc độ người Nhật nói bình thường:
+• Nếu bắt đầu nghe rõ ở 1.2x → bạn đang tiến bộ đúng hướng
+• Nếu vẫn khó → giảm về 1.1x thêm 1 tuần, sau đó thử lại
+• Mục tiêu T8: nghe 1.2x thoải mái = chuẩn bị cho tốc độ thi thật`,
+
+  w10: `📌 Cuối tuần ôn tổng T8W2:
+• Anki 200 thẻ yếu nhất → focus thẻ leech, không ôn hết toàn bộ
+• Shadowing 2 đoạn Bite Size → maintain tốc độ xử lý âm
+• 1 bài Reading dài timed → luyện concentration đọc dài`,
+
+  w11: `📌 Tổng hợp lỗi T5–T8 — viết danh sách 5 lỗi cá nhân:
+• Không phải từ vựng — là PATTERN hành vi: "Tôi hay chọn đáp án có hành động được đề xuất đầu tiên thay vì xác nhận sau cùng"
+• Dán danh sách này lên màn hình — nhìn mỗi ngày trước khi học
+• Nhìn thấy lỗi của mình = bước đầu để không lặp lại`,
+
+  w12: `📌 Drill lại dạng câu sai nhất từ Mock #1 — cách làm hiệu quả:
+• Chọn 15 câu CỦA CÙNG 1 DẠNG mà bạn sai nhiều nhất
+• Làm timed, không lookup từ
+• So sánh kết quả với Mock #1: nếu tăng 30%+ → đã fix được điểm yếu đó`,
+
+  w13: `📌 Reading speed drill — 1 email trong 3 phút:
+• Không đọc lại lần 2 — quyết định trong lần đọc đầu
+• Nếu không xong trong 3 phút → đoán và đi tiếp
+• Luyện "comfortable uncertainty" — chấp nhận không chắc chắn 100% để đủ thời gian`,
+
+  w14: `📌 Tango/Hyougen: ôn thẻ leech — những từ sai nhiều nhất:
+• Thẻ leech = từ não bạn từ chối nhớ → thường vì không có context gắn kết
+• Fix: thêm ví dụ câu thật từ công việc của bạn vào mặt sau thẻ Anki
+• Ví dụ: 検討する → "社長はその提案を検討している (sếp đang xem xét đề xuất đó)"`,
+
+  w15: `📌 Cuối tuần: 1 bộ đề Listening đầy đủ timed — lần này so sánh với T7:
+• Ghi điểm vào notebook → vẽ đường trend từ T7 đến T8
+• Nếu điểm tăng → tiếp tục approach hiện tại
+• Nếu điểm không tăng → vấn đề thường là tốc độ xử lý, không phải từ vựng`,
+
+  w16: `📌 Sprint 3 ngày trước MOCK TEST #2:
+① Anki: review toàn bộ deck — không thêm thẻ mới
+② Đọc lại ghi chú phân tích lỗi Mock #1
+③ Nghe lại 2 tập Bite Size quen → tai "warm"
+Ngủ đủ giấc đêm trước — quan trọng hơn ôn thêm 1 tiếng.`,
+
+  w17: `📌 FULL MOCK TEST #2 — mục tiêu tăng từ 10–30 điểm so với Mock #1:
+• Áp dụng 1 cải thiện cụ thể từ phân tích Mock #1 (không phải tất cả)
+• Ví dụ: "Lần này tôi sẽ đọc câu hỏi kỹ hơn trước khi nghe"
+• Chỉ focus 1 thứ — không overload bản thân trong phòng thi`,
+
+  w18: `📌 Phân tích Mock #2 — so sánh với Mock #1:
+• Vẽ bảng so sánh: Dạng câu | Điểm M1 | Điểm M2 | Tăng/Giảm
+• Dạng nào tăng nhiều nhất = phương pháp đang dùng hiệu quả → tiếp tục
+• Dạng nào vẫn sai nhiều = cần đổi approach ôn luyện T9`,
+
+  w19: `📌 Review Listening sai Mock #2:
+• Quy trình: nghe → ghi → xem script → highlight
+• Chú ý: từ nào xuất hiện lần 2 (đã highlight từ Mock #1)? → đây là từ ưu tiên học`,
+
+  w20: `📌 Cuối tuần sau Mock #2 — cập nhật và plan T9:
+• Ghi từ mới từ Mock #2 vào Anki deck BJT
+• So sánh điểm Mock #1 vs #2 → viết 1 câu nhận xét về tiến độ
+• Lập list 3 điểm cần cải thiện nhất T9 → dán lên màn hình`,
+
+  // ── T9 ───────────────────────────────────────────────────────────────────
+  x1: `📌 Phân tích lỗi Mock #1+2 — tìm pattern lặp lại:
+• Lỗi xuất hiện ở cả 2 Mock = điểm yếu thật sự → ưu tiên ôn T9
+• Lỗi chỉ có ở 1 Mock = có thể do đề hoặc do ngày hôm đó → ít ưu tiên hơn
+• Viết kế hoạch T9 cụ thể: "Tuần 1 drill dạng _____, Tuần 2 drill dạng _____"`,
+
+  x2: `📌 Drill dạng sai nhiều nhất từ Mock #2:
+• 15 câu cùng dạng → timed → phân tích kết quả
+• Nếu tỷ lệ đúng tăng 30%+ so với Mock #2 → điểm yếu đang được fix
+• Nếu không tăng → vấn đề không phải luyện tập mà là thiếu từ vựng → bổ sung Anki`,
+
+  x3: `📌 Kỹ thuật scan Reading nâng cao:
+① Đọc câu hỏi → gạch keyword chính (danh từ/động từ quan trọng)
+② Scan tiêu đề bài → đoán nội dung chính
+③ Scan đầu mỗi đoạn → tìm đoạn có keyword
+④ Chỉ đọc kỹ đoạn đó, cộng thêm 1 câu trước/sau để có context
+Mục tiêu: 90 giây/câu scan, không phải 90 giây đọc toàn bài`,
+
+  x4: `📌 Anki review 600 từ — cách ôn hiệu quả:
+• Filter "overdue" trong Anki → chỉ ôn thẻ đến hạn, không ôn hết một lần
+• Mục tiêu: 0 thẻ overdue mỗi ngày (không để tích tụ)
+• Retention rate dưới 80% → giảm thẻ mới, tăng review interval`,
+
+  x5: `📌 Cuối tuần ôn nghe T7–T9 — maintenance + fresh input:
+• Nghe 5 tập Bite Size liên tiếp → luyện concentration dài
+• Shadowing 2 đoạn yêu thích → maintain fluency đã xây dựng
+• So sánh: tập nghe từ T5 và tập nghe hôm nay → tiến bộ bao nhiêu %?`,
+
+  x6: `📌 BJT 読解: 20 câu timed — phân bổ thời gian chuẩn:
+• Email ngắn (1–2 đoạn): 2 phút/câu
+• Thông báo nội bộ: 2.5 phút/câu
+• Bài báo/báo cáo dài: 5–6 phút/câu
+Tổng 40 câu = 70 phút = trung bình 105 giây/câu. Câu ngắn nhanh để dành thời gian câu dài.`,
+
+  x7: `📌 Viết 議事録 3 mục từ Bite Size — luyện tổng hợp thông tin:
+① 決定事項 (điều đã quyết định)
+② 次のアクション — 誰が・何を・いつまでに (ai làm gì deadline)
+③ 保留事項 (vấn đề chưa quyết, sẽ quyết sau)
+Đây là format 議事録 thật sự dùng trong công ty Nhật — vừa luyện thi vừa dùng được ngay`,
+
+  x8: `📌 Keigo 謙譲語 — ưu tiên vì BJT test nhiều hơn 尊敬語:
+申す (nói — 謙譲語 của 言う)
+いたす (làm — 謙譲語 của する)
+参る (đến/đi — 謙譲語 của 行く/来る)
+伺う (hỏi/thăm — 謙譲語 của 聞く/行く)
+いただく (nhận ơn — 謙譲語 của もらう)
+Thuộc 5 động từ này = cover được phần lớn câu hỏi keigo trong BJT`,
+
+  x9: `📌 Tango/Hyougen nhóm tài chính — hay ra trong BJT Reading bài báo:
+予算 (ngân sách) · 決算 (quyết toán) · 収支 (thu chi) · 黒字 (lãi) · 赤字 (lỗ)
+コスト削減 (cắt giảm chi phí) · 費用対効果 (cost-benefit) · 前年比 (so với năm trước)`,
+
+  x10: `📌 Cuối tuần: 1 bộ đề Reading đầy đủ 70 phút timed:
+• Làm xong → phân tích: câu nào sai? Vì sao?
+• Nếu hết giờ mà chưa làm hết → cần tăng tốc scan, không cần học thêm nội dung
+• Ghi điểm → so sánh với tháng trước → xu hướng tăng chưa?`,
+
+  x11: `📌 Chiến lược time management trong phòng thi — vẽ timeline cụ thể:
+Listening 50 phút: ~45 câu → trung bình 67 giây/câu (30s đọc câu hỏi + 37s nghe + chọn)
+Reading 70 phút: 40 câu → trung bình 105 giây/câu
+Phân bổ: câu ngắn 90s, câu dài 120–150s. Nếu 1 câu quá 2 phút → đoán và đi`,
+
+  x12: `📌 15 câu hỗn hợp không phân loại — đây là điều kiện thi thật:
+• Não phải chuyển đổi mode nhanh: câu này hỏi hành động → câu tiếp hỏi thái độ
+• Luyện: sau mỗi câu hỏi, 1 giây xác định dạng → set mental mode tương ứng
+• Đây là meta-skill quan trọng, không liên quan đến từ vựng hay ngữ pháp`,
+
+  x13: `📌 Dictation câu phức — nâng cao:
+• Câu có mệnh đề điều kiện: もし〜なら → ghi được 2 vế
+• Câu có 〜にもかかわらず, 〜ため, 〜ので → ghi được quan hệ nguyên nhân-kết quả
+• Đây là level câu hỏi thi thật của BJT N2 — ghi được = đang đúng level`,
+
+  x14: `📌 Ôn thẻ leech + từ mới từ BJT:
+• Leech = những từ não từ chối nhớ → thêm hình ảnh hoặc ví dụ từ công việc thật
+• 20 từ mới từ BJT = từ "exam tested" — học những từ này trước các từ khác`,
+
+  x15: `📌 Cuối tuần ôn kỹ năng yếu nhất — 3 tiếng focused:
+• Chọn DUY NHẤT 1 kỹ năng yếu nhất (dựa trên Mock #2)
+• Ví dụ: nếu Reading chậm → 3 tiếng chỉ làm Reading speed drill
+• Đừng ôn đều — ôn tập trung 1 điểm yếu hiệu quả hơn nhiều`,
+
+  x16: `📌 Sprint ôn trước Mock #3:
+① Anki: review toàn bộ — không thêm mới
+② Đọc lại ghi chú lỗi Mock #1+2 — reminder về pattern hay mắc
+③ Ngủ đủ giấc — memory consolidation quan trọng hơn ôn thêm 1 tiếng`,
+
+  x17: `📌 FULL MOCK TEST #3 — mục tiêu 430–460 điểm:
+• 430 = đang đúng track cho mục tiêu N2+ cuối năm
+• Dưới 400 → cần thêm 1 tháng ôn từ vựng + giảm số mock
+• Trên 460 → tốt, đẩy mạnh mock T10–T11`,
+
+  x18: `📌 Phân tích Mock #3 — so sánh 3 Mock:
+• Vẽ bảng: Dạng câu | M1 | M2 | M3 | Trend
+• Dạng nào tăng đều → đang fix được, tiếp tục
+• Dạng nào không tăng hoặc giảm → đổi strategy ôn T10`,
+
+  x19: `📌 Review Listening sai Mock #3 — lần này chú ý từ lặp:
+• Từ nào xuất hiện lần 3 (đã highlight ở M1 và M2) → đây là từ ưu tiên tuyệt đối
+• Học từ này với context đầy đủ, không chỉ nghĩa`,
+
+  x20: `📌 Đánh giá tiến độ + lập kế hoạch Sprint T10–T12:
+• So sánh điểm M1 → M3: tăng bao nhiêu điểm sau 3 tháng?
+• Tính khoảng cách đến mục tiêu N2+ (~480 điểm): còn bao nhiêu điểm cần tăng?
+• Phân bổ thực tế: T10 = 2 Mock/tháng, T11 = 2–3 Mock/tháng, T12 = 2 Mock + thi thật`,
+
+  // ── T10 ──────────────────────────────────────────────────────────────────
+  y1: `📌 FULL MOCK TEST #4 — điều kiện thi thật hoàn toàn:
+• Tắt điện thoại, không pause, không tra từ trong lúc làm
+• Làm đúng giờ bắt đầu (sáng nếu được — cùng giờ với thi thật)
+• Đây là lần đầu mô phỏng đúng điều kiện → áp lực tâm lý là bài học quan trọng`,
+
+  y2: `📌 Review Listening Mock #4 ở 0.85x:
+• Nghe chậm lại → nếu bây giờ nghe được = vấn đề là tốc độ xử lý, không phải từ vựng
+• Fix tốc độ xử lý: nghe thêm ở 1.25x, 1.3x nhiều hơn — tai sẽ adapt
+• Nếu nghe 0.85x vẫn không hiểu = vấn đề là từ vựng hoặc grammar → bổ sung vocab`,
+
+  y3: `📌 Xử lý thẻ Anki leech — cuối cùng cũng phải đối mặt:
+• Leech = thẻ sai từ 8 lần trở lên → xóa nếu từ đó không thực tế
+• Thêm ví dụ câu từ CÔNG VIỆC THẬT của bạn → não nhớ ngay vì có context cá nhân
+• Giảm số leech xuống 0 trước khi thi = giảm điểm mù trong từ vựng`,
+
+  y4: `📌 Reading speed drill 90 giây/câu:
+• Đặt timer → bắt đầu scan → hết giờ → đoán nếu chưa xong
+• Luyện "comfortable uncertainty" — không cần chắc chắn 100%, cần đủ nhanh
+• Trong phòng thi, tốc độ quan trọng hơn độ chính xác từng câu`,
+
+  y5: `📌 Cuối tuần T10W1 — maintain và review:
+• Shadowing 2 đoạn ở 1.1x → maintain fluency
+• Anki 100 thẻ yếu → không ôn hết, chỉ ôn thẻ overdue
+• 1 bài Reading dài timed → giữ tốc độ đọc`,
+
+  y6: `📌 FULL MOCK TEST #5:
+• Dùng đề mới — nếu hết sách BJT: tìm 過去問 (đề cũ) online
+• Search: "ビジネス日本語能力テスト 過去問 PDF" hoặc mua quyển luyện thi thứ 2
+• Mục tiêu: xem điểm có ổn định hay dao động — nếu dao động lớn → luck, không phải skill`,
+
+  y7: `📌 Ôn pattern sai lặp lại Mock #4+5:
+• Nếu vẫn sai "次にすること" → luyện lại: đọc câu hỏi → nhủ "nghe hành động CUỐI"
+• Pattern sai sau 5 Mock = deep-rooted habit → cần luyện có ý thức 1–2 tuần liên tiếp
+• Viết pattern này lên giấy, dán trước mặt khi làm bài`,
+
+  y8: `📌 Viết 議事録 nâng cao với bảo lưu sự kiện và rủi ro:
+• 保留事項: việc cần quyết định nhưng chưa quyết — ghi "〜については検討継続"
+• リスク: rủi ro được nhắc đến — ghi "懸念事項: 〜の可能性あり"
+• Khách hàng Nhật đánh giá cao BrSE viết được đủ 6 mục 議事録`,
+
+  y9: `📌 Từ business nâng cao — xuất hiện trong BJT Reading level N2+:
+的確な判断 (phán đoán chính xác) · 迅速な対応 (xử lý nhanh chóng)
+合理的な提案 (đề xuất hợp lý) · 円滑なコミュニケーション (giao tiếp trơn tru)
+Học cả cụm, không học từng từ riêng — BJT test cụm, không test từ đơn`,
+
+  y10: `📌 Cuối tuần drill nghe 2 tiếng — luyện concentration marathon:
+• 30 câu BJT 聴解 timed → nghỉ 10 phút → phân tích lỗi 30 phút
+• Mục tiêu: sau 2 tiếng vẫn tập trung được → đây là condition thi thật`,
+
+  y11: `📌 Làm lại toàn bộ câu sai từ Mock #1–5 — đây là bước tổng hợp quan trọng:
+• Nếu làm đúng lần này = pattern đã được fix
+• Nếu vẫn sai = deep weakness → tập trung drill dạng này 1 tuần cuối T10`,
+
+  y12: `📌 BJT 読解 40 câu timed 60 phút — nhanh hơn thời gian thi thật:
+• Mục tiêu: quen với áp lực thời gian cao → thi thật 70 phút sẽ cảm thấy dễ thở hơn
+• Đạt 70%+ đúng trong 60 phút = đang trên mức N2`,
+
+  y13: `📌 Chiến lược câu khó — không bỏ trống:
+• Loại trừ 2 đáp án sai rõ ràng (thường có thể loại 1–2 đáp án bằng common sense)
+• Đoán trong 2 đáp án còn lại: xác suất 50% > đoán random 25% > bỏ trống 0%
+• Không bao giờ bỏ trống — luôn chọn đáp án dù không chắc`,
+
+  y14: `📌 Anki 700 từ — mục tiêu retention 85%:
+• Retention dưới 80% → giảm thẻ review/ngày, tăng interval ngắn hơn
+• Retention trên 90% → có thể giảm tần suất review, dành thời gian cho mock
+• Đừng thêm từ mới sau T10 — ôn vững những gì đã có`,
+
+  y15: `📌 Cuối tuần T10W3 — drill kỹ năng yếu nhất theo Mock #5:
+• 3 tiếng focused vào 1 dạng câu/kỹ năng duy nhất
+• Đây là cơ hội cuối để cải thiện có hệ thống trước Phase 3 sprint`,
+
+  y16: `📌 FULL MOCK TEST #6:
+• Làm hoàn toàn như thi thật — cùng giờ sáng, tắt mọi thứ
+• Đây là Mock cuối Phase 2 — kết quả cho biết bạn ở đâu trước sprint`,
+
+  y17: `📌 Đánh giá và điều chỉnh kế hoạch T11:
+• Nếu điểm Mock #6 >= 460 → tiếp tục 2 Mock/tháng T11, focus polish
+• Nếu 430–459 → tăng lên 3 Mock/tháng T11, giảm thời gian ôn content
+• Nếu dưới 430 → xem xét lại approach: vấn đề chính là gì?`,
+
+  y18: `📌 Ôn lại lỗi tháng 10 — tập trung 2 dạng sai nhiều nhất:
+• Không ôn tổng — ôn targeted: chỉ 2 dạng, drill đến khi tỷ lệ đúng tăng rõ rệt`,
+
+  y19: `📌 Tango + Keigo: ôn thẻ leech:
+• Xem thẻ nào sai nhiều nhất → đây là từ ưu tiên trước khi thi
+• Thêm ví dụ câu từ công việc thật → não nhớ ngay`,
+
+  y20: `📌 Review trend Mock #4–6 — vẽ chart:
+• Vẽ đường điểm theo thời gian → đang tăng, flat, hay giảm?
+• Tính khoảng cách đến mục tiêu: còn bao nhiêu điểm nữa?
+• Nhìn chart này mỗi ngày T11 → motivation cụ thể hơn "cố gắng thôi"`,
+
+  // ── T11 ──────────────────────────────────────────────────────────────────
+  z1: `📌 MOCK #7 — mục tiêu 460+:
+• 460+ → đúng track, tiếp tục approach hiện tại
+• 450–459 → gần đến, tăng tần suất mock lên 2 đề/tuần T11
+• Dưới 450 → review lại nguyên nhân: từ vựng hay tốc độ hay strategy?`,
+
+  z2: `📌 Drill dạng sai nhiều nhất trong tất cả Mock:
+• Nhìn lại toàn bộ phân tích Mock #1–7 → dạng nào sai nhiều nhất xuyên suốt?
+• Drill tập trung dạng đó 40 phút → đây là ROI cao nhất lúc này`,
+
+  z3: `📌 Bite Size T11 — maintain mode:
+• Chỉ nghe tập chủ đề công việc/xã hội → không cần học mới
+• 20 phút/ngày, không ghi chú — chỉ giữ tai quen với tiếng Nhật
+• Bỏ qua tập về ẩm thực/du lịch — ít liên quan đến BJT`,
+
+  z4: `📌 BJT 読解 40 câu timed 60 phút — maintain tốc độ:
+• So sánh với T10: đã ổn định chưa hay vẫn còn dao động?
+• Nếu ổn định 70%+ → tốt, chuyển focus sang Listening
+• Nếu còn dao động → luyện thêm scan technique`,
+
+  z5: `📌 Cuối tuần T11W1 — drill câu phức + Anki:
+• Dictation câu phức (複文) → đây là level câu hỏi thi thật
+• Anki 100 thẻ yếu → maintain, không thêm mới
+• Shadowing 2 đoạn ở 1.1x → fluency maintenance`,
+
+  z6: `📌 MOCK #8 — so sánh với Mock #1 (T7):
+• Tính mức tăng tổng sau 4 tháng học có chiều sâu
+• Nếu tăng 80–120 điểm → tiến độ tốt, đúng hướng
+• Nếu tăng dưới 60 điểm → vẫn còn kịp T11–T12, nhưng cần tăng tốc`,
+
+  z7: `📌 Vẽ biểu đồ điểm Mock #1→8:
+• Đường đi lên đều → tiếp tục
+• Plateau (dừng tăng) → thường do từ vựng không đủ hoặc speed chưa bắt kịp
+• Plateau fix: 2 tuần chỉ ôn từ vựng + nghe 1.3x → sau đó mock lại xem tăng chưa`,
+
+  z8: `📌 Đọc câu hỏi 30 giây — luyện thành phản xạ:
+• Đến T11, việc này phải hoàn toàn automatic — không tốn năng lượng nhận thức
+• Test bản thân: nhìn 4 đáp án 10 giây → có biết câu hỏi hỏi gì không?
+• Nếu biết → phản xạ tốt. Nếu còn phải đọc câu hỏi kỹ → luyện thêm`,
+
+  z9: `📌 Anki review 700+ từ:
+• Lúc này không thêm mới — chỉ maintain những gì đã có
+• Mục tiêu retention 85%+ trước khi thi
+• Giảm dần số thẻ/ngày: T11 = 20 thẻ/ngày là đủ`,
+
+  z10: `📌 Cuối tuần T11W2 — ôn tổng hợp:
+• Shadowing + Reading speed drill + Anki 150 thẻ
+• Đây là cuối tuần "generalist" — không focus 1 kỹ năng, ôn đều để không mất balance`,
+
+  z11: `📌 MOCK #9 — mô phỏng điều kiện thi thật nhất có thể:
+• Làm buổi sáng, ngồi bàn học thật, tắt mọi thiết bị
+• Giả lập không gian phòng thi: không có người đi lại, không tiếng ồn
+• Tâm lý thi cũng là kỹ năng cần luyện — lần này luyện khả năng calm dưới áp lực`,
+
+  z12: `📌 Nguyên tắc "chỉ ôn, không học mới" từ đây:
+• Não cần thời gian consolidate — học mới trong giai đoạn sprint → dễ confuse với kiến thức cũ
+• Bất kỳ "từ mới" nào gặp bây giờ → skip, không thêm vào Anki
+• Tin tưởng vào nền tảng 6 tháng đã xây dựng`,
+
+  z13: `📌 Keigo 5 động từ quan trọng nhất — thuộc 100% cả 2 chiều:
+いる → いらっしゃる (尊) / おる (謙)
+する → なさる (尊) / いたす (謙)
+言う → おっしゃる (尊) / 申す (謙)
+食べる/飲む → 召し上がる (尊) / いただく (謙)
+もらう → → / いただく (謙)`,
+
+  z14: `📌 NHK Web Easy — thử giọng mới:
+• Bite Size = giọng casual. NHK = giọng news formal → BJT có cả 2 style
+• nhk.or.jp/news/html/ → chọn "やさしい日本語" → nghe bản audio
+• Nếu nghe được NHK = tai đã linh hoạt với nhiều phong cách nói`,
+
+  z15: `📌 Cuối tuần T11W3 — drill điểm yếu cuối cùng:
+• Đây là cuối tuần cuối cùng để drill targeted có ý nghĩa
+• Sau đây → giảm tốc, maintain, không drill nặng nữa`,
+
+  z16: `📌 MOCK #10 — thước đo khả năng thực tế:
+• 460+ → tự tin, T12 chỉ cần maintain
+• 440–459 → vẫn kịp, tăng tốc T12 mock
+• Dưới 440 → đánh giá lại: có thể lùi lịch thi sang kỳ sau không?`,
+
+  z17: `📌 Lập kế hoạch 3 tuần cuối T12:
+• Tuần 1–2: Mock #11 và #12, ôn điểm yếu lần cuối
+• Tuần 3: Giảm tốc, maintain, nghỉ ngơi
+• Ghi rõ lịch mock và lịch thi thật vào calendar`,
+
+  z18: `📌 Nghe lại Listening sai Mock #10 — lần cuối review kiểu này:
+• Ghi từ highlight lần cuối → đây là "last chance" vocab trước khi thi
+• Sau đây không review câu sai nữa — chỉ maintain và giảm tốc`,
+
+  z19: `📌 Anki từ T11W4 — giảm còn 20 thẻ/ngày:
+• Không thêm mới — chỉ review
+• Não cần ổn định, không phải thêm input mới vào giai đoạn này`,
+
+  z20: `📌 Nghỉ 1 ngày hoàn toàn:
+• Nghỉ không phải lười biếng — là chiến lược
+• Motivation và mental freshness quan trọng không kém kiến thức ở giai đoạn sprint cuối`,
+
+  // ── T12 ──────────────────────────────────────────────────────────────────
+  a1: `📌 MOCK #11 T12:
+• Dùng đề chưa làm (nếu còn). Nếu hết → tìm 過去問 online hoặc làm lại đề cũ không xem đáp án
+• Mục tiêu: ổn định điểm, không bị dao động lớn
+• Nếu điểm thấp hơn Mock #10 → bình thường, có thể do stress. Phân tích kỹ trước khi lo lắng`,
+
+  a2: `📌 Ôn điểm yếu lần cuối — chỉ điều chỉnh nhẹ:
+• Không học gì mới — chỉ củng cố những gì đã biết nhưng hay quên
+• Đọc lại danh sách 5 lỗi cá nhân đã viết → nhắc bản thân lần cuối`,
+
+  a3: `📌 Nghe Bite Size T12 — đo progress từ T5:
+• Nghe 1 tập hoàn toàn → tự đánh giá: hiểu được bao nhiêu % so với tháng 5?
+• Đây là thước đo progress thực tế nhất — không phải điểm mock
+• Sự tiến bộ này = kết quả 7 tháng học — cảm nhận và trân trọng nó`,
+
+  a4: `📌 Anki T12: 20 thẻ/ngày — chỉ maintain:
+• Không thêm mới, không ép ôn nhiều
+• Giữ thói quen để não không "nguội"`,
+
+  a5: `📌 MOCK #12 — mock cuối cùng:
+• 470+ → tự tin vào thi, T12 chỉ cần giảm tốc và nghỉ ngơi
+• 450–469 → vẫn trong range đạt N2+ với đề vừa sức. Đừng panic.
+• Kết quả mock ≠ kết quả thi thật — nhiều người thi tốt hơn mock vì không có pressure giả`,
+
+  a6: `📌 Tuần trước thi — nghe nhẹ nhàng:
+• 1 tập Bite Size/ngày, không ghi chú, không phân tích
+• Chỉ nghe để tai không "nguội" và để cảm giác thoải mái với tiếng Nhật`,
+
+  a7: `📌 Anki tuần cuối: 15 thẻ/ngày:
+• Không thêm thẻ mới trong mọi trường hợp
+• Đừng cố ôn hết 700+ từ — não không thể xử lý. Tin vào 7 tháng đã học.`,
+
+  a8: `📌 Đọc lại chiến lược làm bài lần cuối:
+Listening: 30 giây đầu mỗi câu = đọc câu hỏi, gạch keyword. Ghi số liệu NGAY KHI NGHE.
+Reading: đọc câu hỏi → scan → locate → đọc đoạn đó. Câu ngắn trước, câu dài sau.
+Câu khó: loại trừ 2 đáp án → đoán trong 2 còn lại. Không bỏ trống.`,
+
+  a9: `📌 Ngủ đủ giấc — quan trọng hơn ôn thêm 1 tiếng:
+• Memory consolidation xảy ra khi ngủ — não sắp xếp lại tất cả những gì đã học
+• Ngủ đủ 2 đêm trước thi = tốt hơn thức khuya ôn đêm hôm trước
+• Tin cơ thể và não của bạn.`,
+
+  a10: `📌 Ngày trước thi — nghỉ ngơi hoàn toàn:
+• Nếu lo lắng → đọc lại danh sách điểm đã tiến bộ (Mock #1 vs Mock #12)
+• Bạn đã học 7 tháng, không phải vào thi tay không
+• がんばってきた — bây giờ chỉ cần TẬP TRUNG THỰC HIỆN những gì đã luyện`,
+
+  a11: `📌 Sáng ngày thi:
+• Ăn sáng đủ chất — não cần glucose để hoạt động 2 tiếng liên tục
+• Đến sớm 20 phút — quen không gian, không rush
+• Không ôn trong phòng chờ — dễ confuse, tốt hơn là thả lỏng`,
+
+  a12: `📌 Listening ngày thi:
+• 30 giây đầu mỗi phần = đọc câu hỏi, gạch keyword
+• Khi băng chạy = CHỈ NGHE, đừng nhìn lại câu hỏi
+• Miss 1 câu → đoán ngay, không nghe lại, chuyển tiếp
+• Ghi số liệu/tên bằng ký hiệu tắt trên nháp nếu có`,
+
+  a13: `📌 Reading ngày thi:
+• Làm câu ngắn (email, thông báo) trước → nhanh hơn, lấy điểm dễ trước
+• Câu dài (bài báo, báo cáo) làm sau
+• Không bao giờ để trống — đoán nếu hết thời gian`,
+
+  a14: `📌 Câu không biết = đoán ngay:
+• Đoán 25% > bỏ trống 0%
+• Loại trừ đáp án sai rõ ràng trước → tăng xác suất đoán đúng lên 33–50%
+• Không bao giờ bỏ trống bất kỳ câu nào`,
+
+  a15: `📌 Sau thi:
+• Ghi lại cảm nhận về từng phần nếu muốn phân tích sau
+• Kết quả thường có sau 1–2 tháng
+• Dù kết quả thế nào — 7 tháng học đã nâng trình độ tiếng Nhật thực tế của bạn rõ rệt
+• がんばった！お疲れ様でした！`,
 }
