@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/OTHER/Dashboard/dashboard-hub/**)",
+      "Bash(npm run *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill /PID 20348 /F)",
+      "PowerShell(Stop-Process -Id 20348 -Force)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

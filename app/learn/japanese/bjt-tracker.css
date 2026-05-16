@@ -276,7 +276,8 @@
 .bjt-tag.tag-vocab { background: var(--green-bg); color: var(--green); }
 .bjt-tag.tag-gram { background: var(--purple-bg); color: var(--purple); }
 .bjt-tag.tag-test { background: var(--red-bg); color: var(--red); }
-.bjt-tag.tag-tips { background: #fdf4ff; color: #7e22ce; }
+.bjt-tag.tag-tips    { background: #fdf4ff; color: #7e22ce; }
+.bjt-tag.tag-weekend { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
 
 /* Source badge */
 .bjt-src {
