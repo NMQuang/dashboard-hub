@@ -5,10 +5,10 @@ import DashboardClient, { type MonthlySummary } from '@/components/family/financ
 
 export const dynamic = 'force-dynamic'
 
-function prevYearMonth(offset: number): string {
-  const d = new Date()
-  d.setMonth(d.getMonth() - offset)
-  return d.toISOString().slice(0, 7)
+function offsetMonth(base: string, offset: number): string {
+  const [y, m] = base.split('-').map(Number)
+  const d = new Date(y, m - 1 - offset, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 function monthLabel(ym: string): string {
@@ -16,10 +16,15 @@ function monthLabel(ym: string): string {
   return `${parts[1]}/${parts[0]}`
 }
 
-export default async function FinanceDashboardPage() {
-  const thisMonth = prevYearMonth(0)
+interface PageProps {
+  searchParams: { month?: string }
+}
 
-  // Fetch current month data, investments, debts, and forex in parallel
+export default async function FinanceDashboardPage({ searchParams }: PageProps) {
+  const todayMonth = new Date().toISOString().slice(0, 7)
+  const thisMonth = searchParams.month ?? todayMonth
+
+  // Fetch selected month data, investments, debts, and forex in parallel
   const [incomeResult, expensesResult, investmentsResult, debtsResult, forexResult] = await Promise.allSettled([
     getIncomeByMonth(thisMonth),
     getExpensesByMonth(thisMonth),
@@ -39,9 +44,9 @@ export default async function FinanceDashboardPage() {
     vnd: forex.find(r => r.symbol === 'VND')?.price ?? 25000,
   }
 
-  // Fetch last 5 months for trend chart
+  // Fetch 5 months before selected month for trend chart
   const histOffsets = [1, 2, 3, 4, 5]
-  const histKeys = histOffsets.map(o => prevYearMonth(o))
+  const histKeys = histOffsets.map(o => offsetMonth(thisMonth, o))
 
   const histIncome = await Promise.allSettled(histKeys.map(m => getIncomeByMonth(m)))
   const histExpenses = await Promise.allSettled(histKeys.map(m => getExpensesByMonth(m)))

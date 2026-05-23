@@ -44,6 +44,7 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
   const totalJPY = income.filter(i => i.currency === 'JPY').reduce((s, i) => s + i.amount, 0)
   const totalUSD = income.filter(i => i.currency === 'USD').reduce((s, i) => s + i.amount, 0)
   const isEditing = editingId !== null
+  const isFiltered = filterSource !== 'all' || filterCurrency !== 'all'
 
   function toggleSort(key: 'date' | 'amount' | 'source') {
     if (sortKey === key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
@@ -64,6 +65,11 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
       else if (sortKey === 'source') cmp = a.source.localeCompare(b.source)
       return sortDir === 'asc' ? cmp : -cmp
     })
+
+  const dispVND = displayed.filter(i => i.currency === 'VND').reduce((s, i) => s + i.amount, 0)
+  const dispJPY = displayed.filter(i => i.currency === 'JPY').reduce((s, i) => s + i.amount, 0)
+  const dispUSD = displayed.filter(i => i.currency === 'USD').reduce((s, i) => s + i.amount, 0)
+  const dispTotalVND = displayed.reduce((s, i) => s + toVND(i.amount, i.currency, rates), 0)
 
   function startEdit(item: FamilyIncome) {
     setEditingId(item.id)
@@ -281,30 +287,57 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* Monthly total */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
-          <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 10 }}>Tổng thu nhập tháng {month} · {income.length} khoản</div>
+        <div style={{
+          background: 'var(--surface)',
+          border: `1px solid ${isFiltered ? '#3b82f6' : 'var(--border)'}`,
+          borderRadius: 14, padding: '14px 16px',
+          transition: 'border-color 0.15s',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--ink3)' }}>
+              {isFiltered
+                ? <>Tổng <strong style={{ color: '#3b82f6' }}>đang lọc</strong> · {displayed.length}/{income.length} khoản</>
+                : <>Tổng thu nhập tháng {month} · {income.length} khoản</>}
+            </div>
+            {isFiltered && (
+              <button
+                onClick={() => { setFilterSource('all'); setFilterCurrency('all') }}
+                style={{ fontSize: 10, color: '#3b82f6', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 99, padding: '2px 8px', cursor: 'pointer' }}
+              >
+                Bỏ lọc
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {totalVND > 0 && (
+            {(isFiltered ? dispVND : totalVND) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: 'var(--ink3)', fontFamily: 'monospace' }}>VND</span>
                 <span className="font-mono" style={{ fontSize: 20, fontWeight: 600, color: '#10b981' }}>
-                  {formatVND(totalVND)}
+                  {formatVND(isFiltered ? dispVND : totalVND)}
                 </span>
               </div>
             )}
-            {totalJPY > 0 && (
+            {(isFiltered ? dispJPY : totalJPY) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: 'var(--ink3)', fontFamily: 'monospace' }}>JPY</span>
                 <span className="font-mono" style={{ fontSize: 20, fontWeight: 600, color: '#10b981' }}>
-                  ¥{totalJPY.toLocaleString('ja-JP')}
+                  ¥{(isFiltered ? dispJPY : totalJPY).toLocaleString('ja-JP')}
                 </span>
               </div>
             )}
-            {totalUSD > 0 && (
+            {(isFiltered ? dispUSD : totalUSD) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11, color: 'var(--ink3)', fontFamily: 'monospace' }}>USD</span>
                 <span className="font-mono" style={{ fontSize: 20, fontWeight: 600, color: '#10b981' }}>
-                  ${totalUSD.toLocaleString()}
+                  ${(isFiltered ? dispUSD : totalUSD).toLocaleString()}
+                </span>
+              </div>
+            )}
+            {isFiltered && dispTotalVND > 0 && (dispVND === 0 || dispJPY > 0 || dispUSD > 0) && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 6, borderTop: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 11, color: 'var(--ink3)' }}>≈ VND</span>
+                <span className="font-mono" style={{ fontSize: 14, fontWeight: 600, color: '#10b981' }}>
+                  {formatVND(dispTotalVND)}
                 </span>
               </div>
             )}
@@ -355,9 +388,21 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
           ))}
         </div>
 
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
-            Danh sách thu nhập · {displayed.length}{displayed.length !== income.length ? ` / ${income.length}` : ''} khoản
+        <div style={{ background: 'var(--surface)', border: `1px solid ${isFiltered ? '#3b82f6' : 'var(--border)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+              {isFiltered
+                ? <><strong style={{ color: '#3b82f6' }}>{displayed.length}</strong>/{income.length} khoản (đang lọc)</>
+                : <>Danh sách thu nhập · {displayed.length} khoản</>}
+            </span>
+            {isFiltered && (
+              <button
+                onClick={() => { setFilterSource('all'); setFilterCurrency('all') }}
+                style={{ fontSize: 10, color: '#3b82f6', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 99, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Bỏ lọc
+              </button>
+            )}
           </div>
           {displayed.length === 0 ? (
             <p style={{ padding: '16px', fontSize: 12.5, color: 'var(--ink3)', fontStyle: 'italic' }}>
@@ -377,6 +422,21 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
                     <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>Ghi chú</th>
                     <th style={{ padding: '8px 12px', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}></th>
                   </tr>
+                  {/* Totals rows — aligned with Số tiền column */}
+                  {displayed.length > 0 && (() => {
+                    const rows: { label: string; amount: string; vndEquiv: string; color: string }[] = []
+                    if (dispVND > 0) rows.push({ label: isFiltered ? `Tổng lọc · ${displayed.length}/${income.length} khoản` : `Tổng · ${displayed.length} khoản`, amount: formatVND(dispVND), vndEquiv: '', color: '#10b981' })
+                    if (dispJPY > 0) rows.push({ label: rows.length === 0 ? (isFiltered ? `Tổng lọc · ${displayed.length}/${income.length} khoản` : `Tổng · ${displayed.length} khoản`) : '', amount: `¥${dispJPY.toLocaleString('ja-JP')}`, vndEquiv: `≈ ${formatVND(toVND(dispJPY, 'JPY', rates))}`, color: '#0ea5e9' })
+                    if (dispUSD > 0) rows.push({ label: rows.length === 0 ? (isFiltered ? `Tổng lọc · ${displayed.length}/${income.length} khoản` : `Tổng · ${displayed.length} khoản`) : '', amount: `$${dispUSD.toLocaleString()}`, vndEquiv: `≈ ${formatVND(toVND(dispUSD, 'USD', rates))}`, color: '#f59e0b' })
+                    return rows.map((r, i) => (
+                      <tr key={i} style={{ background: '#f0fdf4', borderTop: i === 0 ? '1px solid #d1fae5' : 'none', borderBottom: i === rows.length - 1 ? '2px solid #d1fae5' : 'none' }}>
+                        <td colSpan={4} style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontSize: 11, color: 'var(--ink3)', fontStyle: 'italic' }}>{r.label}</td>
+                        <td className="font-mono" style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontWeight: 700, color: r.color, fontSize: 14, whiteSpace: 'nowrap' }}>{r.amount}</td>
+                        <td className="font-mono" style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontWeight: 500, color: 'var(--ink3)', fontSize: 12, whiteSpace: 'nowrap' }}>{r.vndEquiv}</td>
+                        <td colSpan={2} />
+                      </tr>
+                    ))
+                  })()}
                 </thead>
                 <tbody>
                   {displayed.map((i, idx) => {

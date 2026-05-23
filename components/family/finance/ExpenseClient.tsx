@@ -44,6 +44,7 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   const isEditing = editingId !== null
+  const isFiltered = filterCountry !== 'all' || filterCategory !== 'all'
 
   const totalConvertedVND = expenses.reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
   const totalExpVND = expenses.filter(e => e.currency === 'VND').reduce((s, e) => s + e.amount, 0)
@@ -73,6 +74,10 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
     else if (sortKey === 'country') cmp = a.country.localeCompare(b.country)
     return sortDir === 'asc' ? cmp : -cmp
   })
+
+  const sortedVND = sorted.filter(e => e.currency === 'VND').reduce((s, e) => s + e.amount, 0)
+  const sortedJPY = sorted.filter(e => e.currency === 'JPY').reduce((s, e) => s + e.amount, 0)
+  const sortedTotalVND = sorted.reduce((s, e) => s + toVND(e.amount, e.currency, rates), 0)
 
   function startEdit(item: FamilyExpense) {
     setEditingId(item.id)
@@ -386,9 +391,21 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
           ))}
         </div>
 
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
-            {sorted.length}{sorted.length !== expenses.length ? ` / ${expenses.length}` : ''} khoản chi
+        <div style={{ background: 'var(--surface)', border: `1px solid ${isFiltered ? '#3b82f6' : 'var(--border)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>
+              {isFiltered
+                ? <><strong style={{ color: '#3b82f6' }}>{sorted.length}</strong>/{expenses.length} khoản chi (đang lọc)</>
+                : <>{sorted.length} khoản chi</>}
+            </span>
+            {isFiltered && (
+              <button
+                onClick={() => { setFilterCountry('all'); setFilterCategory('all') }}
+                style={{ fontSize: 10, color: '#3b82f6', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 99, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Bỏ lọc
+              </button>
+            )}
           </div>
           {sorted.length === 0 ? (
             <p style={{ padding: '16px', fontSize: 12.5, color: 'var(--ink3)', fontStyle: 'italic' }}>
@@ -409,6 +426,20 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
                     <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500, whiteSpace: 'nowrap' }}>Ghi chú</th>
                     <th style={{ padding: '8px 12px', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}></th>
                   </tr>
+                  {/* Totals rows — aligned with Số tiền column */}
+                  {sorted.length > 0 && (() => {
+                    const rows: { label: string; amount: string; vndEquiv: string; color: string }[] = []
+                    if (sortedVND > 0) rows.push({ label: isFiltered ? `Tổng lọc · ${sorted.length}/${expenses.length} khoản` : `Tổng · ${sorted.length} khoản`, amount: formatVND(sortedVND), vndEquiv: '', color: '#ef4444' })
+                    if (sortedJPY > 0) rows.push({ label: rows.length === 0 ? (isFiltered ? `Tổng lọc · ${sorted.length}/${expenses.length} khoản` : `Tổng · ${sorted.length} khoản`) : '', amount: `¥${sortedJPY.toLocaleString('ja-JP')}`, vndEquiv: `≈ ${formatVND(toVND(sortedJPY, 'JPY', rates))}`, color: '#ef4444' })
+                    return rows.map((r, i) => (
+                      <tr key={i} style={{ background: '#fef2f2', borderTop: i === 0 ? '1px solid #fecaca' : 'none', borderBottom: i === rows.length - 1 ? '2px solid #fecaca' : 'none' }}>
+                        <td colSpan={5} style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontSize: 11, color: 'var(--ink3)', fontStyle: 'italic' }}>{r.label}</td>
+                        <td className="font-mono" style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontWeight: 700, color: r.color, fontSize: 14, whiteSpace: 'nowrap' }}>{r.amount}</td>
+                        <td className="font-mono" style={{ padding: i === 0 ? '7px 12px 4px' : '4px 12px 7px', fontWeight: 500, color: 'var(--ink3)', fontSize: 12, whiteSpace: 'nowrap' }}>{r.vndEquiv}</td>
+                        <td colSpan={2} />
+                      </tr>
+                    ))
+                  })()}
                 </thead>
                 <tbody>
                   {sorted.map((e, idx) => {
