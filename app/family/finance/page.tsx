@@ -1,4 +1,4 @@
-import { getIncomeByMonth, getExpensesByMonth, toVND, type ForexRates } from '@/services/familyFinance'
+import { getIncomeByMonth, getExpensesByMonth, getDebts, toVND, type ForexRates } from '@/services/familyFinance'
 import { getInvestments } from '@/services/familyInvestments'
 import { fetchForex } from '@/services/market'
 import DashboardClient, { type MonthlySummary } from '@/components/family/finance/DashboardClient'
@@ -19,17 +19,19 @@ function monthLabel(ym: string): string {
 export default async function FinanceDashboardPage() {
   const thisMonth = prevYearMonth(0)
 
-  // Fetch current month data, investments, and forex in parallel
-  const [incomeResult, expensesResult, investmentsResult, forexResult] = await Promise.allSettled([
+  // Fetch current month data, investments, debts, and forex in parallel
+  const [incomeResult, expensesResult, investmentsResult, debtsResult, forexResult] = await Promise.allSettled([
     getIncomeByMonth(thisMonth),
     getExpensesByMonth(thisMonth),
     getInvestments(),
+    getDebts(),
     fetchForex(),
   ])
 
   const incomeThisMonth = incomeResult.status === 'fulfilled' ? incomeResult.value : []
   const expensesThisMonth = expensesResult.status === 'fulfilled' ? expensesResult.value : []
   const investments = investmentsResult.status === 'fulfilled' ? investmentsResult.value : []
+  const debts = debtsResult.status === 'fulfilled' ? debtsResult.value : []
   const forex = forexResult.status === 'fulfilled' ? forexResult.value : []
 
   const rates: ForexRates = {
@@ -69,6 +71,7 @@ export default async function FinanceDashboardPage() {
       incomeThisMonth={incomeThisMonth}
       expensesThisMonth={expensesThisMonth}
       investments={investments}
+      debts={debts}
       rates={rates}
       monthLabel={monthLabel(thisMonth)}
       recentMonths={recentMonths}

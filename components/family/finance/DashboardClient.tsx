@@ -3,12 +3,13 @@
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
+  AreaChart, Area, CartesianGrid, ReferenceLine,
 } from 'recharts'
-import type { FamilyIncome, FamilyExpense, FamilyInvestment } from '@/types/family'
+import type { FamilyIncome, FamilyExpense, FamilyInvestment, FamilyDebt } from '@/types/family'
 import { INCOME_SOURCE_LABELS, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types/family'
 import type { ForexRates } from '@/services/familyFinance'
 import { toVND, formatVND, formatJPY } from '@/services/familyFinance'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 interface MonthlySummary {
@@ -21,9 +22,48 @@ interface DashboardClientProps {
   incomeThisMonth: FamilyIncome[]
   expensesThisMonth: FamilyExpense[]
   investments: FamilyInvestment[]
+  debts: FamilyDebt[]
   rates: ForexRates
   monthLabel: string
   recentMonths: MonthlySummary[]
+}
+
+// ── Projection helpers ──────────────────────────────────────────────────────
+
+interface ProjectionPoint {
+  month: number
+  label: string
+  remaining: number
+  paidPct: number
+}
+
+function computeProjection(totalVND: number, monthlyVND: number): ProjectionPoint[] {
+  if (totalVND <= 0 || monthlyVND <= 0) return []
+  const pts: ProjectionPoint[] = []
+  let payoffMonth: number | null = null
+  for (let m = 0; m <= 60; m++) {
+    const remaining = Math.max(0, totalVND - monthlyVND * m)
+    const paidPct = Math.round(((totalVND - remaining) / totalVND) * 100)
+    if (payoffMonth === null && remaining === 0) payoffMonth = m
+    if (m % 6 === 0 || m === payoffMonth) {
+      const yr = m / 12
+      const label = m === 0 ? 'Nay' : Number.isInteger(yr) ? `${yr} năm` : `${m}th`
+      pts.push({ month: m, label, remaining, paidPct })
+    }
+    if (payoffMonth !== null && m > payoffMonth) break
+  }
+  if (payoffMonth === null && (pts[pts.length - 1]?.month ?? 0) < 60) {
+    const remaining = Math.max(0, totalVND - monthlyVND * 60)
+    pts.push({ month: 60, label: '5 năm', remaining, paidPct: Math.round(((totalVND - remaining) / totalVND) * 100) })
+  }
+  return pts
+}
+
+function fmtVNDCompact(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)}tr`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`
+  return String(n)
 }
 
 const PIE_COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6b7280']
@@ -32,6 +72,7 @@ export default function DashboardClient({
   incomeThisMonth,
   expensesThisMonth,
   investments,
+  debts,
   rates,
   monthLabel,
   recentMonths,
@@ -101,6 +142,33 @@ export default function DashboardClient({
   const portRawVND = investments.filter(i => i.currency === 'VND').reduce((s, i) => s + rawInvAmount(i), 0)
   const portRawJPY = investments.filter(i => i.currency === 'JPY').reduce((s, i) => s + rawInvAmount(i), 0)
   const portRawUSD = investments.filter(i => i.currency === 'USD').reduce((s, i) => s + rawInvAmount(i), 0)
+
+  // ── Debt projection state ──────────────────────────────────────────────────
+  const [savingsInput, setSavingsInput] = useState('')
+  const [savingsCurrency, setSavingsCurrency] = useState<'VND' | 'JPY'>('JPY')
+
+  const totalIOweVND = useMemo(
+    () => debts
+      .filter(d => d.type === 'owe' && d.status !== 'settled')
+      .reduce((s, d) => s + toVND(d.amount - d.paidAmount, d.currency, rates), 0),
+    [debts, rates],
+  )
+
+  const monthlyVND = useMemo(() => {
+    const raw = Number(savingsInput)
+    if (!raw || raw <= 0) return 0
+    return savingsCurrency === 'JPY' ? toVND(raw, 'JPY', rates) : raw
+  }, [savingsInput, savingsCurrency, rates])
+
+  const projectionData = useMemo(
+    () => computeProjection(totalIOweVND, monthlyVND),
+    [totalIOweVND, monthlyVND],
+  )
+
+  const snapAt = (months: number) => {
+    if (!projectionData.length) return null
+    return projectionData.find(p => p.month >= months) ?? projectionData[projectionData.length - 1]
+  }
 
   const searchParams = useSearchParams()
   const currentMonth = searchParams.get('month') ?? new Date().toISOString().slice(0, 7)
@@ -433,11 +501,35 @@ export default function DashboardClient({
           />
         </div>
       </div>
+
+      {/* Debt projection */}
+      {debts.some(d => d.type === 'owe' && d.status !== 'settled') && (
+        <DebtProjectionSection
+          totalIOweVND={totalIOweVND}
+          savingsInput={savingsInput}
+          savingsCurrency={savingsCurrency}
+          monthlyVND={monthlyVND}
+          projectionData={projectionData}
+          at3yr={snapAt(36)}
+          at5yr={snapAt(60)}
+          payoffMonths={projectionData.find(p => p.remaining === 0)?.month ?? null}
+          onSavingsChange={setSavingsInput}
+          onCurrencyChange={setSavingsCurrency}
+          rates={rates}
+        />
+      )}
     </div>
   )
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────
+
+const BUBBLE_STYLE = `
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);    }
+}
+`
 
 function CardLink({ href, month, detail, children }: {
   href: string
@@ -454,19 +546,56 @@ function CardLink({ href, month, detail, children }: {
       onMouseLeave={() => setHovered(false)}
       onClick={() => router.push(`${href}?month=${month}`)}
     >
-      <div style={{ borderRadius: 14, boxShadow: hovered ? '0 0 0 2px var(--ink)' : 'none', transition: 'box-shadow 0.12s' }}>
+      <style>{BUBBLE_STYLE}</style>
+
+      {/* Card — lifts slightly on hover */}
+      <div style={{
+        borderRadius: 14,
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? '0 16px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)'
+          : '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 0.2s cubic-bezier(.34,1.4,.64,1), box-shadow 0.2s ease',
+      }}>
         {children}
       </div>
+
+      {/* Floating bubble — appears above the card */}
       {hovered && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, zIndex: 50,
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: '12px 14px', minWidth: 220,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 6,
+          position: 'absolute',
+          bottom: 'calc(100% + 14px)',
+          left: '50%',
+          zIndex: 100,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          minWidth: 230,
+          maxWidth: 290,
           pointerEvents: 'none',
+          boxShadow: '0 20px 48px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08)',
+          animation: 'bubbleIn 0.18s cubic-bezier(.34,1.3,.64,1) both',
         }}>
-          <div style={{ fontSize: 10, color: 'var(--ink3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Chi tiết — click để xem →
+          {/* Caret pointing down to the card */}
+          <div style={{
+            position: 'absolute',
+            bottom: -7,
+            left: '50%',
+            transform: 'translateX(-50%) rotate(45deg)',
+            width: 13,
+            height: 13,
+            background: 'var(--surface)',
+            borderRight: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
+          }} />
+
+          <div style={{
+            fontSize: 10, color: 'var(--ink3)', marginBottom: 10,
+            textTransform: 'uppercase', letterSpacing: '0.07em',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <span style={{ opacity: 0.5 }}>●</span> Chi tiết · click để xem
           </div>
           {detail}
         </div>
@@ -664,6 +793,159 @@ function RateItem({ label, value }: { label: string; value: string }) {
 
 function EmptyNote({ text }: { text: string }) {
   return <p style={{ fontSize: 12.5, color: 'var(--ink3)', fontStyle: 'italic' }}>{text}</p>
+}
+
+// ── Debt Projection ─────────────────────────────────────────────────────────
+
+function DebtProjectionSection({
+  totalIOweVND, savingsInput, savingsCurrency, monthlyVND,
+  projectionData, at3yr, at5yr, payoffMonths,
+  onSavingsChange, onCurrencyChange, rates,
+}: {
+  totalIOweVND: number
+  savingsInput: string
+  savingsCurrency: 'VND' | 'JPY'
+  monthlyVND: number
+  projectionData: ProjectionPoint[]
+  at3yr: ProjectionPoint | null | undefined
+  at5yr: ProjectionPoint | null | undefined
+  payoffMonths: number | null
+  onSavingsChange: (v: string) => void
+  onCurrencyChange: (v: 'VND' | 'JPY') => void
+  rates: ForexRates
+}) {
+  const hasData = projectionData.length > 1
+
+  const inputStyle: React.CSSProperties = {
+    padding: '7px 10px', borderRadius: 8,
+    border: '1px solid var(--border)', background: 'var(--surface)',
+    color: 'var(--ink)', fontSize: 13, boxSizing: 'border-box',
+  }
+
+  const SnapCard = ({ label, pt }: { label: string; pt: ProjectionPoint | null | undefined }) => {
+    if (!pt) return null
+    const pct = pt.paidPct
+    const color = pct >= 100 ? '#22c55e' : pct >= 75 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444'
+    return (
+      <div style={{
+        background: 'var(--surface2)', border: '1px solid var(--border)',
+        borderRadius: 10, padding: '10px 14px', flex: '1 1 130px', minWidth: 120,
+      }}>
+        <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color }}>
+          {pct >= 100 ? '🎉 Xong!' : `${pct}% trả xong`}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--ink3)', marginTop: 2 }}>
+          Còn: {formatVND(pt.remaining)}
+        </div>
+        <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2, transition: 'width 0.5s' }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>📊 Dự báo trả nợ</div>
+        <div style={{ fontSize: 12, color: 'var(--ink3)' }}>
+          Tổng nợ: <strong>{formatVND(totalIOweVND)}</strong>
+        </div>
+      </div>
+
+      {/* Savings input */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, color: 'var(--ink2)', whiteSpace: 'nowrap' }}>Tiết kiệm / tháng:</span>
+        <input
+          type="number"
+          placeholder="0"
+          value={savingsInput}
+          onChange={e => onSavingsChange(e.target.value)}
+          style={{ ...inputStyle, width: 130 }}
+        />
+        <select
+          value={savingsCurrency}
+          onChange={e => onCurrencyChange(e.target.value as 'VND' | 'JPY')}
+          style={{ ...inputStyle, width: 75 }}
+        >
+          <option value="JPY">JPY</option>
+          <option value="VND">VND</option>
+        </select>
+        {monthlyVND > 0 && (
+          <span style={{ fontSize: 12, color: 'var(--ink3)' }}>≈ {formatVND(monthlyVND)}/tháng</span>
+        )}
+      </div>
+
+      {/* Snapshot cards */}
+      {hasData && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <SnapCard label="Hiện tại" pt={{ month: 0, label: 'Nay', remaining: totalIOweVND, paidPct: 0 }} />
+          <SnapCard label="3 năm sau" pt={at3yr} />
+          <SnapCard label="5 năm sau" pt={at5yr} />
+          {payoffMonths !== null && (
+            <div style={{
+              background: '#22c55e18', border: '1px solid #22c55e44',
+              borderRadius: 10, padding: '10px 14px', flex: '1 1 130px', minWidth: 120,
+            }}>
+              <div style={{ fontSize: 11, color: '#22c55e', marginBottom: 4 }}>Trả xong sau</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#22c55e' }}>
+                {payoffMonths < 12
+                  ? `${payoffMonths} tháng`
+                  : `${(payoffMonths / 12).toFixed(1)} năm`}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chart */}
+      {hasData ? (
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={projectionData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="debtGradOv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--ink3)' }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={fmtVNDCompact} tick={{ fontSize: 11, fill: 'var(--ink3)' }} axisLine={false} tickLine={false} width={52} />
+            <Tooltip
+              formatter={(v: number) => [formatVND(v), 'Còn nợ']}
+              labelFormatter={(l: string) => `Thời điểm: ${l}`}
+              contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+            />
+            {[0.75, 0.5, 0.25].map(ratio => (
+              <ReferenceLine key={ratio} y={totalIOweVND * ratio}
+                stroke="#6b6860" strokeDasharray="3 3" strokeOpacity={0.4}
+                label={{ value: `${Math.round((1 - ratio) * 100)}%`, position: 'right', fontSize: 10, fill: '#6b6860' }}
+              />
+            ))}
+            {projectionData.some(p => p.month === 36) && (
+              <ReferenceLine x="3 năm" stroke="#3b82f6" strokeDasharray="4 3" strokeOpacity={0.6}
+                label={{ value: '3 năm', position: 'top', fontSize: 10, fill: '#3b82f6' }} />
+            )}
+            {projectionData.some(p => p.month === 60) && (
+              <ReferenceLine x="5 năm" stroke="#8b5cf6" strokeDasharray="4 3" strokeOpacity={0.6}
+                label={{ value: '5 năm', position: 'top', fontSize: 10, fill: '#8b5cf6' }} />
+            )}
+            <Area type="monotone" dataKey="remaining" stroke="#ef4444" strokeWidth={2}
+              fill="url(#debtGradOv)" dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div style={{
+          height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--ink3)', fontSize: 13, border: '1px dashed var(--border)', borderRadius: 10,
+        }}>
+          Nhập mức tiết kiệm hàng tháng để xem đồ thị dự báo
+        </div>
+      )}
+    </div>
+  )
 }
 
 export type { MonthlySummary }

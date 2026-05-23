@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { FamilyDebt, DebtType, DebtStatus } from '@/types/family'
 import type { ForexRates } from '@/services/familyFinance'
-import { formatJPY, formatVND, toVND, toJPY } from '@/services/familyFinance'
+import { formatJPY, formatVND, toVND } from '@/services/familyFinance'
 
 interface Props {
   initialDebts: FamilyDebt[]
@@ -28,6 +28,8 @@ const STATUS_COLOR: Record<DebtStatus, string> = {
   settled: '#22c55e',
 }
 
+// ── Main component ──────────────────────────────────────────────────────────
+
 export default function DebtsClient({ initialDebts, rates }: Props) {
   const [debts, setDebts] = useState<FamilyDebt[]>(initialDebts)
   const [form, setForm] = useState<Partial<FamilyDebt>>(emptyDebt())
@@ -41,11 +43,11 @@ export default function DebtsClient({ initialDebts, rates }: Props) {
   const iOwe = debts.filter(d => d.type === 'owe')
   const theyOwe = debts.filter(d => d.type === 'lend')
 
-  const totalIOwe = iOwe
+  const totalIOweVND = iOwe
     .filter(d => d.status !== 'settled')
     .reduce((s, d) => s + toVND(d.amount - d.paidAmount, d.currency, rates), 0)
 
-  const totalTheyOwe = theyOwe
+  const totalTheyOweVND = theyOwe
     .filter(d => d.status !== 'settled')
     .reduce((s, d) => s + toVND(d.amount - d.paidAmount, d.currency, rates), 0)
 
@@ -127,13 +129,13 @@ export default function DebtsClient({ initialDebts, rates }: Props) {
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <SummaryCard
           label="Tôi đang nợ"
-          value={formatVND(totalIOwe)}
+          value={formatVND(totalIOweVND)}
           color="#ef4444"
           count={iOwe.filter(d => d.status !== 'settled').length}
         />
         <SummaryCard
           label="Người ta nợ tôi"
-          value={formatVND(totalTheyOwe)}
+          value={formatVND(totalTheyOweVND)}
           color="#3b82f6"
           count={theyOwe.filter(d => d.status !== 'settled').length}
         />
@@ -247,7 +249,7 @@ export default function DebtsClient({ initialDebts, rates }: Props) {
         </div>
       )}
 
-      {/* Tôi nợ */}
+      {/* Debt lists */}
       <DebtSection
         title="Tôi đang nợ"
         color="#ef4444"
@@ -258,7 +260,6 @@ export default function DebtsClient({ initialDebts, rates }: Props) {
         onDelete={handleDelete}
       />
 
-      {/* Người ta nợ */}
       <DebtSection
         title="Người ta nợ tôi"
         color="#3b82f6"
@@ -470,3 +471,4 @@ const btnSecondary: React.CSSProperties = {
   border: '1px solid var(--border)', background: 'var(--surface2)',
   color: 'var(--ink)', fontSize: 13, cursor: 'pointer',
 }
+
