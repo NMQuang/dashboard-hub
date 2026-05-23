@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
-import type { FamilyIncome, FamilyExpense } from '@/types/family'
+import type { FamilyIncome, FamilyExpense, FamilyBill, FamilyBillTemplate, FamilyDebt, DebtStatus } from '@/types/family'
 
 function log(msg: string): void {
   console.warn('[familyFinance]', msg)
@@ -280,6 +280,328 @@ export async function deleteExpense(id: string): Promise<boolean> {
     return true
   } catch (err) {
     log(`deleteExpense: ${err}`)
+    return false
+  }
+}
+
+// ── Bills CRUD ────────────────────────────────────────────────────────────
+
+const _bills = new Map<string, FamilyBill>()
+
+type BillRow = {
+  id: string
+  month: string
+  country: string
+  name: string
+  category: string
+  estimated_amount: number | null
+  actual_amount: number | null
+  currency: string
+  due_date: string | null
+  status: string
+  expense_id: string | null
+  note: string | null
+  created_at: string
+}
+
+function rowToBill(row: BillRow): FamilyBill {
+  return {
+    id: row.id,
+    month: row.month,
+    country: row.country as 'JP' | 'VN',
+    name: row.name,
+    category: row.category,
+    estimatedAmount: row.estimated_amount ?? undefined,
+    actualAmount: row.actual_amount ?? undefined,
+    currency: row.currency as FamilyBill['currency'],
+    dueDate: row.due_date ?? undefined,
+    status: row.status as FamilyBill['status'],
+    expenseId: row.expense_id ?? undefined,
+    note: row.note ?? undefined,
+    createdAt: row.created_at,
+  }
+}
+
+function billToRow(b: FamilyBill): BillRow {
+  return {
+    id: b.id,
+    month: b.month,
+    country: b.country,
+    name: b.name,
+    category: b.category,
+    estimated_amount: b.estimatedAmount ?? null,
+    actual_amount: b.actualAmount ?? null,
+    currency: b.currency,
+    due_date: b.dueDate ?? null,
+    status: b.status,
+    expense_id: b.expenseId ?? null,
+    note: b.note ?? null,
+    created_at: b.createdAt,
+  }
+}
+
+export async function getBillsByMonth(yearMonth: string): Promise<FamilyBill[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_bills')
+        .select('*')
+        .eq('month', yearMonth)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return (data as BillRow[]).map(rowToBill)
+    } catch (err) {
+      log(`getBillsByMonth: ${err}`)
+    }
+  }
+  return Array.from(_bills.values()).filter(b => b.month === yearMonth)
+}
+
+export async function saveBill(bill: FamilyBill): Promise<boolean> {
+  _bills.set(bill.id, bill)
+  if (!supabase) return false
+  try {
+    const { error } = await supabase.from('family_bills').upsert(billToRow(bill))
+    if (error) throw error
+    return true
+  } catch (err) {
+    log(`saveBill: ${err}`)
+    return false
+  }
+}
+
+export async function deleteBill(id: string): Promise<boolean> {
+  _bills.delete(id)
+  if (!supabase) return false
+  try {
+    const { error } = await supabase.from('family_bills').delete().eq('id', id)
+    if (error) throw error
+    return true
+  } catch (err) {
+    log(`deleteBill: ${err}`)
+    return false
+  }
+}
+
+// ── Bill Templates ────────────────────────────────────────────────────────
+
+type TemplateRow = {
+  id: string
+  country: string
+  name: string
+  category: string
+  currency: string
+  estimated_amount: number | null
+  enabled: boolean
+  sort_order: number
+  created_at: string
+}
+
+function rowToTemplate(row: TemplateRow): FamilyBillTemplate {
+  return {
+    id: row.id,
+    country: row.country as 'JP' | 'VN',
+    name: row.name,
+    category: row.category,
+    currency: row.currency as 'JPY' | 'VND',
+    estimatedAmount: row.estimated_amount ?? undefined,
+    enabled: row.enabled,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+  }
+}
+
+export async function getBillTemplates(): Promise<FamilyBillTemplate[]> {
+  if (!supabase) return []
+  try {
+    const { data, error } = await supabase
+      .from('family_bill_templates')
+      .select('*')
+      .order('sort_order', { ascending: true })
+    if (error) throw error
+    return (data as TemplateRow[]).map(rowToTemplate)
+  } catch (err) {
+    log(`getBillTemplates: ${err}`)
+    return []
+  }
+}
+
+export async function updateBillTemplate(
+  id: string,
+  updates: { enabled?: boolean; estimated_amount?: number | null },
+): Promise<boolean> {
+  if (!supabase) return false
+  try {
+    const { error } = await supabase
+      .from('family_bill_templates')
+      .update(updates)
+      .eq('id', id)
+    if (error) throw error
+    return true
+  } catch (err) {
+    log(`updateBillTemplate: ${err}`)
+    return false
+  }
+}
+
+// Lấy actual amount của bill cùng tên tháng trước (smart estimate)
+async function getPrevMonthActual(
+  name: string,
+  country: string,
+  targetMonth: string,
+): Promise<number | null> {
+  if (!supabase) return null
+  const [y, m] = targetMonth.split('-').map(Number)
+  const prevMonth = m === 1
+    ? `${y - 1}-12`
+    : `${y}-${String(m - 1).padStart(2, '0')}`
+  try {
+    const { data } = await supabase
+      .from('family_bills')
+      .select('actual_amount')
+      .eq('name', name)
+      .eq('country', country)
+      .eq('month', prevMonth)
+      .eq('status', 'paid')
+      .limit(1)
+    return (data?.[0]?.actual_amount as number) ?? null
+  } catch {
+    return null
+  }
+}
+
+// Sinh bills tự động cho 1 tháng từ templates đang enabled
+// Trả về số bill được tạo mới
+export async function generateBillsForMonth(targetMonth: string): Promise<{
+  created: number
+  skipped: number
+  month: string
+}> {
+  const templates = await getBillTemplates()
+  const enabled = templates.filter(t => t.enabled)
+  const existing = await getBillsByMonth(targetMonth)
+  const existingKeys = new Set(existing.map(b => `${b.country}|${b.name}`))
+
+  let created = 0
+  let skipped = 0
+
+  for (const tpl of enabled) {
+    const key = `${tpl.country}|${tpl.name}`
+    if (existingKeys.has(key)) { skipped++; continue }
+
+    // Smart estimate: template amount → prev month actual → null
+    let estimate: number | undefined = tpl.estimatedAmount
+    if (!estimate) {
+      const prev = await getPrevMonthActual(tpl.name, tpl.country, targetMonth)
+      if (prev) estimate = prev
+    }
+
+    const bill: FamilyBill = {
+      id: `bill-auto-${targetMonth}-${tpl.id}`,
+      month: targetMonth,
+      country: tpl.country,
+      name: tpl.name,
+      category: tpl.category,
+      estimatedAmount: estimate,
+      currency: tpl.currency,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+    await saveBill(bill)
+    created++
+  }
+
+  return { created, skipped, month: targetMonth }
+}
+
+// ── Debts CRUD ────────────────────────────────────────────────────────────
+
+const _debts = new Map<string, FamilyDebt>()
+
+type DebtRow = {
+  id: string
+  type: string
+  person: string
+  amount: number
+  currency: string
+  description: string | null
+  due_date: string | null
+  status: string
+  paid_amount: number
+  created_at: string
+  settled_at: string | null
+}
+
+function rowToDebt(row: DebtRow): FamilyDebt {
+  return {
+    id: row.id,
+    type: row.type as FamilyDebt['type'],
+    person: row.person,
+    amount: Number(row.amount),
+    currency: row.currency as FamilyDebt['currency'],
+    description: row.description ?? undefined,
+    dueDate: row.due_date ?? undefined,
+    status: row.status as DebtStatus,
+    paidAmount: Number(row.paid_amount),
+    createdAt: row.created_at,
+    settledAt: row.settled_at ?? undefined,
+  }
+}
+
+function debtToRow(d: FamilyDebt): DebtRow {
+  return {
+    id: d.id,
+    type: d.type,
+    person: d.person,
+    amount: d.amount,
+    currency: d.currency,
+    description: d.description ?? null,
+    due_date: d.dueDate ?? null,
+    status: d.status,
+    paid_amount: d.paidAmount,
+    created_at: d.createdAt,
+    settled_at: d.settledAt ?? null,
+  }
+}
+
+export async function getDebts(): Promise<FamilyDebt[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_debts')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data as DebtRow[]).map(rowToDebt)
+    } catch (err) {
+      log(`getDebts: ${err}`)
+    }
+  }
+  return Array.from(_debts.values())
+}
+
+export async function saveDebt(debt: FamilyDebt): Promise<boolean> {
+  _debts.set(debt.id, debt)
+  if (!supabase) return false
+  try {
+    const { error } = await supabase.from('family_debts').upsert(debtToRow(debt))
+    if (error) throw error
+    return true
+  } catch (err) {
+    log(`saveDebt: ${err}`)
+    return false
+  }
+}
+
+export async function deleteDebt(id: string): Promise<boolean> {
+  _debts.delete(id)
+  if (!supabase) return false
+  try {
+    const { error } = await supabase.from('family_debts').delete().eq('id', id)
+    if (error) throw error
+    return true
+  } catch (err) {
+    log(`deleteDebt: ${err}`)
     return false
   }
 }

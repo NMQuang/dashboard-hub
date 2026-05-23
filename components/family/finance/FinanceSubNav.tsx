@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 
 const TABS = [
-  { href: '/family/finance',             label: 'Overview',     icon: '◎' },
-  { href: '/family/finance/income',      label: 'Income',       icon: '↑' },
-  { href: '/family/finance/expenses',    label: 'Expenses',     icon: '↓' },
-  { href: '/family/finance/investments', label: 'Investments',  icon: '◈' },
-  { href: '/family/finance/reports',     label: 'Reports',      icon: '≡' },
-] as const
+  { href: '/family/finance',             label: 'Overview',     icon: '◎', noMonth: false },
+  { href: '/family/finance/income',      label: 'Income',       icon: '↑', noMonth: false },
+  { href: '/family/finance/expenses',    label: 'Expenses',     icon: '↓', noMonth: false },
+  { href: '/family/finance/bills',       label: 'Bills',        icon: '🗒', noMonth: false },
+  { href: '/family/finance/debts',       label: 'Debts',        icon: '⇄', noMonth: true  },
+  { href: '/family/finance/investments', label: 'Investments',  icon: '◈', noMonth: false },
+  { href: '/family/finance/reports',     label: 'Reports',      icon: '≡', noMonth: false },
+]
 
 function shiftMonth(yearMonth: string, delta: number): string {
   const [y, m] = yearMonth.split('-').map(Number)
@@ -42,7 +44,7 @@ export default function FinanceSubNav() {
           return (
             <Link
               key={tab.href}
-              href={`${tab.href}?month=${month}`}
+              href={tab.noMonth ? tab.href : `${tab.href}?month=${month}`}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '6px 14px', borderRadius: 20, fontSize: 13,

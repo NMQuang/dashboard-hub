@@ -297,6 +297,89 @@ export interface FamilyInvestment {
   updatedAt: string
 }
 
+// ── Bills (hóa đơn cố định JP) ────────────────────────────────────────────
+
+export type BillStatus = 'pending' | 'paid'
+
+export interface FamilyBill {
+  id: string
+  month: string             // YYYY-MM
+  country: 'JP' | 'VN'
+  name: string
+  category: string
+  estimatedAmount?: number
+  actualAmount?: number
+  currency: 'JPY' | 'VND'
+  dueDate?: string          // YYYY-MM-DD
+  status: BillStatus
+  expenseId?: string        // sau khi mark paid → link to expense
+  note?: string
+  createdAt: string
+}
+
+export interface BillPreset {
+  name: string
+  icon: string
+  category: string
+  country: 'JP' | 'VN'
+  currency: 'JPY' | 'VND'
+}
+
+export const BILL_PRESETS: BillPreset[] = [
+  // Japan — tiền cố định hàng tháng
+  { name: '電気',          icon: '💡', category: 'utilities',      country: 'JP', currency: 'JPY' },
+  { name: '水道',          icon: '💧', category: 'utilities',      country: 'JP', currency: 'JPY' },
+  { name: 'ガス',          icon: '🔥', category: 'utilities',      country: 'JP', currency: 'JPY' },
+  { name: 'インターネット', icon: '🌐', category: 'utilities',      country: 'JP', currency: 'JPY' },
+  { name: 'WiFi',          icon: '📶', category: 'utilities',      country: 'JP', currency: 'JPY' },
+  { name: '食費',          icon: '🍱', category: 'food',           country: 'JP', currency: 'JPY' },
+  { name: 'JP その他',     icon: '📋', category: 'misc',           country: 'JP', currency: 'JPY' },
+  // Vietnam — tiền cố định hàng tháng
+  { name: 'Tiền điện',        icon: '💡', category: 'utilities',       country: 'VN', currency: 'VND' },
+  { name: 'Tiền nước',        icon: '💧', category: 'utilities',       country: 'VN', currency: 'VND' },
+  { name: 'Tiền internet',    icon: '🌐', category: 'utilities',       country: 'VN', currency: 'VND' },
+  { name: 'Tiền trả VISA',    icon: '💳', category: 'misc',            country: 'VN', currency: 'VND' },
+  { name: 'Tiền trả ngân hàng', icon: '🏦', category: 'utilities',    country: 'VN', currency: 'VND' },
+  { name: 'Tiền xe',          icon: '🛵', category: 'transportation',  country: 'VN', currency: 'VND' },
+  { name: 'VN Khác',          icon: '📋', category: 'misc',            country: 'VN', currency: 'VND' },
+]
+
+export const BILL_PRESETS_JP = BILL_PRESETS.filter(p => p.country === 'JP')
+export const BILL_PRESETS_VN = BILL_PRESETS.filter(p => p.country === 'VN')
+
+// ── Bill templates (cấu hình tự động sinh hàng tháng) ────────────────────
+
+export interface FamilyBillTemplate {
+  id: string
+  country: 'JP' | 'VN'
+  name: string
+  category: string
+  currency: 'JPY' | 'VND'
+  estimatedAmount?: number  // null = dùng smart estimate (actual tháng trước)
+  enabled: boolean
+  sortOrder: number
+  createdAt: string
+}
+
+// ── Debts (công nợ) ───────────────────────────────────────────────────────
+
+export type DebtType = 'owe' | 'lend'  // owe = tôi nợ, lend = người ta nợ tôi
+export type DebtStatus = 'active' | 'partial' | 'settled'
+
+export interface FamilyDebt {
+  id: string
+  type: DebtType
+  person: string
+  amount: number
+  currency: 'JPY' | 'VND' | 'USD'
+  description?: string
+  dueDate?: string          // YYYY-MM-DD
+  status: DebtStatus
+  paidAmount: number        // số đã trả/nhận
+  createdAt: string
+  settledAt?: string
+}
+
 // ── Upload ────────────────────────────────────────────────────────────────
 
 export interface PresignedUploadUrl {
