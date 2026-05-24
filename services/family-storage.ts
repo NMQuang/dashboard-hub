@@ -29,6 +29,7 @@ import type {
   GooglePhotoAlbum,
 } from '@/types/family-types'
 import type { GoogleFamilyPhoto } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 const KV_URL = (process.env.FAMILY_KV_REST_API_URL ?? '').trim()
 const KV_TOKEN = (process.env.FAMILY_KV_REST_API_TOKEN ?? '').trim()
@@ -175,52 +176,114 @@ async function kvDelete(key: string): Promise<boolean> {
   return true
 }
 
-// ── Photos ────────────────────────────────────────────────────────────────
+// ── Photos — Supabase primary, KV fallback ────────────────────────────────
+
+type PhotoRow = {
+  id: string; filename: string; url: string; thumbnail_url: string
+  taken_at: string; uploaded_at: string; uploaded_by: string
+  tags: string[]; caption: string | null; location: string | null
+  size_bytes: number; width: number; height: number
+}
+type GooglePhotoRow = {
+  id: string; url: string; thumbnail_url: string; filename: string
+  description: string | null; taken_at: string; created_at: string
+  mime_type: string; width: number; height: number; synced_at: string
+}
+
+function photoToRow(p: FamilyPhoto): PhotoRow {
+  return {
+    id: p.id, filename: p.filename, url: p.url, thumbnail_url: p.thumbnailUrl,
+    taken_at: p.takenAt, uploaded_at: p.uploadedAt, uploaded_by: p.uploadedBy,
+    tags: p.tags, caption: p.caption ?? null, location: p.location ?? null,
+    size_bytes: p.sizeBytes, width: p.width, height: p.height,
+  }
+}
+function rowToPhoto(r: PhotoRow): FamilyPhoto {
+  return {
+    id: r.id, filename: r.filename, url: r.url, thumbnailUrl: r.thumbnail_url,
+    takenAt: r.taken_at, uploadedAt: r.uploaded_at,
+    uploadedBy: r.uploaded_by as 'me' | 'partner',
+    tags: r.tags, caption: r.caption ?? undefined, location: r.location ?? undefined,
+    sizeBytes: r.size_bytes, width: r.width, height: r.height, albumIds: [],
+  }
+}
+function googlePhotoToRow(p: GoogleFamilyPhoto, syncedAt: string): GooglePhotoRow {
+  return {
+    id: p.id, url: p.url, thumbnail_url: p.thumbnailUrl, filename: p.filename,
+    description: p.description ?? null, taken_at: p.takenAt, created_at: p.createdAt,
+    mime_type: p.mimeType, width: p.width, height: p.height, synced_at: syncedAt,
+  }
+}
+function rowToGooglePhoto(r: GooglePhotoRow): GoogleFamilyPhoto {
+  return {
+    id: r.id, url: r.url, thumbnailUrl: r.thumbnail_url, filename: r.filename,
+    description: r.description ?? undefined, takenAt: r.taken_at, createdAt: r.created_at,
+    mimeType: r.mime_type, width: r.width, height: r.height, source: 'google_photos' as const,
+  }
+}
 
 export async function getAllPhotos(): Promise<FamilyPhoto[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_photos').select('*').order('taken_at', { ascending: false })
+      if (error) throw error
+      return (data as PhotoRow[]).map(rowToPhoto)
+    } catch (err) { console.error(logPrefix('getAllPhotos'), err) }
+  }
   const result = await kvGet<FamilyPhoto[]>('family:photos')
   return Array.isArray(result) ? result : []
 }
 
 export async function getPhoto(id: string): Promise<FamilyPhoto | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_photos').select('*').eq('id', id).maybeSingle()
+      if (error) throw error
+      return data ? rowToPhoto(data as PhotoRow) : null
+    } catch (err) { console.error(logPrefix('getPhoto'), err) }
+  }
   return kvGet<FamilyPhoto>(`family:photo:${id}`)
 }
 
 export async function savePhoto(photo: FamilyPhoto): Promise<void> {
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('family_photos').upsert(photoToRow(photo))
+      if (error) throw error
+      return
+    } catch (err) { console.error(logPrefix('savePhoto'), err) }
+  }
   await kvSet(`family:photo:${photo.id}`, photo)
-
   const all = Array.from(await getAllPhotos())
   const idx = all.findIndex((p) => p.id === photo.id)
-
   if (idx >= 0) all[idx] = photo
   else all.unshift(photo)
-
   await kvSet('family:photos', all)
 }
 
 export async function updatePhotoCaption(id: string, caption: string): Promise<void> {
   const photo = await getPhoto(id)
   if (!photo) return
-
-  await savePhoto({
-    ...photo,
-    caption,
-    captionGeneratedAt: new Date().toISOString(),
-  })
+  await savePhoto({ ...photo, caption, captionGeneratedAt: new Date().toISOString() })
 }
 
 export async function deletePhoto(id: string): Promise<void> {
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('family_photos').delete().eq('id', id)
+      if (error) throw error
+      return
+    } catch (err) { console.error(logPrefix('deletePhoto'), err) }
+  }
   await kvDelete(`family:photo:${id}`)
-
   const all = Array.from(await getAllPhotos())
-  await kvSet(
-    'family:photos',
-    all.filter((p) => p.id !== id),
-  )
+  await kvSet('family:photos', all.filter((p) => p.id !== id))
 }
 
 export async function getPhotosByTag(tag: string): Promise<FamilyPhoto[]> {
-  const all = Array.from(await getAllPhotos())
+  const all = await getAllPhotos()
   return all.filter((p) => p.tags.includes(tag))
 }
 
@@ -444,8 +507,7 @@ export async function saveGoogleAlbumsCache(albums: GooglePhotoAlbum[]): Promise
   } satisfies GoogleAlbumsCache)
 }
 
-// ── Google Photos Picker — synced photos ──────────────────────────────────────
-// Photos the user has selected via the Picker API flow, saved permanently in KV.
+// ── Google Photos Picker — Supabase primary, KV fallback ──────────────────────
 
 interface PickedPhotosStore {
   photos: GoogleFamilyPhoto[]
@@ -453,16 +515,52 @@ interface PickedPhotosStore {
 }
 
 export async function getPickedGooglePhotos(): Promise<GoogleFamilyPhoto[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_google_photos').select('*').order('taken_at', { ascending: false })
+      if (error) throw error
+      return (data as GooglePhotoRow[]).map(rowToGooglePhoto)
+    } catch (err) { console.error(logPrefix('getPickedGooglePhotos'), err) }
+  }
   const result = await kvGet<PickedPhotosStore>('family:google_picked_photos')
   return Array.isArray(result?.photos) ? result!.photos : []
 }
 
 export async function getPickedPhotosSyncedAt(): Promise<string | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_google_photos').select('synced_at').order('synced_at', { ascending: false }).limit(1)
+      if (error) throw error
+      return (data as { synced_at: string }[])[0]?.synced_at ?? null
+    } catch (err) { console.error(logPrefix('getPickedPhotosSyncedAt'), err) }
+  }
   const result = await kvGet<PickedPhotosStore>('family:google_picked_photos')
   return result?.syncedAt ?? null
 }
 
 export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promise<boolean> {
+  if (supabase) {
+    try {
+      const syncedAt = new Date().toISOString()
+      if (photos.length > 0) {
+        const { error: upsertErr } = await supabase
+          .from('family_google_photos')
+          .upsert(photos.map(p => googlePhotoToRow(p, syncedAt)))
+        if (upsertErr) throw upsertErr
+        // Delete photos removed from the list
+        const ids = photos.map(p => p.id)
+        const { error: delErr } = await supabase
+          .from('family_google_photos').delete().not('id', 'in', `(${ids.map(id => `"${id}"`).join(',')})`)
+        if (delErr) throw delErr
+      } else {
+        // Clear all
+        await supabase.from('family_google_photos').delete().neq('id', '')
+      }
+      return true
+    } catch (err) { console.error(logPrefix('savePickedGooglePhotos'), err) }
+  }
   return kvSet('family:google_picked_photos', {
     photos,
     syncedAt: new Date().toISOString(),
@@ -470,6 +568,13 @@ export async function savePickedGooglePhotos(photos: GoogleFamilyPhoto[]): Promi
 }
 
 export async function deletePickedGooglePhoto(id: string): Promise<void> {
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('family_google_photos').delete().eq('id', id)
+      if (error) throw error
+      return
+    } catch (err) { console.error(logPrefix('deletePickedGooglePhoto'), err) }
+  }
   const current = await getPickedGooglePhotos()
   await savePickedGooglePhotos(current.filter(p => p.id !== id))
 }
