@@ -294,6 +294,7 @@ export interface FamilyInvestment {
   currentPrice?: number
   currency: string
   note?: string
+  purchasedAt?: string   // YYYY-MM-DD
   updatedAt: string
 }
 

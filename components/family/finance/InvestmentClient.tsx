@@ -9,6 +9,38 @@ function genId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 5)
 }
 
+function todayVN(): string {
+  const now = new Date()
+  const vnMs = now.getTime() + 7 * 60 * 60 * 1000
+  return new Date(vnMs).toISOString().slice(0, 10)
+}
+
+function formatDate(d: string | undefined): string {
+  if (!d) return '—'
+  const [y, m, day] = d.split('-')
+  return `${day}/${m}/${y}`
+}
+
+const GOLD_ASSET_KEY: Record<string, string> = {
+  'SJC':                'nguyen_lieu',
+  'PNJ':                'nhan',
+  'Bảo Tín Minh Châu':  'mieng',
+  'Nhẫn tròn':          'nhan',
+}
+
+async function fetchGoldSellPrice(assetName: string): Promise<number | null> {
+  const key = GOLD_ASSET_KEY[assetName]
+  if (!key) return null
+  try {
+    const res = await fetch('/api/market/vn-gold')
+    if (!res.ok) return null
+    const { prices } = (await res.json()) as { prices: { key: string; sell: number }[] }
+    return prices.find(p => p.key === key)?.sell ?? null
+  } catch {
+    return null
+  }
+}
+
 interface InvestmentClientProps {
   initialInvestments: FamilyInvestment[]
   rates: ForexRates
@@ -51,7 +83,9 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   const [currentPrice, setCurrentPrice] = useState('')
   const [currency, setCurrency] = useState<InvCurrency>('VND')
   const [note, setNote] = useState('')
+  const [purchasedAt, setPurchasedAt] = useState(todayVN())
   const [saving, setSaving] = useState(false)
+  const [fetchingPrice, setFetchingPrice] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -85,7 +119,22 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   function handleTypeChange(t: InvestmentType) {
     setType(t)
     setAssetName('')
+    setAvgBuyPrice('')
+    setCurrentPrice('')
     setCurrency(t === 'savings' ? 'VND' : t === 'gold' ? 'VND' : t === 'stock' ? 'VND' : 'USD')
+  }
+
+  async function selectGoldAsset(name: string) {
+    setAssetName(name)
+    if (GOLD_ASSET_KEY[name]) {
+      setFetchingPrice(true)
+      const price = await fetchGoldSellPrice(name)
+      if (price) {
+        setAvgBuyPrice(price.toLocaleString('en-US'))
+        setCurrentPrice(price.toLocaleString('en-US'))
+      }
+      setFetchingPrice(false)
+    }
   }
 
   async function handleAdd(evt: React.FormEvent) {
@@ -106,6 +155,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       currentPrice:    type === 'savings' ? undefined : cur,
       currency,
       note: note.trim() || undefined,
+      purchasedAt: purchasedAt || todayVN(),
       updatedAt: new Date().toISOString(),
     }
 
@@ -123,6 +173,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       setAvgBuyPrice('')
       setCurrentPrice('')
       setNote('')
+      setPurchasedAt(todayVN())
       setShowForm(false)
     } catch (err) {
       setError('Lưu thất bại, thử lại.')
@@ -208,7 +259,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
                 <button
                   key={s}
                   type="button"
-                  onClick={() => setAssetName(s)}
+                  onClick={() => type === 'gold' ? selectGoldAsset(s) : setAssetName(s)}
                   style={{
                     padding: '3px 10px', borderRadius: 99, fontSize: 11.5, cursor: 'pointer',
                     border: '1px solid var(--border)', background: assetName === s ? 'var(--surface2)' : 'transparent',
@@ -255,6 +306,17 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
               ))}
             </div>
 
+            {/* Ngày mua */}
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>Ngày mua</div>
+              <input
+                type="date"
+                value={purchasedAt}
+                onChange={e => setPurchasedAt(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+
             {isSavings ? (
               /* Savings: only balance */
               <div>
@@ -283,7 +345,13 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
                   />
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>Giá vốn</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>
+                    Giá vốn
+                    {fetchingPrice && <span style={{ marginLeft: 4, color: '#d97706' }}>đang lấy...</span>}
+                    {type === 'gold' && !fetchingPrice && avgBuyPrice && (
+                      <span style={{ marginLeft: 4, color: '#10b981', fontSize: 10 }}>BTMC</span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={avgBuyPrice}
@@ -529,7 +597,7 @@ function InvestmentSection({ title, items, rates, onDelete, deletingId }: {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface2)' }}>
-              {['Tài sản', 'Số lượng', 'Giá vốn', 'Giá hiện tại', 'Giá trị VND', 'Lãi/Lỗ', ''].map(h => (
+              {['Tài sản', 'Ngày mua', 'Số lượng', 'Giá vốn', 'Giá hiện tại', 'Giá trị VND', 'Lãi/Lỗ', ''].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
@@ -556,6 +624,9 @@ function InvestmentSection({ title, items, rates, onDelete, deletingId }: {
                   <td style={{ padding: '10px 12px', fontWeight: 500, color: 'var(--ink)' }}>
                     {inv.assetName}
                     {inv.note && <div style={{ fontSize: 11, color: 'var(--ink3)', fontWeight: 400 }}>{inv.note}</div>}
+                  </td>
+                  <td className="font-mono" style={{ padding: '10px 12px', fontSize: 12, color: 'var(--ink3)' }}>
+                    {formatDate(inv.purchasedAt)}
                   </td>
                   <td className="font-mono" style={{ padding: '10px 12px', color: 'var(--ink2)' }}>{inv.quantity}</td>
                   <td className="font-mono" style={{ padding: '10px 12px', color: 'var(--ink3)' }}>

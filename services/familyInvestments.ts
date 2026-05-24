@@ -27,6 +27,7 @@ type InvestmentRow = {
   current_price: number | null
   currency: string
   note: string | null
+  purchased_at: string | null
   updated_at: string
 }
 
@@ -35,13 +36,14 @@ type InvestmentRow = {
 function rowToInvestment(row: InvestmentRow): FamilyInvestment {
   return {
     id: row.id,
-    type: row.type as 'gold' | 'crypto' | 'savings',
+    type: row.type as 'gold' | 'crypto' | 'savings' | 'stock',
     assetName: row.asset_name,
     quantity: Number(row.quantity),
     averageBuyPrice: row.average_buy_price != null ? Number(row.average_buy_price) : undefined,
     currentPrice: row.current_price != null ? Number(row.current_price) : undefined,
     currency: row.currency,
     note: row.note ?? undefined,
+    purchasedAt: row.purchased_at ?? undefined,
     updatedAt: row.updated_at,
   }
 }
@@ -56,6 +58,7 @@ function investmentToRow(i: FamilyInvestment): InvestmentRow {
     current_price: i.currentPrice ?? null,
     currency: i.currency,
     note: i.note ?? null,
+    purchased_at: i.purchasedAt ?? null,
     updated_at: i.updatedAt,
   }
 }
