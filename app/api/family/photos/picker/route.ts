@@ -32,6 +32,7 @@ async function inBatches<T, R>(
 async function processPickerItem(
   item: PickerMediaItem,
   existingById: Map<string, GoogleFamilyPhoto>,
+  accessToken: string,
 ): Promise<GoogleFamilyPhoto | null> {
   const { id, createTime, mediaFile } = item
   const { baseUrl, mimeType, filename, mediaFileMetadata } = mediaFile
@@ -52,10 +53,14 @@ async function processPickerItem(
 
   const r2Key = `google-photos/${id}.${ext}`
 
-  // Two attempts: Google CDN can have transient failures
+  // Two attempts: Google CDN can have transient failures.
+  // Picker API baseUrls require Bearer token — include it in the download request.
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const dlRes = await fetch(`${baseUrl}=d`, { cache: 'no-store' })
+      const dlRes = await fetch(`${baseUrl}=d`, {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
       if (!dlRes.ok) {
         console.warn(`[picker] Google download failed for ${id} (HTTP ${dlRes.status}), attempt ${attempt}`)
         if (attempt === 2) return null
@@ -162,7 +167,7 @@ export async function PUT(req: NextRequest) {
 
     console.info('[picker] processing', imageItems.length, 'photos (R2 upload enabled:', R2_CONFIGURED, ')...')
 
-    const processed = await inBatches(imageItems, 5, item => processPickerItem(item, existingById))
+    const processed = await inBatches(imageItems, 5, item => processPickerItem(item, existingById, accessToken))
     const photos = processed.filter((p): p is GoogleFamilyPhoto => p !== null)
     const failedCount = imageItems.length - photos.length
 
