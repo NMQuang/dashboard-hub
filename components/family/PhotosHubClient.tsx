@@ -116,11 +116,12 @@ export default function PhotosHubClient({
             body: JSON.stringify({ sessionId }),
           })
           if (!sr.ok) throw new Error(`Save HTTP ${sr.status}`)
-          const { count, failed, photos: newPhotos, kvPersisted } = await sr.json() as {
+          const { count, failed, photos: newPhotos, kvPersisted, errors } = await sr.json() as {
             count: number
             failed: number
             photos: GoogleFamilyPhoto[]
             kvPersisted: boolean
+            errors?: string[]
           }
           if (newPhotos?.length) {
             const newDisplayPhotos = newPhotos.map(googlePhotoToDisplay)
@@ -131,7 +132,10 @@ export default function PhotosHubClient({
             })
           }
           let msg = `✓ Đã sync ${count} ảnh`
-          if (failed > 0) msg += ` (${failed} ảnh lỗi tải về R2 — sẽ không hiển thị)`
+          if (failed > 0) {
+            const firstErr = errors?.[0] ? `: ${errors[0]}` : ''
+            msg += ` (${failed} ảnh lỗi${firstErr})`
+          }
           if (!kvPersisted) msg += ` · ⚠ Lỗi lưu DB — ảnh có thể mất sau khi reload`
           setSyncMsg(msg)
           setSyncStep('done')
