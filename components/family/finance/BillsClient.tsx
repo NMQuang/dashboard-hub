@@ -8,6 +8,7 @@ import { formatJPY, formatVND, toVND } from '@/services/familyFinance'
 
 interface Props {
   initialBills: FamilyBill[]
+  prevMonthBills: FamilyBill[]
   month: string
   rates: ForexRates
 }
@@ -34,7 +35,7 @@ function nextMonthOf(ym: string): string {
     : `${y}-${String(m + 1).padStart(2, '0')}`
 }
 
-export default function BillsClient({ initialBills, month, rates }: Props) {
+export default function BillsClient({ initialBills, prevMonthBills, month, rates }: Props) {
   const [bills, setBills] = useState<FamilyBill[]>(initialBills)
   const [form, setForm] = useState<Partial<FamilyBill>>(empty(month))
   const [showForm, setShowForm] = useState(false)
@@ -42,6 +43,14 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
   const [payModal, setPayModal] = useState<FamilyBill | null>(null)
   const [payAmount, setPayAmount] = useState('')
   const [error, setError] = useState('')
+
+  // Edit modal
+  const [editModal, setEditModal] = useState<FamilyBill | null>(null)
+  const [editForm, setEditForm] = useState<{ estimatedAmount: string; dueDate: string; note: string; name: string }>({
+    estimatedAmount: '', dueDate: '', note: '', name: '',
+  })
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
 
   // Auto-generate
   const [generating, setGenerating] = useState(false)
@@ -62,8 +71,17 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
   const totalPaid = bills.filter(b => b.status === 'paid')
     .reduce((s, b) => s + toVND(b.actualAmount ?? b.estimatedAmount ?? 0, b.currency, rates), 0)
 
+  // Tra giá từ tháng trước theo tên bill
+  function prevAmountFor(name: string): number | undefined {
+    const prev = prevMonthBills.find(b => b.name === name)
+    if (!prev) return undefined
+    return prev.actualAmount ?? prev.estimatedAmount
+  }
+
   function openForm(preset?: BillPreset) {
-    setForm(empty(month, preset))
+    const base = empty(month, preset)
+    const prevAmt = preset ? prevAmountFor(preset.name) : undefined
+    setForm({ ...base, estimatedAmount: prevAmt })
     setShowForm(true)
     setError('')
   }
@@ -125,6 +143,41 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
     setLoading(false)
   }
 
+  function openEdit(bill: FamilyBill) {
+    setEditModal(bill)
+    setEditForm({
+      name: bill.name,
+      estimatedAmount: bill.estimatedAmount != null ? String(bill.estimatedAmount) : '',
+      dueDate: bill.dueDate ?? '',
+      note: bill.note ?? '',
+    })
+    setEditError('')
+  }
+
+  async function handleEditSave() {
+    if (!editModal) return
+    setEditLoading(true); setEditError('')
+    const updated: FamilyBill = {
+      ...editModal,
+      name: editForm.name || editModal.name,
+      estimatedAmount: editForm.estimatedAmount ? Number(editForm.estimatedAmount) : undefined,
+      dueDate: editForm.dueDate || undefined,
+      note: editForm.note || undefined,
+    }
+    const res = await fetch('/api/family/finance/bills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    })
+    if (res.ok) {
+      setBills(prev => prev.map(b => b.id === updated.id ? updated : b))
+      setEditModal(null)
+    } else {
+      setEditError('Lưu thất bại')
+    }
+    setEditLoading(false)
+  }
+
   // Auto-generate bills cho tháng sau
   async function handleGenerate() {
     const target = nextMonthOf(month)
@@ -136,7 +189,6 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
       )
       const data = await res.json()
       setGenResult(data)
-      // Nếu đang xem tháng đó thì refresh (ít xảy ra vì target = tháng sau)
     } catch {
       setGenResult({ created: 0, skipped: 0, month: target })
     }
@@ -259,8 +311,10 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
       {/* Quick presets row */}
       {!showForm && (
         <div style={{ marginBottom: 20 }}>
-          <PresetRow label="🇯🇵 Nhật" presets={BILL_PRESETS_JP} onPick={openForm} />
-          <PresetRow label="🇻🇳 Việt Nam" presets={BILL_PRESETS_VN} onPick={openForm} />
+          <PresetRow label="🇯🇵 Nhật" presets={BILL_PRESETS_JP} onPick={openForm}
+            prevAmountFor={prevAmountFor} />
+          <PresetRow label="🇻🇳 Việt Nam" presets={BILL_PRESETS_VN} onPick={openForm}
+            prevAmountFor={prevAmountFor} />
         </div>
       )}
 
@@ -291,11 +345,13 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
                 value={form.name ?? ''}
                 onChange={e => {
                   const p = BILL_PRESETS.find(x => x.name === e.target.value)
+                  const prevAmt = prevAmountFor(e.target.value)
                   setForm(f => ({
                     ...f,
                     name: e.target.value,
                     category: p?.category ?? 'misc',
                     currency: p?.currency ?? f.currency,
+                    estimatedAmount: prevAmt ?? f.estimatedAmount,
                   }))
                 }}
                 style={selectStyle}
@@ -315,7 +371,14 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
             </div>
 
             <div>
-              <Label>Dự kiến ({form.currency})</Label>
+              <Label>
+                Dự kiến ({form.currency})
+                {form.estimatedAmount != null && (
+                  <span style={{ color: '#6366f1', marginLeft: 6, fontStyle: 'italic' }}>
+                    · tháng trước
+                  </span>
+                )}
+              </Label>
               <input
                 type="number" placeholder="0"
                 value={form.estimatedAmount ?? ''}
@@ -360,6 +423,7 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
         flag="🇯🇵" label="Nhật Bản" bills={jpBills} rates={rates}
         onPay={b => { setPayModal(b); setPayAmount(String(b.estimatedAmount ?? '')) }}
         onDelete={handleDelete}
+        onEdit={openEdit}
       />
 
       {/* VN bills */}
@@ -367,6 +431,7 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
         flag="🇻🇳" label="Việt Nam" bills={vnBills} rates={rates}
         onPay={b => { setPayModal(b); setPayAmount(String(b.estimatedAmount ?? '')) }}
         onDelete={handleDelete}
+        onEdit={openEdit}
       />
 
       {bills.length === 0 && (
@@ -502,33 +567,115 @@ export default function BillsClient({ initialBills, month, rates }: Props) {
           </div>
         </div>
       )}
+
+      {/* Edit modal */}
+      {editModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999,
+        }}>
+          <div style={{
+            background: 'var(--surface)', borderRadius: 16, padding: 24,
+            width: 360, border: '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15 }}>
+                {editModal.country === 'JP' ? '🇯🇵' : '🇻🇳'} Sửa hóa đơn
+              </h3>
+              <button onClick={() => setEditModal(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--ink3)' }}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <Label>Tên hóa đơn</Label>
+                <input
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <Label>Dự kiến ({editModal.currency})</Label>
+                <input
+                  type="number"
+                  value={editForm.estimatedAmount}
+                  onChange={e => setEditForm(f => ({ ...f, estimatedAmount: e.target.value }))}
+                  placeholder="0"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <Label>Ngày đến hạn</Label>
+                <input
+                  type="date"
+                  value={editForm.dueDate}
+                  onChange={e => setEditForm(f => ({ ...f, dueDate: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <Label>Ghi chú</Label>
+                <input
+                  value={editForm.note}
+                  onChange={e => setEditForm(f => ({ ...f, note: e.target.value }))}
+                  placeholder="(tuỳ chọn)"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {editError && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 10 }}>{editError}</p>}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={() => setEditModal(null)} style={btnSecondary}>Hủy</button>
+              <button onClick={handleEditSave} disabled={editLoading} style={btnPrimary}>
+                {editLoading ? '...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
-function PresetRow({ label, presets, onPick }: {
+function PresetRow({ label, presets, onPick, prevAmountFor }: {
   label: string
   presets: BillPreset[]
   onPick: (p: BillPreset) => void
+  prevAmountFor: (name: string) => number | undefined
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
       <span style={{ fontSize: 11, color: 'var(--ink3)', minWidth: 70, fontWeight: 500 }}>{label}</span>
-      {presets.map(p => (
-        <button
-          key={p.name}
-          onClick={() => onPick(p)}
-          title={`Thêm nhanh: ${p.name}`}
-          style={{
-            padding: '5px 10px', borderRadius: 20, border: '1px solid var(--border)',
-            background: 'var(--surface2)', fontSize: 12, cursor: 'pointer', color: 'var(--ink2)',
-          }}
-        >
-          {p.icon} {p.name}
-        </button>
-      ))}
+      {presets.map(p => {
+        const prev = prevAmountFor(p.name)
+        return (
+          <button
+            key={p.name}
+            onClick={() => onPick(p)}
+            title={prev != null ? `Tháng trước: ${prev.toLocaleString()} ${p.currency}` : `Thêm nhanh: ${p.name}`}
+            style={{
+              padding: '5px 10px', borderRadius: 20, border: '1px solid var(--border)',
+              background: 'var(--surface2)', fontSize: 12, cursor: 'pointer', color: 'var(--ink2)',
+              position: 'relative',
+            }}
+          >
+            {p.icon} {p.name}
+            {prev != null && (
+              <span style={{
+                marginLeft: 4, fontSize: 10, color: '#6366f1', fontWeight: 500,
+              }}>
+                {prev.toLocaleString()}
+              </span>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -548,13 +695,14 @@ function SummaryCard({ label, value, sub, color }: {
   )
 }
 
-function BillGroup({ flag, label, bills, rates, onPay, onDelete }: {
+function BillGroup({ flag, label, bills, rates, onPay, onDelete, onEdit }: {
   flag: string
   label: string
   bills: FamilyBill[]
   rates: ForexRates
   onPay: (b: FamilyBill) => void
   onDelete: (id: string) => void
+  onEdit: (b: FamilyBill) => void
 }) {
   if (bills.length === 0) return null
   const pending = bills.filter(b => b.status === 'pending')
@@ -573,7 +721,9 @@ function BillGroup({ flag, label, bills, rates, onPay, onDelete }: {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pending.map(b => (
               <BillCard key={b.id} bill={b} rates={rates}
-                onPay={() => onPay(b)} onDelete={() => onDelete(b.id)} />
+                onPay={() => onPay(b)}
+                onEdit={() => onEdit(b)}
+                onDelete={() => onDelete(b.id)} />
             ))}
           </div>
         </div>
@@ -586,6 +736,7 @@ function BillGroup({ flag, label, bills, rates, onPay, onDelete }: {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {paid.map(b => (
               <BillCard key={b.id} bill={b} rates={rates}
+                onEdit={() => onEdit(b)}
                 onDelete={() => onDelete(b.id)} />
             ))}
           </div>
@@ -595,10 +746,11 @@ function BillGroup({ flag, label, bills, rates, onPay, onDelete }: {
   )
 }
 
-function BillCard({ bill, rates, onPay, onDelete }: {
+function BillCard({ bill, rates, onPay, onEdit, onDelete }: {
   bill: FamilyBill
   rates: ForexRates
   onPay?: () => void
+  onEdit: () => void
   onDelete: () => void
 }) {
   const preset = BILL_PRESETS.find(p => p.name === bill.name)
@@ -644,6 +796,12 @@ function BillCard({ bill, rates, onPay, onDelete }: {
             Đã trả
           </button>
         )}
+        <button onClick={onEdit} style={{
+          padding: '4px 10px', borderRadius: 20, border: '1px solid var(--border)',
+          background: 'none', color: 'var(--ink2)', fontSize: 12, cursor: 'pointer',
+        }}>
+          Sửa
+        </button>
         <button onClick={onDelete} style={{
           padding: '4px 8px', borderRadius: 20, border: '1px solid var(--border)',
           background: 'none', color: 'var(--ink3)', fontSize: 12, cursor: 'pointer',

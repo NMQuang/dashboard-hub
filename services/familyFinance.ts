@@ -49,10 +49,7 @@ export function toJPY(
 }
 
 export function formatVND(value: number): string {
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}T₫`
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M₫`
-  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K₫`
-  return `${value}₫`
+  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value) + '₫'
 }
 
 export function formatJPY(value: number): string {
