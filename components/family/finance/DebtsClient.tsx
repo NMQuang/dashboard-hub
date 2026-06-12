@@ -88,7 +88,11 @@ export default function DebtsClient({ initialDebts, rates }: Props) {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/family/finance/debts?id=${id}`, { method: 'DELETE' })
+    const item = debts.find(d => d.id === id)
+    const amtFmt = item ? `${new Intl.NumberFormat('ja-JP').format(item.amount)} ${item.currency}` : ''
+    const typeLabel = item?.type === 'owe' ? 'tôi nợ' : 'họ nợ tôi'
+    const desc = item ? `khoản nợ (${typeLabel}): ${item.person} ${amtFmt}` : 'khoản nợ'
+    await fetch(`/api/family/finance/debts?id=${id}&desc=${encodeURIComponent(desc)}`, { method: 'DELETE' })
     setDebts(prev => prev.filter(d => d.id !== id))
   }
 

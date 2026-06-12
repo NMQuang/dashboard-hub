@@ -11,6 +11,7 @@ const TABS = [
   { href: '/family/finance/debts',       label: 'Debts',        icon: '⇄', noMonth: true  },
   { href: '/family/finance/investments', label: 'Investments',  icon: '◈', noMonth: false },
   { href: '/family/finance/reports',     label: 'Reports',      icon: '≡', noMonth: false },
+  { href: '/family/finance/history',     label: 'History',      icon: '⏱', noMonth: true  },
 ]
 
 function shiftMonth(yearMonth: string, delta: number): string {

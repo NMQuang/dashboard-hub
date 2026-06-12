@@ -381,6 +381,22 @@ export interface FamilyDebt {
   settledAt?: string
 }
 
+// ── Finance History (audit log) ──────────────────────────────────────────
+
+export type FinanceEntityType = 'income' | 'expense' | 'bill' | 'debt' | 'investment'
+export type FinanceHistoryAction = 'created' | 'updated' | 'deleted'
+
+export interface FinanceHistoryEntry {
+  id: string
+  entityType: FinanceEntityType
+  entityId: string
+  action: FinanceHistoryAction
+  description: string
+  snapshot?: Record<string, unknown>
+  month?: string   // YYYY-MM, null cho debt/investment
+  createdAt: string
+}
+
 // ── Upload ────────────────────────────────────────────────────────────────
 
 export interface PresignedUploadUrl {

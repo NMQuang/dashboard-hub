@@ -186,7 +186,9 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   async function handleDelete(id: string) {
     setDeletingId(id)
     try {
-      await fetch(`/api/family/finance/investments?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const item = investments.find(i => i.id === id)
+      const desc = item ? `đầu tư ${item.assetName} (${item.quantity} ${item.currency})` : 'đầu tư'
+      await fetch(`/api/family/finance/investments?id=${encodeURIComponent(id)}&desc=${encodeURIComponent(desc)}`, { method: 'DELETE' })
       setInvestments(prev => prev.filter(i => i.id !== id))
     } catch (err) {
       console.error(err)

@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
-import type { FamilyIncome, FamilyExpense, FamilyBill, FamilyBillTemplate, FamilyDebt, DebtStatus } from '@/types/family'
+import type { FamilyIncome, FamilyExpense, FamilyBill, FamilyBillTemplate, FamilyDebt, DebtStatus, FinanceHistoryEntry, FinanceEntityType, FinanceHistoryAction } from '@/types/family'
 
 function log(msg: string): void {
   console.warn('[familyFinance]', msg)
@@ -600,5 +600,76 @@ export async function deleteDebt(id: string): Promise<boolean> {
   } catch (err) {
     log(`deleteDebt: ${err}`)
     return false
+  }
+}
+
+// ── Finance History (audit log) ──────────────────────────────────────────
+
+type HistoryRow = {
+  id: string
+  entity_type: string
+  entity_id: string
+  action: string
+  description: string
+  snapshot: Record<string, unknown> | null
+  month: string | null
+  created_at: string
+}
+
+function rowToHistory(row: HistoryRow): FinanceHistoryEntry {
+  return {
+    id: row.id,
+    entityType: row.entity_type as FinanceEntityType,
+    entityId: row.entity_id,
+    action: row.action as FinanceHistoryAction,
+    description: row.description,
+    snapshot: row.snapshot ?? undefined,
+    month: row.month ?? undefined,
+    createdAt: row.created_at,
+  }
+}
+
+export async function logFinanceHistory(entry: {
+  entityType: FinanceEntityType
+  entityId: string
+  action: FinanceHistoryAction
+  description: string
+  snapshot?: Record<string, unknown>
+  month?: string
+}): Promise<void> {
+  if (!supabase) return
+  try {
+    await supabase.from('family_finance_history').insert({
+      entity_type: entry.entityType,
+      entity_id: entry.entityId,
+      action: entry.action,
+      description: entry.description,
+      snapshot: entry.snapshot ?? null,
+      month: entry.month ?? null,
+    })
+  } catch (err) {
+    log(`logFinanceHistory: ${err}`)
+  }
+}
+
+export async function getFinanceHistory(opts: {
+  limit?: number
+  offset?: number
+  entityType?: FinanceEntityType
+}): Promise<FinanceHistoryEntry[]> {
+  if (!supabase) return []
+  try {
+    let q = supabase
+      .from('family_finance_history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(opts.offset ?? 0, (opts.offset ?? 0) + (opts.limit ?? 50) - 1)
+    if (opts.entityType) q = q.eq('entity_type', opts.entityType)
+    const { data, error } = await q
+    if (error) throw error
+    return (data as HistoryRow[]).map(rowToHistory)
+  } catch (err) {
+    log(`getFinanceHistory: ${err}`)
+    return []
   }
 }

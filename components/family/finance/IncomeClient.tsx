@@ -140,7 +140,13 @@ export default function IncomeClient({ initialIncome, month, rates }: IncomeClie
     if (editingId === id) cancelEdit()
     setDeletingId(id)
     try {
-      await fetch(`/api/family/finance/income?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const item = income.find(i => i.id === id)
+      const amt = item
+        ? item.currency === 'JPY' ? `¥${new Intl.NumberFormat('ja-JP').format(item.amount)}` : `${new Intl.NumberFormat('vi-VN').format(item.amount)}₫`
+        : ''
+      const desc = item ? `thu nhập ${amt} — ${INCOME_SOURCE_LABELS[item.source] ?? item.source}` : 'thu nhập'
+      const monthParam = item?.receivedDate.slice(0, 7) ?? ''
+      await fetch(`/api/family/finance/income?id=${encodeURIComponent(id)}&month=${monthParam}&desc=${encodeURIComponent(desc)}`, { method: 'DELETE' })
       setIncome(prev => prev.filter(i => i.id !== id))
     } catch (err) {
       console.error(err)

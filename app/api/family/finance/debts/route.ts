@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDebts, saveDebt, deleteDebt } from '@/services/familyFinance'
+import { getDebts, saveDebt, deleteDebt, logFinanceHistory } from '@/services/familyFinance'
 import { sendEmail } from '@/lib/email'
 import type { FamilyDebt } from '@/types/family'
 
@@ -80,6 +80,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
     }
 
+    const typeLabel = debt.type === 'owe' ? 'Tôi nợ' : 'Họ nợ tôi'
+    const amtFmt = `${new Intl.NumberFormat('ja-JP').format(debt.amount)} ${debt.currency}`
+    const isDebtNew = !oldDebt
+    let debtDesc: string
+    if (isDebtNew) {
+      debtDesc = `Thêm khoản nợ (${typeLabel}) — ${debt.person}: ${amtFmt}`
+    } else if (debt.status === 'settled') {
+      debtDesc = `Tất toán khoản nợ — ${debt.person}: ${amtFmt}`
+    } else if (debt.paidAmount !== oldDebt.paidAmount) {
+      const paidFmt = `${new Intl.NumberFormat('ja-JP').format(debt.paidAmount)} ${debt.currency}`
+      debtDesc = `Cập nhật nợ ${debt.person}: đã trả ${paidFmt}/${amtFmt} (${Math.round(debt.paidAmount / debt.amount * 100)}%)`
+    } else {
+      debtDesc = `Cập nhật khoản nợ — ${debt.person}: ${amtFmt}`
+    }
+    logFinanceHistory({
+      entityType: 'debt',
+      entityId: debt.id,
+      action: isDebtNew ? 'created' : 'updated',
+      description: debtDesc,
+      snapshot: debt as unknown as Record<string, unknown>,
+    })
+
     return NextResponse.json({ debt })
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -89,6 +111,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  const desc = req.nextUrl.searchParams.get('desc') ?? 'khoản nợ'
   await deleteDebt(id)
+  logFinanceHistory({ entityType: 'debt', entityId: id, action: 'deleted', description: `Xóa ${desc}` })
   return NextResponse.json({ ok: true })
 }

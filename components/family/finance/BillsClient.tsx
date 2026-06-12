@@ -118,7 +118,13 @@ export default function BillsClient({ initialBills, prevMonthBills, month, rates
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/family/finance/bills?id=${id}`, { method: 'DELETE' })
+    const item = bills.find(b => b.id === id)
+    const n = item?.actualAmount ?? item?.estimatedAmount
+    const amt = n && item
+      ? item.currency === 'JPY' ? ` ¥${new Intl.NumberFormat('ja-JP').format(n)}` : ` ${new Intl.NumberFormat('vi-VN').format(n)}₫`
+      : ''
+    const desc = item ? `hóa đơn "${item.name}"${amt}` : 'hóa đơn'
+    await fetch(`/api/family/finance/bills?id=${id}&month=${item?.month ?? ''}&desc=${encodeURIComponent(desc)}`, { method: 'DELETE' })
     setBills(prev => prev.filter(b => b.id !== id))
   }
 

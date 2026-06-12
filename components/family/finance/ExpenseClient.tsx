@@ -149,7 +149,13 @@ export default function ExpenseClient({ initialExpenses, month, rates }: Expense
     if (editingId === id) cancelEdit()
     setDeletingId(id)
     try {
-      await fetch(`/api/family/finance/expenses?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const item = expenses.find(e => e.id === id)
+      const amt = item
+        ? item.currency === 'JPY' ? `¥${new Intl.NumberFormat('ja-JP').format(item.amount)}` : `${new Intl.NumberFormat('vi-VN').format(item.amount)}₫`
+        : ''
+      const desc = item ? `chi tiêu ${amt} — ${EXPENSE_CATEGORY_LABELS[item.category] ?? item.category}` : 'chi tiêu'
+      const monthParam = item?.spentDate.slice(0, 7) ?? ''
+      await fetch(`/api/family/finance/expenses?id=${encodeURIComponent(id)}&month=${monthParam}&desc=${encodeURIComponent(desc)}`, { method: 'DELETE' })
       setExpenses(prev => prev.filter(e => e.id !== id))
     } catch (err) {
       console.error(err)
