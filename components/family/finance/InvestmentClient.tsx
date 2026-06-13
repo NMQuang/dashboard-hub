@@ -89,6 +89,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const goldInvestments    = investments.filter(i => i.type === 'gold')
   const cryptoInvestments  = investments.filter(i => i.type === 'crypto')
@@ -147,7 +148,7 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
     setError(null)
 
     const entry: FamilyInvestment = {
-      id: genId(),
+      id: editingId ?? genId(),
       type,
       assetName: assetName.trim(),
       quantity: qty,
@@ -167,7 +168,12 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const { investment: saved } = (await res.json()) as { investment: FamilyInvestment }
-      setInvestments(prev => [saved, ...prev])
+      if (editingId) {
+        setInvestments(prev => prev.map(i => i.id === editingId ? saved : i))
+      } else {
+        setInvestments(prev => [saved, ...prev])
+      }
+      setEditingId(null)
       setAssetName('')
       setQuantity('')
       setAvgBuyPrice('')
@@ -181,6 +187,21 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
     } finally {
       setSaving(false)
     }
+  }
+
+  function handleEdit(inv: FamilyInvestment) {
+    setType(inv.type)
+    setAssetName(inv.assetName)
+    setQuantity(inv.quantity.toString())
+    setAvgBuyPrice(inv.averageBuyPrice?.toString() ?? '')
+    setCurrentPrice(inv.currentPrice?.toString() ?? '')
+    setCurrency(inv.currency as InvCurrency)
+    setNote(inv.note ?? '')
+    setPurchasedAt(inv.purchasedAt ?? todayVN())
+    setEditingId(inv.id)
+    setShowForm(true)
+    setError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleDelete(id: string) {
@@ -220,7 +241,14 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       {/* Add button */}
       <div>
         <button
-          onClick={() => setShowForm(v => !v)}
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false)
+              setEditingId(null)
+            } else {
+              setShowForm(true)
+            }
+          }}
           style={{
             padding: '8px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
             background: showForm ? 'var(--surface2)' : 'var(--ink)', color: showForm ? 'var(--ink)' : '#fff',
@@ -234,6 +262,9 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
       {/* Add form */}
       {showForm && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', maxWidth: 600 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 12 }}>
+            {editingId ? '✏️ Sửa tài sản' : '+ Thêm tài sản'}
+          </div>
           <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Type */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -393,14 +424,14 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
                 opacity: saving || !assetName || !quantity ? 0.4 : 1,
               }}
             >
-              {saving ? 'Đang lưu…' : '+ Thêm'}
+              {saving ? 'Đang lưu…' : editingId ? 'Lưu thay đổi' : '+ Thêm'}
             </button>
           </form>
         </div>
       )}
 
       {/* Savings section */}
-      <SavingsSection items={savingsInvestments} onDelete={handleDelete} deletingId={deletingId} />
+      <SavingsSection items={savingsInvestments} onDelete={handleDelete} deletingId={deletingId} onEdit={handleEdit} editingId={editingId} />
 
       {/* Gold portfolio */}
       <InvestmentSection
@@ -409,6 +440,8 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
         rates={rates}
         onDelete={handleDelete}
         deletingId={deletingId}
+        onEdit={handleEdit}
+        editingId={editingId}
       />
 
       {/* Crypto portfolio */}
@@ -418,6 +451,8 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
         rates={rates}
         onDelete={handleDelete}
         deletingId={deletingId}
+        onEdit={handleEdit}
+        editingId={editingId}
       />
 
       {/* Stock portfolio */}
@@ -427,6 +462,8 @@ export default function InvestmentClient({ initialInvestments, rates }: Investme
         rates={rates}
         onDelete={handleDelete}
         deletingId={deletingId}
+        onEdit={handleEdit}
+        editingId={editingId}
       />
 
       {investments.length === 0 && (
@@ -507,10 +544,12 @@ function SavingsCard({ savingsVND, savingsJPY }: { savingsVND: number; savingsJP
   )
 }
 
-function SavingsSection({ items, onDelete, deletingId }: {
+function SavingsSection({ items, onDelete, deletingId, onEdit, editingId }: {
   items: FamilyInvestment[]
   onDelete: (id: string) => void
   deletingId: string | null
+  onEdit: (inv: FamilyInvestment) => void
+  editingId: string | null
 }) {
   if (items.length === 0) return null
 
@@ -534,7 +573,7 @@ function SavingsSection({ items, onDelete, deletingId }: {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface2)' }}>
-              {['Tên tài khoản', 'Tiền tệ', 'Số dư', 'Ghi chú', ''].map(h => (
+              {['Tên tài khoản', 'Tiền tệ', 'Số dư', 'Ghi chú', '', ''].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
@@ -559,6 +598,19 @@ function SavingsSection({ items, onDelete, deletingId }: {
                     : formatVND(inv.quantity)}
                 </td>
                 <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--ink3)' }}>{inv.note ?? '—'}</td>
+                <td style={{ padding: '10px 4px' }}>
+                  <button
+                    onClick={() => onEdit(inv)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: editingId === inv.id ? '#3b82f6' : 'var(--ink3)', fontSize: 13,
+                      opacity: 0.7, padding: '2px 6px',
+                    }}
+                    title="Sửa"
+                  >
+                    ✏️
+                  </button>
+                </td>
                 <td style={{ padding: '10px 8px' }}>
                   <button
                     onClick={() => onDelete(inv.id)}
@@ -581,12 +633,14 @@ function SavingsSection({ items, onDelete, deletingId }: {
   )
 }
 
-function InvestmentSection({ title, items, rates, onDelete, deletingId }: {
+function InvestmentSection({ title, items, rates, onDelete, deletingId, onEdit, editingId }: {
   title: string
   items: FamilyInvestment[]
   rates: ForexRates
   onDelete: (id: string) => void
   deletingId: string | null
+  onEdit: (inv: FamilyInvestment) => void
+  editingId: string | null
 }) {
   if (items.length === 0) return null
 
@@ -599,7 +653,7 @@ function InvestmentSection({ title, items, rates, onDelete, deletingId }: {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--surface2)' }}>
-              {['Tài sản', 'Ngày mua', 'Số lượng', 'Giá vốn', 'Giá hiện tại', 'Giá trị VND', 'Lãi/Lỗ', ''].map(h => (
+              {['Tài sản', 'Ngày mua', 'Số lượng', 'Giá vốn', 'Giá hiện tại', 'Giá trị VND', 'Lãi/Lỗ', '', ''].map(h => (
                 <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, color: 'var(--ink3)', fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
@@ -651,6 +705,19 @@ function InvestmentSection({ title, items, rates, onDelete, deletingId }: {
                         )}
                       </>
                     ) : '—'}
+                  </td>
+                  <td style={{ padding: '10px 4px' }}>
+                    <button
+                      onClick={() => onEdit(inv)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: editingId === inv.id ? '#3b82f6' : 'var(--ink3)', fontSize: 13,
+                        opacity: 0.7, padding: '2px 6px',
+                      }}
+                      title="Sửa"
+                    >
+                      ✏️
+                    </button>
                   </td>
                   <td style={{ padding: '10px 8px' }}>
                     <button
