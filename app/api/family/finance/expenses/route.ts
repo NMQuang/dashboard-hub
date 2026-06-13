@@ -22,7 +22,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const existing = (await getExpensesByMonth(expense.spentDate.slice(0, 7))).find(e => e.id === expense.id)
     await saveExpense(expense)
     const action = existing ? 'updated' : 'created'
-    logFinanceHistory({
+    await logFinanceHistory({
       entityType: 'expense',
       entityId: expense.id,
       action,
@@ -42,6 +42,6 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const month = req.nextUrl.searchParams.get('month') ?? undefined
   const desc = req.nextUrl.searchParams.get('desc') ?? 'khoản chi tiêu'
   await deleteExpense(id)
-  logFinanceHistory({ entityType: 'expense', entityId: id, action: 'deleted', description: `Xóa ${desc}`, month })
+  await logFinanceHistory({ entityType: 'expense', entityId: id, action: 'deleted', description: `Xóa ${desc}`, month })
   return NextResponse.json({ ok: true })
 }

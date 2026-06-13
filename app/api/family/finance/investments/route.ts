@@ -21,7 +21,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const action = existing ? 'updated' : 'created'
     const typeLabel = TYPE_LABELS[investment.type] ?? investment.type
     const qtyFmt = `${investment.quantity} ${investment.currency}`
-    logFinanceHistory({
+    await logFinanceHistory({
       entityType: 'investment',
       entityId: investment.id,
       action,
@@ -39,6 +39,6 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const desc = req.nextUrl.searchParams.get('desc') ?? 'đầu tư'
   await deleteInvestment(id)
-  logFinanceHistory({ entityType: 'investment', entityId: id, action: 'deleted', description: `Xóa ${desc}` })
+  await logFinanceHistory({ entityType: 'investment', entityId: id, action: 'deleted', description: `Xóa ${desc}` })
   return NextResponse.json({ ok: true })
 }

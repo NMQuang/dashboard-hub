@@ -94,7 +94,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } else {
       debtDesc = `Cập nhật khoản nợ — ${debt.person}: ${amtFmt}`
     }
-    logFinanceHistory({
+    await logFinanceHistory({
       entityType: 'debt',
       entityId: debt.id,
       action: isDebtNew ? 'created' : 'updated',
@@ -113,6 +113,6 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const desc = req.nextUrl.searchParams.get('desc') ?? 'khoản nợ'
   await deleteDebt(id)
-  logFinanceHistory({ entityType: 'debt', entityId: id, action: 'deleted', description: `Xóa ${desc}` })
+  await logFinanceHistory({ entityType: 'debt', entityId: id, action: 'deleted', description: `Xóa ${desc}` })
   return NextResponse.json({ ok: true })
 }

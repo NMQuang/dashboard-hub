@@ -37,7 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       await saveExpense(expense)
       const updated: FamilyBill = { ...bill, status: 'paid', actualAmount, expenseId }
       await saveBill(updated)
-      logFinanceHistory({
+      await logFinanceHistory({
         entityType: 'bill',
         entityId: bill.id,
         action: 'updated',
@@ -72,6 +72,6 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const month = req.nextUrl.searchParams.get('month') ?? undefined
   const desc = req.nextUrl.searchParams.get('desc') ?? 'hóa đơn'
   await deleteBill(id)
-  logFinanceHistory({ entityType: 'bill', entityId: id, action: 'deleted', description: `Xóa ${desc}`, month })
+  await logFinanceHistory({ entityType: 'bill', entityId: id, action: 'deleted', description: `Xóa ${desc}`, month })
   return NextResponse.json({ ok: true })
 }
